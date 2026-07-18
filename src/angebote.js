@@ -1,0 +1,31 @@
+import { apiFetch } from './apiClient.js';
+
+const API_BASE = '/api/angebote';
+
+export async function getAllAngebote() {
+  return apiFetch(API_BASE);
+}
+
+export async function getAngebot(id) {
+  try {
+    return await apiFetch(`${API_BASE}/${id}`);
+  } catch (err) {
+    if (err.message === 'Angebot nicht gefunden.') return null;
+    throw err;
+  }
+}
+
+export async function saveAngebot(angebot) {
+  return apiFetch(API_BASE, {
+    method: 'POST',
+    body: JSON.stringify(angebot),
+  });
+}
+
+export async function deleteAngebot(id) {
+  return apiFetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+}
+
+export function createAngebotId() {
+  return `ang_${Date.now()}`;
+}

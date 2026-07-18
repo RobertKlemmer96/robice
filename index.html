@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Angebot erstellen</title>
+    <script>
+      (function () {
+        var theme = localStorage.getItem('angebot_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="login-screen" class="login-screen hidden">
+      <div class="login-screen__inner">
+        <div class="login-card">
+          <div class="login-header">
+            <h1 id="auth-title">Anmelden</h1>
+            <div class="login-tabs" role="tablist">
+              <button type="button" class="login-tab is-active" data-auth-tab="login" role="tab">Anmelden</button>
+              <button type="button" class="login-tab" data-auth-tab="register" role="tab">Registrieren</button>
+            </div>
+          </div>
+          <form id="login-form" class="login-form">
+            <label>
+              E-Mail
+              <input type="text" id="login-user" autocomplete="username" required />
+            </label>
+            <label>
+              Passwort
+              <input type="password" id="login-pass" autocomplete="current-password" required />
+            </label>
+            <p id="login-error" class="login-error hidden">Anmeldung fehlgeschlagen.</p>
+            <button type="submit" class="btn btn-primary btn-full">Einloggen</button>
+          </form>
+          <form id="register-form" class="login-form hidden">
+            <label>
+              Firmenname
+              <input type="text" id="register-tenant" autocomplete="organization" required />
+            </label>
+            <label>
+              E-Mail
+              <input type="email" id="register-email" autocomplete="email" required />
+            </label>
+            <label>
+              Passwort (min. 8 Zeichen)
+              <input type="password" id="register-pass" autocomplete="new-password" required minlength="8" />
+            </label>
+            <p id="register-error" class="login-error hidden">Registrierung fehlgeschlagen.</p>
+            <button type="submit" class="btn btn-primary btn-full">Konto anlegen</button>
+          </form>
+        </div>
+        <nav class="legal-nav" aria-label="Rechtliches">
+          <button type="button" class="legal-nav__link" data-legal-page="impressum">Impressum</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="datenschutz">Datenschutz</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="agb">AGB</button>
+        </nav>
+      </div>
+    </div>
+
+    <div id="app" class="app hidden">
+      <header class="app-header">
+        <div class="app-header__inner">
+          <button
+            type="button"
+            class="app-brand"
+            id="bereich-switcher"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-controls="bereich-modal"
+          >
+            <span class="app-brand__mark app-brand__mark--angebote" id="bereich-switcher-mark" aria-hidden="true"
+              >A</span
+            >
+            <span class="app-brand__title" id="bereich-switcher-label">Angebote</span>
+            <svg class="app-brand__chevron" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M4 6l4 4 4-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="app-nav-toggle"
+            id="nav-mobile-toggle"
+            aria-expanded="false"
+            aria-controls="main-nav"
+            aria-label="Menü öffnen"
+          >
+            <span class="app-nav-toggle__bar" aria-hidden="true"></span>
+            <span class="app-nav-toggle__bar" aria-hidden="true"></span>
+            <span class="app-nav-toggle__bar" aria-hidden="true"></span>
+          </button>
+
+          <nav class="app-nav" id="main-nav" aria-label="Hauptnavigation">
+            <ul class="app-nav__list">
+              <li class="app-nav__group" data-nav-group="angebote">
+                <button
+                  type="button"
+                  class="app-nav__trigger"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  data-nav-trigger
+                >
+                  <span>Angebote</span>
+                  <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <div class="app-nav__menu" role="menu">
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="neu">
+                    <span class="app-nav__link-title">Neues Angebot</span>
+                    <span class="app-nav__link-desc">Angebot &amp; PDF erstellen</span>
+                  </button>
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="archiv">
+                    <span class="app-nav__link-title">Alle Angebote</span>
+                    <span class="app-nav__link-desc">Archiv durchsuchen</span>
+                  </button>
+                </div>
+              </li>
+              <li class="app-nav__group is-bereich-hidden" data-nav-group="rechnungen">
+                <button
+                  type="button"
+                  class="app-nav__trigger"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  data-nav-trigger
+                >
+                  <span>Rechnungen</span>
+                  <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <div class="app-nav__menu" role="menu">
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-neu">
+                    <span class="app-nav__link-title">Neue Rechnung</span>
+                    <span class="app-nav__link-desc">Rechnung &amp; PDF erstellen</span>
+                  </button>
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-archiv">
+                    <span class="app-nav__link-title">Alle Rechnungen</span>
+                    <span class="app-nav__link-desc">Archiv durchsuchen</span>
+                  </button>
+                </div>
+              </li>
+              <li class="app-nav__group app-nav__group--direct" data-nav-group="kunden">
+                <button type="button" class="app-nav__trigger" data-nav-view="kunden">
+                  <span>Kunde</span>
+                </button>
+              </li>
+              <li class="app-nav__group" data-nav-group="einstellungen">
+                <button
+                  type="button"
+                  class="app-nav__trigger"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  data-nav-trigger
+                >
+                  <span>Einstellungen</span>
+                  <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <div class="app-nav__menu" role="menu">
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="einstellungen">
+                    <span class="app-nav__link-title">PDF-Vorlage</span>
+                    <span class="app-nav__link-desc">PDF-Format konfigurieren</span>
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </nav>
+
+          <div class="app-toolbar">
+            <button
+              type="button"
+              id="profile-btn"
+              class="btn btn-ghost btn-icon profile-btn"
+              aria-label="Profil"
+              title="Profil"
+            >
+              <svg class="profile-btn__icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.75" />
+                <path
+                  d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+            <button type="button" id="logout-btn" class="btn btn-ghost btn-icon" aria-label="Abmelden" title="Abmelden">
+              <span aria-hidden="true">🚪</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div id="view-rechnung-neu" class="hidden">
+        <main class="main">
+          <section class="card">
+            <h2>Rechnung</h2>
+            <div class="form-grid">
+              <label class="full">
+                Kunde
+                <div class="input-row">
+                  <input type="text" id="rechnung-kunde-name" placeholder="Freiname oder Kunde wählen" />
+                  <button type="button" id="rechnung-kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
+                </div>
+                <span id="rechnung-kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
+              </label>
+              <label class="full">
+                Rechnungsadresse
+                <textarea id="rechnung-kunde-adresse" rows="2" placeholder="Straße, PLZ Ort"></textarea>
+              </label>
+              <label class="full">
+                Objekt / Einsatzort
+                <select id="rechnung-kunde-objekt" disabled>
+                  <option value="">— Kein Objekt —</option>
+                </select>
+                <span class="field-hint">Optional: Baustelle oder alternative Rechnungsadresse vom Kunden</span>
+              </label>
+              <label>
+                Rechnungsnummer
+                <input type="text" id="rechnung-nr" />
+              </label>
+              <label>
+                Rechnungsdatum
+                <input type="date" id="rechnung-datum" />
+              </label>
+              <label>
+                Fällig am
+                <input type="date" id="rechnung-faellig" />
+              </label>
+              <p id="rechnung-angebot-ref" class="field-hint full hidden"></p>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header card-header--search">
+              <input type="search" id="rechnung-suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
+            </div>
+            <div id="rechnung-posten-liste" class="posten-liste"></div>
+          </section>
+
+          <div id="rechnung-sticky-footer" class="angebot-sticky-footer rechnung-sticky-footer">
+            <section class="card summary-card">
+              <h2>Zusammenfassung</h2>
+              <div id="rechnung-zusammenfassung" class="zusammenfassung">
+                <p class="empty">Noch keine Posten ausgewählt.</p>
+              </div>
+              <div class="totals">
+                <div class="total-row">
+                  <span>Netto</span>
+                  <span id="rechnung-summe-netto">0,00 €</span>
+                </div>
+                <div class="total-row">
+                  <span>MwSt. 19 %</span>
+                  <span id="rechnung-summe-mwst">0,00 €</span>
+                </div>
+                <div class="total-row total-row--bold">
+                  <span>Gesamt</span>
+                  <span id="rechnung-summe-brutto">0,00 €</span>
+                </div>
+              </div>
+            </section>
+
+            <div id="rechnung-pdf-footer" class="pdf-footer">
+              <button type="button" id="rechnung-reset-btn" class="btn btn-ghost hidden">Neu starten</button>
+              <button type="button" id="rechnung-pdf-btn" class="btn btn-primary btn-primary--rechnungen is-disabled" aria-disabled="true">PDF erstellen</button>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <div id="view-rechnung-archiv" class="hidden">
+        <main class="main">
+          <section class="card">
+            <div class="card-header">
+              <h2>Gespeicherte Rechnungen</h2>
+              <input type="search" id="rechnung-archiv-suche" class="search" placeholder="Rechnungen suchen…" />
+            </div>
+            <div id="rechnung-archiv-liste" class="archiv-liste"></div>
+          </section>
+        </main>
+      </div>
+
+      <div id="view-neu">
+        <main class="main">
+          <section class="card angebot-kopf" id="angebot-kopf">
+            <button
+              type="button"
+              class="angebot-kopf__bar"
+              id="angebot-kopf-toggle"
+              aria-expanded="true"
+              aria-controls="angebot-kopf-body"
+            >
+              <span class="angebot-kopf__summary">
+                <span class="angebot-kopf__title">Angebot</span>
+                <span class="angebot-kopf__meta">
+                  <span id="angebot-kopf-summary-nr" class="angebot-kopf__nr">—</span>
+                  <span class="angebot-kopf__sep" aria-hidden="true">·</span>
+                  <span id="angebot-kopf-summary-kunde" class="angebot-kopf__kunde">Kein Kunde</span>
+                </span>
+              </span>
+              <svg class="angebot-kopf__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  d="M4 6l4 4 4-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div class="angebot-kopf__collapse" id="angebot-kopf-body">
+              <div class="angebot-kopf__body">
+                <div class="form-grid">
+                  <label class="full">
+                    Kunde
+                    <div class="input-row">
+                      <input type="text" id="kunde-name" placeholder="Freiname oder Kunde wählen" />
+                      <button type="button" id="kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
+                    </div>
+                    <span id="kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
+                  </label>
+                  <label class="full">
+                    Rechnungsadresse
+                    <textarea id="kunde-adresse" rows="2" placeholder="Straße, PLZ Ort"></textarea>
+                  </label>
+                  <label class="full">
+                    Objekt / Einsatzort
+                    <select id="kunde-objekt" disabled>
+                      <option value="">— Kein Objekt —</option>
+                    </select>
+                    <span class="field-hint">Optional: Baustelle oder alternative Rechnungsadresse vom Kunden</span>
+                  </label>
+                  <label>
+                    Angebotsnummer
+                    <input type="text" id="angebot-nr" />
+                  </label>
+                  <label>
+                    Gültig bis
+                    <input type="date" id="gueltig-bis" />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header card-header--search">
+              <input type="search" id="suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
+            </div>
+            <div id="posten-liste" class="posten-liste"></div>
+          </section>
+
+          <div id="angebot-sticky-footer" class="angebot-sticky-footer">
+            <section class="card summary-card">
+              <h2>Zusammenfassung</h2>
+              <div id="zusammenfassung" class="zusammenfassung">
+                <p class="empty">Noch keine Posten ausgewählt.</p>
+              </div>
+              <div class="totals">
+                <div class="total-row">
+                  <span>Netto</span>
+                  <span id="summe-netto">0,00 €</span>
+                </div>
+                <div class="total-row">
+                  <span>MwSt. 19 %</span>
+                  <span id="summe-mwst">0,00 €</span>
+                </div>
+                <div class="total-row total-row--bold">
+                  <span>Gesamt</span>
+                  <span id="summe-brutto">0,00 €</span>
+                </div>
+              </div>
+            </section>
+
+            <div id="pdf-footer" class="pdf-footer">
+              <button type="button" id="reset-btn" class="btn btn-ghost hidden">Neu starten</button>
+              <button type="button" id="pdf-btn" class="btn btn-primary is-disabled" aria-disabled="true">PDF erstellen</button>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <div id="view-archiv" class="hidden">
+        <main class="main">
+          <section class="card">
+            <div class="card-header">
+              <h2>Gespeicherte Angebote</h2>
+              <input type="search" id="archiv-suche" class="search" placeholder="Angebote suchen…" />
+            </div>
+            <div id="archiv-liste" class="archiv-liste"></div>
+          </section>
+        </main>
+      </div>
+      <div id="view-einstellungen" class="hidden">
+        <main class="main">
+          <section class="card">
+            <h2>PDF-Vorlage</h2>
+            <p class="settings-lead">
+              Firmendaten, Nummern, Farben, Texte und Bilder für Angebots- und Rechnungs-PDFs.
+              Änderungen gelten für neu erstellte PDFs.
+            </p>
+            <form id="pdf-template-form" class="pdf-template-form">
+              <fieldset class="form-section">
+                <legend>Angebotsnummer</legend>
+                <div class="form-grid">
+                  <label class="full">
+                    Schema (automatische Vergabe)
+                    <input
+                      type="text"
+                      name="angebot-nummer-schema"
+                      id="angebot-nummer-schema"
+                      spellcheck="false"
+                      autocomplete="off"
+                      placeholder="ANG-{YYYY}{MM}{DD}-{NR:3}"
+                    />
+                  </label>
+                </div>
+                <p class="schema-hint">
+                  <strong>Pflicht:</strong> eine Laufnummer, z. B. <code>{NR:3}</code> oder <code>{NNN}</code>.
+                  <strong>Datum optional</strong> — nur eintragen, wenn du es brauchst:
+                  <code>{YYYY}</code>,
+                  <code>{YY}</code>,
+                  <code>{MM}</code>,
+                  <code>{DD}</code>,
+                  <code>{YYYYMMDD}</code>.
+                  Vorschau:
+                  <strong id="angebot-schema-preview">—</strong>
+                </p>
+                <p class="schema-hint schema-hint--examples">
+                  Beispiele:
+                  <code>ANG-{YYYY}{MM}{DD}-{NR:3}</code>
+                  (pro Tag),
+                  <code>ANG-{NR:5}</code>
+                  (fortlaufend ohne Datum),
+                  <code>QUO-{YYYY}-{NR:4}</code>
+                  (pro Jahr).
+                </p>
+              </fieldset>
+
+              <fieldset class="form-section">
+                <legend>Rechnungsnummer</legend>
+                <div class="form-grid">
+                  <label class="full">
+                    Schema (automatische Vergabe)
+                    <input
+                      type="text"
+                      name="rechnung-nummer-schema"
+                      id="rechnung-nummer-schema"
+                      spellcheck="false"
+                      autocomplete="off"
+                      placeholder="RE-{YYYY}{MM}{DD}-{NR:3}"
+                    />
+                  </label>
+                  <label>
+                    Zahlungsziel (Tage)
+                    <input
+                      type="number"
+                      name="rechnung-zahlungsziel-tage"
+                      id="rechnung-zahlungsziel-tage"
+                      min="0"
+                      max="365"
+                      step="1"
+                    />
+                  </label>
+                </div>
+                <p class="schema-hint">
+                  Vorschau:
+                  <strong id="rechnung-schema-preview">—</strong>
+                </p>
+              </fieldset>
+
+              <fieldset class="form-section">
+                <legend>Rechnungstexte (PDF)</legend>
+                <div class="form-grid">
+                  <label class="full">
+                    Titel
+                    <input type="text" name="rechnung-text-titel" autocomplete="off" />
+                  </label>
+                  <label class="full">
+                    Einleitung
+                    <textarea name="rechnung-text-einleitung" rows="2"></textarea>
+                  </label>
+                  <label class="full">
+                    Fußzeile 1
+                    <textarea name="rechnung-text-fuss1" rows="2"></textarea>
+                  </label>
+                  <label class="full">
+                    Fußzeile 2
+                    <textarea name="rechnung-text-fuss2" rows="2"></textarea>
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset class="form-section">
+                <legend>Firmendaten (Briefkopf)</legend>
+                <div class="form-grid">
+                  <label class="full">
+                    Firmenname
+                    <input type="text" name="firma-name" autocomplete="organization" />
+                  </label>
+                  <label class="full">
+                    Straße
+                    <input type="text" name="firma-strasse" />
+                  </label>
+                  <label>
+                    PLZ &amp; Ort
+                    <input type="text" name="firma-plzOrt" />
+                  </label>
+                  <label>
+                    Telefon
+                    <input type="text" name="firma-telefon" />
+                  </label>
+                  <label>
+                    E-Mail
+                    <input type="email" name="firma-email" autocomplete="email" />
+                  </label>
+                  <label>
+                    Webseite
+                    <input type="text" name="firma-web" />
+                  </label>
+                  <label class="full">
+                    USt-IdNr.
+                    <input type="text" name="firma-ustId" />
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset class="form-section">
+                <legend>Farben</legend>
+                <div class="form-grid form-grid--colors">
+                  <label class="color-field">
+                    Primärfarbe (Tabellenkopf)
+                    <span class="color-field-row">
+                      <input type="color" name="farbe-primaer" />
+                      <input type="text" class="color-hex" data-sync-color="farbe-primaer" />
+                    </span>
+                  </label>
+                  <label class="color-field">
+                    Gedämpfter Text
+                    <span class="color-field-row">
+                      <input type="color" name="farbe-textMuted" />
+                      <input type="text" class="color-hex" data-sync-color="farbe-textMuted" />
+                    </span>
+                  </label>
+                  <label class="color-field">
+                    Fußzeile
+                    <span class="color-field-row">
+                      <input type="color" name="farbe-fusszeile" />
+                      <input type="text" class="color-hex" data-sync-color="farbe-fusszeile" />
+                    </span>
+                  </label>
+                  <label class="color-field">
+                    Trennlinie
+                    <span class="color-field-row">
+                      <input type="color" name="farbe-trennlinie" />
+                      <input type="text" class="color-hex" data-sync-color="farbe-trennlinie" />
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset class="form-section">
+                <legend>Texte</legend>
+                <div class="form-grid">
+                  <label>
+                    Dokumenttitel
+                    <input type="text" name="text-titel" placeholder="ANGEBOT" />
+                  </label>
+                  <label class="full">
+                    Einleitungstext
+                    <textarea name="text-einleitung" rows="2"></textarea>
+                  </label>
+                  <label class="full">
+                    Fußzeile Zeile 1
+                    <textarea name="text-fuss1" rows="2"></textarea>
+                  </label>
+                  <label class="full">
+                    Fußzeile Zeile 2
+                    <textarea name="text-fuss2" rows="2"></textarea>
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset class="form-section">
+                <legend>Bilder</legend>
+                <div class="form-grid">
+                  <div class="full image-upload-block">
+                    <span class="image-upload-label">Logo (links oben)</span>
+                    <div class="image-upload-row">
+                      <input type="file" id="pdf-logo-file" accept="image/png,image/jpeg,image/webp" />
+                      <button type="button" class="btn btn-ghost btn-sm" data-clear-image="logo">
+                        Entfernen
+                      </button>
+                    </div>
+                    <p class="image-upload-hint">
+                      PNG (empfohlen mit transparentem Hintergrund), JPG oder WebP · max. 2&nbsp;MB ·
+                      wird automatisch verkleinert (max. 640&nbsp;px breit) zum Speichern.
+                    </p>
+                    <div class="image-preview is-empty" data-preview="logo"></div>
+                    <div class="form-grid form-grid--compact">
+                      <label>
+                        Breite (mm)
+                        <input type="number" name="layout-logoBreiteMm" min="10" max="80" step="1" />
+                      </label>
+                      <label>
+                        Höhe (mm)
+                        <input type="number" name="layout-logoHoeheMm" min="8" max="40" step="1" />
+                      </label>
+                    </div>
+                  </div>
+                  <div class="full image-upload-block">
+                    <label class="checkbox-label">
+                      <input type="checkbox" name="layout-headerAktiv" />
+                      Header-Banner oben (volle Breite)
+                    </label>
+                    <div class="image-upload-row">
+                      <input type="file" id="pdf-header-file" accept="image/png,image/jpeg,image/webp" />
+                      <button type="button" class="btn btn-ghost btn-sm" data-clear-image="header">
+                        Entfernen
+                      </button>
+                    </div>
+                    <p class="image-upload-hint">
+                      PNG, JPG oder WebP · max. 2&nbsp;MB · Banner max. 1600&nbsp;px breit.
+                    </p>
+                    <div class="image-preview is-empty" data-preview="header"></div>
+                    <label>
+                      Banner-Höhe (mm)
+                      <input type="number" name="layout-headerHoeheMm" min="10" max="50" step="1" />
+                    </label>
+                  </div>
+                </div>
+              </fieldset>
+
+              <div class="form-actions full settings-actions">
+                <button type="submit" class="btn btn-primary">Vorlage speichern</button>
+                <button type="button" id="pdf-template-reset" class="btn btn-ghost">
+                  Auf Standard zurücksetzen
+                </button>
+                <p id="pdf-template-status" class="settings-status hidden" role="status"></p>
+              </div>
+            </form>
+          </section>
+        </main>
+      </div>
+
+      <div id="view-profil" class="hidden">
+        <main class="main">
+          <section class="card">
+            <h2>Mein Profil</h2>
+            <p class="settings-lead">Ihre Kontodetails und Sicherheitseinstellungen.</p>
+            <form id="profil-account-form" class="form-grid">
+              <label class="full">
+                Firma
+                <input type="text" id="profil-tenant-name" autocomplete="organization" required />
+              </label>
+              <div class="profil-field profil-field--static full">
+                <span class="profil-field__label">E-Mail</span>
+                <span id="profil-email" class="profil-field__value">—</span>
+              </div>
+              <div class="profil-field profil-field--static full">
+                <span class="profil-field__label">Tarif</span>
+                <span id="profil-plan" class="profil-field__value">—</span>
+              </div>
+              <div class="form-actions full">
+                <button type="submit" class="btn btn-primary">Speichern</button>
+              </div>
+            </form>
+            <p id="profil-account-status" class="settings-status hidden" role="status"></p>
+          </section>
+
+          <section class="card">
+            <h2>Passwort ändern</h2>
+            <form id="profil-password-form" class="form-grid">
+              <label class="full">
+                Aktuelles Passwort
+                <input
+                  type="password"
+                  id="profil-current-password"
+                  autocomplete="current-password"
+                  required
+                />
+              </label>
+              <label class="full">
+                Neues Passwort (min. 8 Zeichen)
+                <input
+                  type="password"
+                  id="profil-new-password"
+                  autocomplete="new-password"
+                  required
+                  minlength="8"
+                />
+              </label>
+              <label class="full">
+                Neues Passwort bestätigen
+                <input
+                  type="password"
+                  id="profil-confirm-password"
+                  autocomplete="new-password"
+                  required
+                  minlength="8"
+                />
+              </label>
+              <div class="form-actions full">
+                <button type="submit" class="btn btn-primary">Passwort speichern</button>
+              </div>
+            </form>
+            <p id="profil-password-status" class="settings-status hidden" role="status"></p>
+          </section>
+        </main>
+      </div>
+
+      <div id="view-kunden" class="hidden">
+        <main class="main">
+          <section id="kunden-form-section" class="card">
+            <h2 id="kunden-form-title">Neuer Kunde</h2>
+            <form id="kunden-form" class="form-grid">
+              <label class="full">
+                Firmenname / Name
+                <input type="text" id="kunden-form-name" required placeholder="Firma oder Name" />
+              </label>
+              <label class="full">
+                Rechnungsadresse
+                <textarea id="kunden-form-adresse" rows="2" placeholder="Straße, PLZ Ort"></textarea>
+              </label>
+              <label>
+                Telefon
+                <input type="tel" id="kunden-form-telefon" placeholder="z. B. 0170 …" autocomplete="tel" />
+              </label>
+              <label>
+                E-Mail
+                <input type="email" id="kunden-form-email" placeholder="kunde@beispiel.de" autocomplete="email" />
+              </label>
+              <label class="full">
+                Notiz
+                <textarea id="kunden-form-notiz" rows="3" placeholder="z. B. Anfahrt, Schlüssel, Besonderheiten"></textarea>
+              </label>
+              <div class="form-actions full">
+                <button type="submit" class="btn btn-primary">Speichern</button>
+                <button type="button" id="kunden-form-reset" class="btn btn-ghost hidden">Abbrechen</button>
+              </div>
+            </form>
+          </section>
+
+          <section id="kunden-detail" class="card hidden" aria-labelledby="kunden-detail-title">
+            <div class="card-header kunden-detail__header">
+              <h2 id="kunden-detail-title">Kunde</h2>
+              <div class="kunden-detail__header-actions">
+                <button type="button" id="kunden-detail-neu-angebot" class="btn btn-primary btn-sm">
+                  Neues Angebot
+                </button>
+                <button type="button" id="kunden-detail-neu-rechnung" class="btn btn-primary btn-sm">
+                  Neue Rechnung
+                </button>
+                <button type="button" id="kunden-detail-edit" class="btn btn-ghost btn-sm">Bearbeiten</button>
+                <button type="button" id="kunden-detail-close" class="btn btn-ghost btn-sm">Zur Liste</button>
+              </div>
+            </div>
+            <div class="kunden-detail__body">
+              <dl class="kunden-detail__meta">
+                <div class="kunden-detail__row">
+                  <dt>Rechnungsadresse</dt>
+                  <dd id="kunden-detail-adresse"></dd>
+                </div>
+                <div class="kunden-detail__row">
+                  <dt>Telefon</dt>
+                  <dd id="kunden-detail-telefon"></dd>
+                </div>
+                <div class="kunden-detail__row">
+                  <dt>E-Mail</dt>
+                  <dd id="kunden-detail-email"></dd>
+                </div>
+              </dl>
+              <div id="kunden-detail-notiz-wrap" class="kunden-detail__notiz hidden">
+                <h3 class="kunden-detail__subheading">Notiz</h3>
+                <p id="kunden-detail-notiz" class="kunden-detail__notiz-text"></p>
+              </div>
+              <div id="kunden-detail-objekte" class="kunden-detail__objekte">
+                <div class="kunden-detail__objekte-header">
+                  <h3 class="kunden-detail__subheading">Objekte &amp; Adressen</h3>
+                </div>
+                <div id="kunden-detail-objekte-liste" class="kunden-objekte-liste"></div>
+                <form id="kunden-objekt-form" class="form-grid kunden-objekt-form">
+                  <label class="full">
+                    Objektname
+                    <input type="text" id="kunden-objekt-name" required placeholder="z. B. WEG Musterstraße 12" />
+                  </label>
+                  <label class="full">
+                    Adresse
+                    <textarea id="kunden-objekt-adresse" rows="2" placeholder="Baustelle oder alternative Rechnungsadresse"></textarea>
+                  </label>
+                  <label class="full">
+                    Art
+                    <select id="kunden-objekt-typ">
+                      <option value="einsatz">Einsatzort / Baustelle</option>
+                      <option value="rechnung">Rechnungsadresse (alternativ)</option>
+                    </select>
+                  </label>
+                  <div class="form-actions full">
+                    <button type="submit" class="btn btn-primary btn-sm">Objekt speichern</button>
+                    <button type="button" id="kunden-objekt-cancel" class="btn btn-ghost btn-sm hidden">Abbrechen</button>
+                  </div>
+                </form>
+              </div>
+              <div id="kunden-detail-dokumente" class="kunden-detail__dokumente"></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <h2>Kundenliste</h2>
+              <div class="kunden-liste-toolbar">
+                <input type="search" id="kunden-suche" class="search" placeholder="Kunden suchen…" />
+                <button type="button" id="kunden-neu-btn" class="btn btn-ghost btn-sm">Neuer Kunde</button>
+              </div>
+            </div>
+            <div id="kunden-liste" class="kunden-liste"></div>
+          </section>
+        </main>
+      </div>
+
+      <footer class="app-footer">
+        <nav class="legal-nav" aria-label="Rechtliches">
+          <button type="button" class="legal-nav__link" data-legal-page="impressum">Impressum</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="datenschutz">Datenschutz</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="agb">AGB</button>
+        </nav>
+      </footer>
+    </div>
+
+    <div id="bereich-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-bereich-modal></div>
+      <div class="modal-panel card bereich-modal-panel" role="dialog" aria-labelledby="bereich-modal-title">
+        <div class="card-header">
+          <h2 id="bereich-modal-title">Bereich wählen</h2>
+          <button type="button" class="btn btn-ghost btn-sm" data-close-bereich-modal>Schließen</button>
+        </div>
+        <div class="bereich-picker" role="list">
+          <button type="button" class="bereich-picker__item" data-bereich="angebote" role="listitem">
+            <span class="app-brand__mark app-brand__mark--angebote" aria-hidden="true">A</span>
+            <span class="bereich-picker__text">
+              <span class="bereich-picker__title">Angebote</span>
+              <span class="bereich-picker__desc">Angebote erstellen &amp; verwalten</span>
+            </span>
+          </button>
+          <button type="button" class="bereich-picker__item" data-bereich="rechnungen" role="listitem">
+            <span class="app-brand__mark app-brand__mark--rechnungen" aria-hidden="true">R</span>
+            <span class="bereich-picker__text">
+              <span class="bereich-picker__title">Rechnungen</span>
+              <span class="bereich-picker__desc">Rechnungen erstellen &amp; verwalten</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="kunden-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-panel card kunden-modal-panel" role="dialog" aria-labelledby="kunden-modal-title">
+        <div class="kunden-modal__header card-header">
+          <h2 id="kunden-modal-title">Kunde auswählen</h2>
+          <input
+            type="search"
+            id="kunden-picker-suche"
+            class="search kunden-modal__search"
+            placeholder="Kunde suchen…"
+            aria-label="Kunde suchen"
+          />
+        </div>
+        <div id="kunden-picker-liste" class="kunden-picker-liste"></div>
+        <div class="kunden-modal__footer">
+          <button type="button" class="btn btn-ghost btn-sm" data-close-modal>Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="legal-screen" class="legal-screen hidden" aria-hidden="true">
+      <header class="legal-screen__header">
+        <button type="button" id="legal-back" class="btn btn-ghost btn-sm">← Zurück</button>
+      </header>
+      <main class="legal-screen__main">
+        <article id="legal-content" class="legal-content card"></article>
+      </main>
+    </div>
+
+    <button
+      type="button"
+      class="theme-dock btn btn-ghost btn-icon theme-toggle hidden"
+      data-theme-toggle
+      aria-label="Hellmodus aktivieren"
+      title="Hellmodus"
+      hidden
+    >
+      <span class="theme-icon" aria-hidden="true">☀️</span>
+    </button>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

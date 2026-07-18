@@ -1,0 +1,645 @@
+import { POSTEN, getDefaultEinheit, getPostenPreis } from './data.js';
+import {
+  formatEuro,
+  formatMenge,
+  parseMengeInput,
+  parsePreisInput,
+  berechneSummenAusPosten,
+} from './pdf.js';
+
+export const ENTWURF_ID = '__entwurf__';
+
+export function createEmptyEntwurf() {
+  return { bezeichnung: '', preis: '', einheit: 'Std.' };
+}
+
+export function createFreiId() {
+  return `frei_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function createEditorState() {
+  return {
+    auswahl: new Map(),
+    freiePosten: new Map(),
+    entwurf: createEmptyEntwurf(),
+    einheitPrefs: new Map(),
+    suche: '',
+  };
+}
+
+export function resolvePostenDetails(postenAuswahl) {
+  return postenAuswahl
+    .map((item) => {
+      const { id, menge, einheit, bezeichnung, beschreibung, preis } = item;
+      const katalog = POSTEN.find((p) => p.id === id);
+      if (katalog) {
+        const ein = einheit || getDefaultEinheit(katalog);
+        return {
+          ...katalog,
+          menge,
+          einheit: ein,
+          preis: getPostenPreis(katalog, ein),
+        };
+      }
+      if (bezeichnung || String(id).startsWith('frei_')) {
+        return {
+          id,
+          bezeichnung: bezeichnung || 'Posten',
+          beschreibung: beschreibung || '',
+          menge,
+          einheit: einheit || 'Std.',
+          preis: Number(preis) || 0,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
+
+export function createPostenEditor(editorState, els) {
+  function getPostenEinheit(id) {
+    const raw = editorState.auswahl.get(id);
+    if (raw && typeof raw === 'object') return raw.einheit;
+    if (editorState.einheitPrefs.has(id)) return editorState.einheitPrefs.get(id);
+    const posten = POSTEN.find((p) => p.id === id);
+    return getDefaultEinheit(posten);
+  }
+
+  function normalizeAuswahl(id) {
+    const raw = editorState.auswahl.get(id);
+    if (raw && typeof raw === 'object') return raw;
+    const posten = POSTEN.find((p) => p.id === id);
+    return {
+      menge: Number(raw) || 1,
+      einheit: editorState.einheitPrefs.get(id) || getDefaultEinheit(posten),
+    };
+  }
+
+  function getGefiltertePosten() {
+    const q = editorState.suche.trim().toLowerCase();
+    if (!q) return [];
+    return POSTEN.filter(
+      (p) =>
+        !editorState.auswahl.has(p.id) &&
+        (p.bezeichnung.toLowerCase().includes(q) ||
+          p.beschreibung.toLowerCase().includes(q))
+    );
+  }
+
+  function getAusgewaehltePosten() {
+    const katalog = POSTEN.filter((p) => editorState.auswahl.has(p.id)).map((p) => {
+      const sel = normalizeAuswahl(p.id);
+      const einheit = sel.einheit;
+      return {
+        ...p,
+        menge: sel.menge,
+        einheit,
+        preis: getPostenPreis(p, einheit),
+      };
+    });
+
+    const frei = Array.from(editorState.freiePosten.entries()).map(([id, data]) => ({
+      id,
+      bezeichnung: data.bezeichnung,
+      beschreibung: data.beschreibung,
+      menge: data.menge,
+      einheit: data.einheit,
+      preis: data.preis,
+      custom: true,
+    }));
+
+    return [...katalog, ...frei];
+  }
+
+  function clearPostenState() {
+    editorState.auswahl.clear();
+    editorState.freiePosten.clear();
+    editorState.entwurf = createEmptyEntwurf();
+    editorState.einheitPrefs.clear();
+    editorState.suche = '';
+    if (els.suche) els.suche.value = '';
+  }
+
+  function loadPostenFromDocument(posten) {
+    editorState.auswahl.clear();
+    editorState.freiePosten.clear();
+    editorState.entwurf = createEmptyEntwurf();
+    editorState.einheitPrefs.clear();
+
+    posten.forEach((item) => {
+      const { id, menge, einheit, bezeichnung, beschreibung, preis } = item;
+      const katalogPosten = POSTEN.find((p) => p.id === id);
+      if (katalogPosten) {
+        const ein = einheit || getDefaultEinheit(katalogPosten);
+        editorState.einheitPrefs.set(id, ein);
+        editorState.auswahl.set(id, { menge, einheit: ein });
+        return;
+      }
+
+      const freiId = id || createFreiId();
+      editorState.freiePosten.set(freiId, {
+        bezeichnung: bezeichnung || '',
+        beschreibung: beschreibung || '',
+        preis: Number(preis) || 0,
+        menge,
+        einheit: einheit || 'Std.',
+      });
+    });
+  }
+
+  function renderPostenInfo(modus, { id, bezeichnung }) {
+    if (modus === 'katalog') {
+      return `
+      <div class="posten-info">
+        <h3>${bezeichnung}</h3>
+      </div>
+    `;
+    }
+
+    const bezeichnungAction = modus === 'entwurf' ? 'entwurf-bezeichnung' : 'frei-bezeichnung';
+
+    return `
+    <div class="posten-info posten-info--editierbar">
+      <input
+        type="text"
+        class="posten-info-input posten-info-input--title"
+        value="${bezeichnung}"
+        placeholder=""
+        data-action="${bezeichnungAction}"
+        data-id="${id}"
+      />
+      <span class="posten-info-add-zone" title="Klicken: +1"></span>
+    </div>
+  `;
+  }
+
+  function renderPostenPreisFeld(modus, { id, preis }) {
+    if (modus === 'katalog') {
+      return `<span class="posten-preis">${formatEuro(preis)}</span>`;
+    }
+
+    return `<input
+    type="text"
+    inputmode="decimal"
+    class="posten-preis-input"
+    value="${preis === '' || preis === undefined ? '' : typeof preis === 'string' ? preis : formatMenge(preis)}"
+    placeholder="0,00"
+    aria-label="Einzelpreis"
+    data-action="${modus === 'entwurf' ? 'entwurf-preis' : 'frei-preis'}"
+    data-id="${id}"
+  />`;
+  }
+
+  function renderPostenEinheitFeld(modus, { id, sel }) {
+    const einheitAction = modus === 'entwurf' ? 'entwurf-einheit' : 'einheit';
+
+    return `<select class="posten-einheit" data-action="${einheitAction}" data-id="${id}">
+    <option value="Stk." ${sel.einheit === 'Stk.' ? 'selected' : ''}>Stück</option>
+    <option value="Std." ${sel.einheit === 'Std.' ? 'selected' : ''}>Std.</option>
+  </select>`;
+  }
+
+  function renderPostenZeile(config) {
+    const { id, bezeichnung, preis, sel, modus, aktiv = modus === 'frei' } = config;
+
+    const itemClass =
+      modus === 'entwurf'
+        ? 'posten-item posten-item--entwurf'
+        : `posten-item ${aktiv ? 'posten-item--aktiv' : ''}`;
+
+    return `
+    <article class="${itemClass}${aktiv ? ' posten-item--mit-zeile' : ''}" data-id="${id}" data-modus="${modus}">
+      <div class="posten-menge-feld">
+        <input
+          type="text"
+          inputmode="decimal"
+          class="posten-menge-input"
+          value="${aktiv ? formatMenge(sel.menge) : ''}"
+          placeholder="${modus === 'entwurf' ? '1' : '–'}"
+          aria-label="Anzahl ${bezeichnung || 'Posten'}"
+          data-action="menge"
+          data-id="${id}"
+        />
+      </div>
+      ${renderPostenInfo(modus, { id, bezeichnung })}
+      <div class="posten-preis-feld">
+        ${renderPostenPreisFeld(modus, { id, preis })}
+      </div>
+      <div class="posten-einheit-feld">
+        ${renderPostenEinheitFeld(modus, { id, sel })}
+      </div>
+      ${aktiv ? `<span class="posten-zeile">${formatEuro(preis * sel.menge)}</span>` : ''}
+    </article>
+  `;
+  }
+
+  function renderPostenLegende() {
+    return `
+    <div class="posten-legende" aria-hidden="true">
+      <span class="posten-legende__label posten-legende__menge">Anzahl</span>
+      <span class="posten-legende__label posten-legende__info">Tätigkeit</span>
+      <span class="posten-legende__label posten-legende__preis">Preis in Euro</span>
+      <span class="posten-legende__label posten-legende__einheit">Std/Stück</span>
+    </div>
+  `;
+  }
+
+  function renderPostenListe() {
+    if (!els.postenListe) return;
+    const suchergebnisse = getGefiltertePosten();
+    const teile = [renderPostenLegende()];
+
+    teile.push(
+      renderPostenZeile({
+        id: ENTWURF_ID,
+        bezeichnung: editorState.entwurf.bezeichnung,
+        preis: editorState.entwurf.preis,
+        sel: { menge: 1, einheit: editorState.entwurf.einheit },
+        modus: 'entwurf',
+      })
+    );
+
+    for (const id of editorState.auswahl.keys()) {
+      const posten = POSTEN.find((p) => p.id === id);
+      if (!posten) continue;
+      const sel = normalizeAuswahl(id);
+      teile.push(
+        renderPostenZeile({
+          id,
+          bezeichnung: posten.bezeichnung,
+          beschreibung: posten.beschreibung,
+          preis: getPostenPreis(posten, sel.einheit),
+          sel,
+          modus: 'katalog',
+          aktiv: true,
+        })
+      );
+    }
+
+    for (const [id, data] of editorState.freiePosten.entries()) {
+      teile.push(
+        renderPostenZeile({
+          id,
+          bezeichnung: data.bezeichnung,
+          beschreibung: data.beschreibung,
+          preis: data.preis,
+          sel: { menge: data.menge, einheit: data.einheit },
+          modus: 'frei',
+        })
+      );
+    }
+
+    if (editorState.suche.trim()) {
+      if (suchergebnisse.length > 0) {
+        teile.push('<p class="posten-suche-hinweis">Katalog-Treffer</p>');
+        suchergebnisse.forEach((p) => {
+          const sel = { menge: 1, einheit: getPostenEinheit(p.id) };
+          teile.push(
+            renderPostenZeile({
+              id: p.id,
+              bezeichnung: p.bezeichnung,
+              beschreibung: p.beschreibung,
+              preis: getPostenPreis(p, sel.einheit),
+              sel,
+              modus: 'katalog',
+              aktiv: false,
+            })
+          );
+        });
+      } else {
+        teile.push('<p class="empty posten-suche-leer">Keine Katalog-Posten gefunden.</p>');
+      }
+    }
+
+    els.postenListe.innerHTML = teile.join('');
+  }
+
+  function syncEntwurfFromItem(item) {
+    if (!item) return;
+    const bezeichnungEl = item.querySelector('[data-action="entwurf-bezeichnung"]');
+    const preisEl = item.querySelector('[data-action="entwurf-preis"]');
+    const einheitEl = item.querySelector('[data-action="entwurf-einheit"]');
+    if (bezeichnungEl) editorState.entwurf.bezeichnung = bezeichnungEl.value;
+    if (preisEl) editorState.entwurf.preis = preisEl.value;
+    if (einheitEl) editorState.entwurf.einheit = einheitEl.value;
+  }
+
+  function isEntwurfVollstaendig() {
+    if (!editorState.entwurf.bezeichnung.trim()) return false;
+    if (!String(editorState.entwurf.preis).trim()) return false;
+    return !Number.isNaN(parsePreisInput(editorState.entwurf.preis));
+  }
+
+  function commitEntwurf(menge) {
+    const bezeichnung = editorState.entwurf.bezeichnung.trim();
+    if (!bezeichnung) return;
+
+    const parsedPreis = parsePreisInput(editorState.entwurf.preis);
+    const preis = Number.isNaN(parsedPreis) ? 0 : Math.max(0, parsedPreis);
+
+    editorState.freiePosten.set(createFreiId(), {
+      bezeichnung,
+      beschreibung: '',
+      preis,
+      menge,
+      einheit: editorState.entwurf.einheit,
+    });
+    editorState.entwurf = createEmptyEntwurf();
+    render();
+  }
+
+  function tryCommitEntwurf(mengeRaw) {
+    if (!isEntwurfVollstaendig()) return false;
+
+    let menge = 1;
+    const raw = String(mengeRaw ?? '').trim();
+    if (raw !== '') {
+      const parsed = parseMengeInput(raw);
+      if (Number.isNaN(parsed) || parsed <= 0) return false;
+      menge = parsed;
+    }
+
+    commitEntwurf(menge);
+    return true;
+  }
+
+  function flushEntwurfIfComplete() {
+    const entwurfItem = els.postenListe?.querySelector('.posten-item--entwurf');
+    if (!entwurfItem) return false;
+    syncEntwurfFromItem(entwurfItem);
+    const mengeInput = entwurfItem.querySelector('[data-action="menge"]');
+    return tryCommitEntwurf(mengeInput?.value ?? '');
+  }
+
+  function updateFreiPosten(id, updates) {
+    const data = editorState.freiePosten.get(id);
+    if (!data) return;
+    editorState.freiePosten.set(id, { ...data, ...updates });
+  }
+
+  function removePostenEinmal(id) {
+    if (id === ENTWURF_ID) return;
+
+    if (editorState.freiePosten.has(id)) {
+      const data = editorState.freiePosten.get(id);
+      if (data.menge > 0 && data.menge < 1) {
+        editorState.freiePosten.delete(id);
+        render();
+        return;
+      }
+      const neueMenge = data.menge - 1;
+      if (neueMenge <= 0) editorState.freiePosten.delete(id);
+      else updateFreiPosten(id, { menge: neueMenge });
+      render();
+      return;
+    }
+
+    if (!editorState.auswahl.has(id)) return;
+    const sel = normalizeAuswahl(id);
+    if (sel.menge > 0 && sel.menge < 1) {
+      editorState.auswahl.delete(id);
+      render();
+      return;
+    }
+    const neueMenge = sel.menge - 1;
+    if (neueMenge <= 0) editorState.auswahl.delete(id);
+    else editorState.auswahl.set(id, { ...sel, menge: neueMenge });
+    render();
+  }
+
+  function addPostenEinmal(id) {
+    if (id === ENTWURF_ID) {
+      if (!editorState.entwurf.bezeichnung.trim()) return;
+      commitEntwurf(1);
+      return;
+    }
+
+    if (editorState.freiePosten.has(id)) {
+      const data = editorState.freiePosten.get(id);
+      updateFreiPosten(id, { menge: Math.min(9999, data.menge + 1) });
+      render();
+      return;
+    }
+
+    const einheit = getPostenEinheit(id);
+    if (editorState.auswahl.has(id)) {
+      const sel = normalizeAuswahl(id);
+      editorState.auswahl.set(id, {
+        ...sel,
+        menge: Math.min(9999, sel.menge + 1),
+      });
+    } else {
+      editorState.auswahl.set(id, { menge: 1, einheit });
+    }
+    render();
+  }
+
+  function setMenge(id, menge) {
+    const raw = String(menge).trim();
+
+    if (id === ENTWURF_ID) {
+      if (raw === '') {
+        tryCommitEntwurf('');
+        return;
+      }
+      const parsed = parseMengeInput(menge);
+      if (Number.isNaN(parsed) || parsed <= 0) return;
+      if (isEntwurfVollstaendig()) commitEntwurf(parsed);
+      return;
+    }
+
+    if (raw === '') {
+      if (editorState.freiePosten.has(id)) editorState.freiePosten.delete(id);
+      else editorState.auswahl.delete(id);
+      render();
+      return;
+    }
+
+    const parsed = parseMengeInput(menge);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      if (editorState.freiePosten.has(id)) editorState.freiePosten.delete(id);
+      else editorState.auswahl.delete(id);
+      render();
+      return;
+    }
+
+    const wert = Math.min(9999, parsed);
+
+    if (editorState.freiePosten.has(id)) {
+      updateFreiPosten(id, { menge: wert });
+      render();
+      return;
+    }
+
+    editorState.auswahl.set(id, { menge: wert, einheit: getPostenEinheit(id) });
+    render();
+  }
+
+  function setEinheit(id, einheit) {
+    if (id === ENTWURF_ID) {
+      editorState.entwurf.einheit = einheit;
+      return;
+    }
+
+    if (editorState.freiePosten.has(id)) {
+      updateFreiPosten(id, { einheit });
+      render();
+      return;
+    }
+
+    editorState.einheitPrefs.set(id, einheit);
+    if (editorState.auswahl.has(id)) {
+      const sel = normalizeAuswahl(id);
+      editorState.auswahl.set(id, { ...sel, einheit });
+    }
+    render();
+  }
+
+  function renderZusammenfassung() {
+    flushEntwurfIfComplete();
+    const posten = getAusgewaehltePosten();
+    const { netto, mwst, brutto } = berechneSummenAusPosten(posten);
+
+    if (els.summeNetto) els.summeNetto.textContent = formatEuro(netto);
+    if (els.summeMwst) els.summeMwst.textContent = formatEuro(mwst);
+    if (els.summeBrutto) els.summeBrutto.textContent = formatEuro(brutto);
+
+    const kannSpeichern = posten.length > 0;
+    if (els.pdfBtn) {
+      els.pdfBtn.disabled = false;
+      els.pdfBtn.setAttribute('aria-disabled', String(!kannSpeichern));
+      els.pdfBtn.classList.toggle('is-disabled', !kannSpeichern);
+    }
+
+    if (!els.zusammenfassung) return;
+
+    if (posten.length === 0) {
+      els.zusammenfassung.innerHTML = '<p class="empty">Noch keine Posten ausgewählt.</p>';
+      return;
+    }
+
+    els.zusammenfassung.innerHTML = posten
+      .map(
+        (p) => `
+      <div class="summary-row">
+        <div>
+          <strong>${p.bezeichnung}</strong>
+          <span>${formatMenge(p.menge)} ${p.einheit} × ${formatEuro(p.preis)}</span>
+        </div>
+        <span>${formatEuro(p.preis * p.menge)}</span>
+      </div>
+    `
+      )
+      .join('');
+  }
+
+  function render() {
+    renderPostenListe();
+    renderZusammenfassung();
+  }
+
+  function bindEvents() {
+    if (!els.postenListe) return;
+
+    els.postenListe.addEventListener('input', (e) => {
+      const target = e.target;
+      const { action, id } = target.dataset;
+      if (!action) return;
+
+      if (action === 'entwurf-bezeichnung') {
+        editorState.entwurf.bezeichnung = target.value;
+        return;
+      }
+      if (action === 'entwurf-preis') {
+        editorState.entwurf.preis = target.value;
+        return;
+      }
+      if (action === 'frei-bezeichnung' && editorState.freiePosten.has(id)) {
+        updateFreiPosten(id, { bezeichnung: target.value });
+        renderZusammenfassung();
+      }
+    });
+
+    els.postenListe.addEventListener('focusout', (e) => {
+      const entwurfItem = e.target.closest('.posten-item--entwurf');
+      if (!entwurfItem) return;
+
+      setTimeout(() => {
+        if (entwurfItem.contains(document.activeElement)) return;
+        syncEntwurfFromItem(entwurfItem);
+        const mengeInput = entwurfItem.querySelector('[data-action="menge"]');
+        tryCommitEntwurf(mengeInput?.value ?? '');
+      }, 0);
+    });
+
+    els.postenListe.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.target.dataset.action !== 'entwurf-preis') return;
+      e.preventDefault();
+      const entwurfItem = e.target.closest('.posten-item--entwurf');
+      syncEntwurfFromItem(entwurfItem);
+      const mengeInput = entwurfItem?.querySelector('[data-action="menge"]');
+      tryCommitEntwurf(mengeInput?.value ?? '');
+    });
+
+    els.postenListe.addEventListener('change', (e) => {
+      const target = e.target;
+      const id = target.dataset.id;
+      if (!id) return;
+      if (target.dataset.action === 'menge') setMenge(id, target.value);
+      else if (target.dataset.action === 'einheit' || target.dataset.action === 'entwurf-einheit') {
+        setEinheit(id, target.value);
+      } else if (target.dataset.action === 'frei-preis' && editorState.freiePosten.has(id)) {
+        const parsed = parsePreisInput(target.value);
+        updateFreiPosten(id, { preis: Number.isNaN(parsed) ? 0 : Math.max(0, parsed) });
+        render();
+      }
+    });
+
+    els.postenListe.addEventListener('click', (e) => {
+      if (e.target.closest('input, select')) return;
+      const info = e.target.closest('.posten-info');
+      if (!info) return;
+      const item = info.closest('.posten-item');
+      if (!item) return;
+      addPostenEinmal(item.dataset.id);
+    });
+
+    els.postenListe.addEventListener('contextmenu', (e) => {
+      if (e.target.closest('input, select')) return;
+      const info = e.target.closest('.posten-info');
+      if (!info) return;
+      e.preventDefault();
+      const item = info.closest('.posten-item');
+      if (!item || item.dataset.id === ENTWURF_ID) return;
+      removePostenEinmal(item.dataset.id);
+    });
+
+    els.suche?.addEventListener('input', (e) => {
+      editorState.suche = e.target.value;
+      renderPostenListe();
+    });
+  }
+
+  return {
+    render,
+    flushEntwurfIfComplete,
+    getAusgewaehltePosten,
+    loadPostenFromDocument,
+    clearPostenState,
+    bindEvents,
+    getPostenForSave: () =>
+      getAusgewaehltePosten().map((p) => {
+        if (p.custom) {
+          return {
+            id: p.id,
+            menge: p.menge,
+            einheit: p.einheit,
+            bezeichnung: p.bezeichnung,
+            beschreibung: p.beschreibung,
+            preis: p.preis,
+          };
+        }
+        return { id: p.id, menge: p.menge, einheit: p.einheit };
+      }),
+  };
+}

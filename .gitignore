@@ -1,0 +1,16 @@
+node_modules
+dist
+.DS_Store
+*.log
+.env
+
+# Mandantendaten (nicht ins Repo)
+data/app.db
+data/app.db-wal
+data/app.db-shm
+data/app-backup-*.db
+data/tenants/
+data/kunden.json
+data/angebote.json
+data/rechnungen.json
+data/pdf-template.json
