@@ -11,6 +11,7 @@ import { runStartupMigrations } from './server/db/migrate-json.js';
 import * as kundenRepo from './server/repositories/kunden.js';
 import * as angeboteRepo from './server/repositories/angebote.js';
 import * as rechnungenRepo from './server/repositories/rechnungen.js';
+import * as katalogPostenRepo from './server/repositories/katalogPosten.js';
 import {
   getPdfTemplate,
   savePdfTemplate,
@@ -76,6 +77,17 @@ app.use(
     get: rechnungenRepo.getRechnung,
     save: rechnungenRepo.saveRechnung,
     remove: rechnungenRepo.deleteRechnung,
+  })
+);
+
+app.use(
+  '/api/katalog-posten',
+  createEntityRouter({
+    label: 'Katalog-Posten',
+    list: katalogPostenRepo.listKatalogPosten,
+    get: katalogPostenRepo.getKatalogPosten,
+    save: katalogPostenRepo.saveKatalogPosten,
+    remove: katalogPostenRepo.deleteKatalogPosten,
   })
 );
 

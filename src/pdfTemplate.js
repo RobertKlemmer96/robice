@@ -119,6 +119,135 @@ export async function savePdfTemplate(template) {
   return cachedTemplate;
 }
 
+export function templatePatchFromForm(form, section) {
+  const fd = new FormData(form);
+  switch (section) {
+    case 'firma':
+      return {
+        firma: {
+          name: String(fd.get('firma-name') || '').trim(),
+          strasse: String(fd.get('firma-strasse') || '').trim(),
+          plzOrt: String(fd.get('firma-plzOrt') || '').trim(),
+          telefon: String(fd.get('firma-telefon') || '').trim(),
+          email: String(fd.get('firma-email') || '').trim(),
+          web: String(fd.get('firma-web') || '').trim(),
+          ustId: String(fd.get('firma-ustId') || '').trim(),
+        },
+      };
+    case 'farben':
+      return {
+        farben: {
+          primaer: String(fd.get('farbe-primaer') || '#1e3a5f'),
+          textMuted: String(fd.get('farbe-textMuted') || '#505050'),
+          fusszeile: String(fd.get('farbe-fusszeile') || '#646464'),
+          trennlinie: String(fd.get('farbe-trennlinie') || '#dcdcdc'),
+        },
+      };
+    case 'angebot-texte':
+      return {
+        texte: {
+          titel: String(fd.get('text-titel') || 'ANGEBOT').trim(),
+          einleitung: String(fd.get('text-einleitung') || '').trim(),
+          fuss1: String(fd.get('text-fuss1') || '').trim(),
+          fuss2: String(fd.get('text-fuss2') || '').trim(),
+        },
+      };
+    case 'angebot-nummer':
+      return {
+        angebot: {
+          nummerSchema:
+            String(fd.get('angebot-nummer-schema') || '').trim() || 'ANG-{YYYY}{MM}{DD}-{NR:3}',
+        },
+      };
+    case 'rechnung-nummer':
+      return {
+        rechnung: {
+          nummerSchema:
+            String(fd.get('rechnung-nummer-schema') || '').trim() || 'RE-{YYYY}{MM}{DD}-{NR:3}',
+          zahlungszielTage: Number(fd.get('rechnung-zahlungsziel-tage')) || 14,
+        },
+      };
+    case 'rechnung-texte':
+      return {
+        texteRechnung: {
+          titel: String(fd.get('rechnung-text-titel') || 'RECHNUNG').trim(),
+          einleitung: String(fd.get('rechnung-text-einleitung') || '').trim(),
+          fuss1: String(fd.get('rechnung-text-fuss1') || '').trim(),
+          fuss2: String(fd.get('rechnung-text-fuss2') || '').trim(),
+        },
+      };
+    case 'bilder':
+      return {
+        bilder: {
+          logo: form.dataset.logoData || '',
+          header: form.dataset.headerData || '',
+        },
+        layout: {
+          logoBreiteMm: Number(fd.get('layout-logoBreiteMm')) || 35,
+          logoHoeheMm: Number(fd.get('layout-logoHoeheMm')) || 18,
+          headerHoeheMm: Number(fd.get('layout-headerHoeheMm')) || 22,
+          headerAktiv: fd.get('layout-headerAktiv') === 'on',
+        },
+      };
+    default:
+      return {};
+  }
+}
+
+export function fillPdfTemplateSectionForm(form, template, section) {
+  const tpl = mergePdfTemplate(template);
+  switch (section) {
+    case 'firma':
+      form.elements['firma-name'].value = tpl.firma.name;
+      form.elements['firma-strasse'].value = tpl.firma.strasse;
+      form.elements['firma-plzOrt'].value = tpl.firma.plzOrt;
+      form.elements['firma-telefon'].value = tpl.firma.telefon;
+      form.elements['firma-email'].value = tpl.firma.email;
+      form.elements['firma-web'].value = tpl.firma.web;
+      form.elements['firma-ustId'].value = tpl.firma.ustId;
+      break;
+    case 'farben':
+      form.elements['farbe-primaer'].value = tpl.farben.primaer;
+      form.elements['farbe-textMuted'].value = tpl.farben.textMuted;
+      form.elements['farbe-fusszeile'].value = tpl.farben.fusszeile;
+      form.elements['farbe-trennlinie'].value = tpl.farben.trennlinie;
+      break;
+    case 'angebot-texte':
+      form.elements['text-titel'].value = tpl.texte.titel;
+      form.elements['text-einleitung'].value = tpl.texte.einleitung;
+      form.elements['text-fuss1'].value = tpl.texte.fuss1;
+      form.elements['text-fuss2'].value = tpl.texte.fuss2;
+      break;
+    case 'angebot-nummer':
+      form.elements['angebot-nummer-schema'].value =
+        tpl.angebot?.nummerSchema || 'ANG-{YYYY}{MM}{DD}-{NR:3}';
+      break;
+    case 'rechnung-nummer':
+      form.elements['rechnung-nummer-schema'].value =
+        tpl.rechnung?.nummerSchema || 'RE-{YYYY}{MM}{DD}-{NR:3}';
+      form.elements['rechnung-zahlungsziel-tage'].value = tpl.rechnung?.zahlungszielTage ?? 14;
+      break;
+    case 'rechnung-texte':
+      form.elements['rechnung-text-titel'].value = tpl.texteRechnung?.titel || 'RECHNUNG';
+      form.elements['rechnung-text-einleitung'].value = tpl.texteRechnung?.einleitung || '';
+      form.elements['rechnung-text-fuss1'].value = tpl.texteRechnung?.fuss1 || '';
+      form.elements['rechnung-text-fuss2'].value = tpl.texteRechnung?.fuss2 || '';
+      break;
+    case 'bilder':
+      form.elements['layout-logoBreiteMm'].value = tpl.layout.logoBreiteMm;
+      form.elements['layout-logoHoeheMm'].value = tpl.layout.logoHoeheMm;
+      form.elements['layout-headerHoeheMm'].value = tpl.layout.headerHoeheMm;
+      form.elements['layout-headerAktiv'].checked = tpl.layout.headerAktiv;
+      form.dataset.logoData = tpl.bilder.logo || '';
+      form.dataset.headerData = tpl.bilder.header || '';
+      updateImagePreview(form.querySelector('[data-preview="logo"]'), tpl.bilder.logo);
+      updateImagePreview(form.querySelector('[data-preview="header"]'), tpl.bilder.header);
+      break;
+    default:
+      break;
+  }
+}
+
 export function templateFromForm(form) {
   const fd = new FormData(form);
   return {

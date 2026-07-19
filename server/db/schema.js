@@ -85,4 +85,17 @@ CREATE TABLE IF NOT EXISTS pdf_templates (
   template_json TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS katalog_posten (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  bezeichnung TEXT NOT NULL,
+  beschreibung TEXT NOT NULL DEFAULT '',
+  preis_stk REAL NOT NULL DEFAULT 0,
+  preis_std REAL NOT NULL DEFAULT 0,
+  erstellt_am TEXT NOT NULL,
+  aktualisiert_am TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_katalog_posten_tenant ON katalog_posten(tenant_id);
 `;

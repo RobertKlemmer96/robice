@@ -1862,6 +1862,191 @@ textarea:focus,
   margin-bottom: 18px;
 }
 
+.posten-suche-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.posten-suche-row .search--full {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.posten-suche-row__btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.katalog-modal-panel {
+  width: min(560px, 100%);
+  max-height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.katalog-modal__header {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.katalog-modal__header h2 {
+  margin: 0;
+}
+
+.katalog-modal__search {
+  width: 100%;
+}
+
+.katalog-modal-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding: 4px 2px;
+  margin-bottom: 12px;
+  min-height: 120px;
+  max-height: min(52vh, 480px);
+}
+
+.katalog-modal-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.katalog-modal-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.katalog-modal-item.is-selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.katalog-modal-item__main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.katalog-modal-item__title {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.katalog-modal-item__desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.katalog-modal-item__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.katalog-modal-item__preis-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.katalog-modal-item__preis {
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.katalog-modal-item__einheit {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.katalog-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.katalog-liste-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.katalog-liste-toolbar .search {
+  flex: 1;
+  min-width: 180px;
+}
+
+.katalog-posten-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.katalog-posten-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--input-bg);
+}
+
+.katalog-posten-item__main {
+  min-width: 0;
+}
+
+.katalog-posten-item__main h3 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+}
+
+.katalog-posten-item__desc {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.katalog-posten-item__preise {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.katalog-posten-item__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .settings-lead {
   margin: 0 0 20px;
   font-size: 0.9rem;

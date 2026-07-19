@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "concurrently \"node server.js\" \"vite\"",
     "build": "vite build",
-    "start": "cross-env NODE_ENV=production node server.js",
-    "preview": "npm run build && npm run start",
+    "start": "node server.js",
+    "preview": "npm run build && cross-env NODE_ENV=production node server.js",
     "db:backup": "node scripts/backup-db.js"
   },
   "dependencies": {

@@ -27,5 +27,5 @@ export async function deleteKunde(id) {
 }
 
 export function createKundeId() {
-  return `kunde_${Date.now()}`;
+  return `kunde_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }

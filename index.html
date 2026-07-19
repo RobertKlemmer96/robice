@@ -152,30 +152,20 @@
                   </button>
                 </div>
               </li>
-              <li class="app-nav__group app-nav__group--direct" data-nav-group="kunden">
-                <button type="button" class="app-nav__trigger" data-nav-view="kunden">
-                  <span>Kunde</span>
+              <li class="app-nav__group app-nav__group--direct" data-nav-group="katalog">
+                <button type="button" class="app-nav__trigger" data-nav-view="katalog">
+                  <span>Katalog</span>
                 </button>
               </li>
-              <li class="app-nav__group" data-nav-group="einstellungen">
-                <button
-                  type="button"
-                  class="app-nav__trigger"
-                  aria-expanded="false"
-                  aria-haspopup="true"
-                  data-nav-trigger
-                >
-                  <span>Einstellungen</span>
-                  <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
+              <li class="app-nav__group app-nav__group--direct" data-nav-group="kunden">
+                <button type="button" class="app-nav__trigger" data-nav-view="kunden">
+                  <span>Kunden</span>
                 </button>
-                <div class="app-nav__menu" role="menu">
-                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="einstellungen">
-                    <span class="app-nav__link-title">PDF-Vorlage</span>
-                    <span class="app-nav__link-desc">PDF-Format konfigurieren</span>
-                  </button>
-                </div>
+              </li>
+              <li class="app-nav__group app-nav__group--direct" data-nav-group="pdf-vorlage">
+                <button type="button" class="app-nav__trigger" data-nav-view="pdf-vorlage">
+                  <span>PDF-Vorlage</span>
+                </button>
               </li>
             </ul>
           </nav>
@@ -258,8 +248,11 @@
           </section>
 
           <section class="card">
-            <div class="card-header card-header--search">
+            <div class="card-header card-header--search posten-suche-row">
               <input type="search" id="rechnung-suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
+              <button type="button" id="rechnung-katalog-oeffnen-btn" class="btn btn-ghost btn-sm posten-suche-row__btn" aria-label="Gesamten Katalog anzeigen">
+                Katalog
+              </button>
             </div>
             <div id="rechnung-posten-liste" class="posten-liste"></div>
           </section>
@@ -411,8 +404,11 @@
             </button>
             <div class="posten-kopf__collapse" id="posten-kopf-body">
               <div class="posten-kopf__body">
-                <div class="card-header card-header--search">
+                <div class="card-header card-header--search posten-suche-row">
                   <input type="search" id="suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
+                  <button type="button" id="katalog-oeffnen-btn" class="btn btn-ghost btn-sm posten-suche-row__btn" aria-label="Gesamten Katalog anzeigen">
+                    Katalog
+                  </button>
                 </div>
                 <div id="posten-liste" class="posten-liste"></div>
               </div>
@@ -456,7 +452,7 @@
           </section>
         </main>
       </div>
-      <div id="view-einstellungen" class="hidden">
+      <div id="view-pdf-vorlage" class="hidden">
         <main class="main">
           <section class="card">
             <h2>PDF-Vorlage</h2>
@@ -482,23 +478,7 @@
                 </div>
                 <p class="schema-hint">
                   <strong>Pflicht:</strong> eine Laufnummer, z. B. <code>{NR:3}</code> oder <code>{NNN}</code>.
-                  <strong>Datum optional</strong> — nur eintragen, wenn du es brauchst:
-                  <code>{YYYY}</code>,
-                  <code>{YY}</code>,
-                  <code>{MM}</code>,
-                  <code>{DD}</code>,
-                  <code>{YYYYMMDD}</code>.
-                  Vorschau:
-                  <strong id="angebot-schema-preview">—</strong>
-                </p>
-                <p class="schema-hint schema-hint--examples">
-                  Beispiele:
-                  <code>ANG-{YYYY}{MM}{DD}-{NR:3}</code>
-                  (pro Tag),
-                  <code>ANG-{NR:5}</code>
-                  (fortlaufend ohne Datum),
-                  <code>QUO-{YYYY}-{NR:4}</code>
-                  (pro Jahr).
+                  Vorschau: <strong id="angebot-schema-preview">—</strong>
                 </p>
               </fieldset>
 
@@ -529,8 +509,7 @@
                   </label>
                 </div>
                 <p class="schema-hint">
-                  Vorschau:
-                  <strong id="rechnung-schema-preview">—</strong>
+                  Vorschau: <strong id="rechnung-schema-preview">—</strong>
                 </p>
               </fieldset>
 
@@ -625,7 +604,7 @@
               </fieldset>
 
               <fieldset class="form-section">
-                <legend>Texte</legend>
+                <legend>Angebotstexte (PDF)</legend>
                 <div class="form-grid">
                   <label>
                     Dokumenttitel
@@ -653,13 +632,10 @@
                     <span class="image-upload-label">Logo (links oben)</span>
                     <div class="image-upload-row">
                       <input type="file" id="pdf-logo-file" accept="image/png,image/jpeg,image/webp" />
-                      <button type="button" class="btn btn-ghost btn-sm" data-clear-image="logo">
-                        Entfernen
-                      </button>
+                      <button type="button" class="btn btn-ghost btn-sm" data-clear-image="logo">Entfernen</button>
                     </div>
                     <p class="image-upload-hint">
-                      PNG (empfohlen mit transparentem Hintergrund), JPG oder WebP · max. 2&nbsp;MB ·
-                      wird automatisch verkleinert (max. 640&nbsp;px breit) zum Speichern.
+                      PNG (empfohlen mit transparentem Hintergrund), JPG oder WebP · max. 2&nbsp;MB
                     </p>
                     <div class="image-preview is-empty" data-preview="logo"></div>
                     <div class="form-grid form-grid--compact">
@@ -680,13 +656,9 @@
                     </label>
                     <div class="image-upload-row">
                       <input type="file" id="pdf-header-file" accept="image/png,image/jpeg,image/webp" />
-                      <button type="button" class="btn btn-ghost btn-sm" data-clear-image="header">
-                        Entfernen
-                      </button>
+                      <button type="button" class="btn btn-ghost btn-sm" data-clear-image="header">Entfernen</button>
                     </div>
-                    <p class="image-upload-hint">
-                      PNG, JPG oder WebP · max. 2&nbsp;MB · Banner max. 1600&nbsp;px breit.
-                    </p>
+                    <p class="image-upload-hint">PNG, JPG oder WebP · max. 2&nbsp;MB · Banner max. 1600&nbsp;px breit.</p>
                     <div class="image-preview is-empty" data-preview="header"></div>
                     <label>
                       Banner-Höhe (mm)
@@ -698,9 +670,7 @@
 
               <div class="form-actions full settings-actions">
                 <button type="submit" class="btn btn-primary">Vorlage speichern</button>
-                <button type="button" id="pdf-template-reset" class="btn btn-ghost">
-                  Auf Standard zurücksetzen
-                </button>
+                <button type="button" id="pdf-template-reset" class="btn btn-ghost">Auf Standard zurücksetzen</button>
                 <p id="pdf-template-status" class="settings-status hidden" role="status"></p>
               </div>
             </form>
@@ -770,6 +740,50 @@
               </div>
             </form>
             <p id="profil-password-status" class="settings-status hidden" role="status"></p>
+          </section>
+        </main>
+      </div>
+
+      <div id="view-katalog" class="hidden">
+        <main class="main">
+          <section id="katalog-form-section" class="card">
+            <h2 id="katalog-form-title">Neuer Katalog-Posten</h2>
+            <p class="settings-lead">
+              Legen Sie Posten an, die Sie in Angeboten und Rechnungen aus dem Katalog auswählen können.
+            </p>
+            <form id="katalog-form" class="form-grid">
+              <label class="full">
+                Bezeichnung
+                <input type="text" id="katalog-form-bezeichnung" required placeholder="z. B. Montagearbeiten" />
+              </label>
+              <label class="full">
+                Beschreibung
+                <textarea id="katalog-form-beschreibung" rows="2" placeholder="Kurze Beschreibung (optional)"></textarea>
+              </label>
+              <label>
+                Preis (Stk.)
+                <input type="text" id="katalog-form-preis-stk" placeholder="0,00" inputmode="decimal" />
+              </label>
+              <label>
+                Preis (Std.)
+                <input type="text" id="katalog-form-preis-std" placeholder="0,00" inputmode="decimal" />
+              </label>
+              <div class="form-actions full">
+                <button type="submit" class="btn btn-primary">Speichern</button>
+                <button type="button" id="katalog-form-reset" class="btn btn-ghost hidden">Abbrechen</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <h2>Ihre Katalog-Posten</h2>
+              <div class="katalog-liste-toolbar">
+                <input type="search" id="katalog-suche" class="search" placeholder="Posten suchen…" />
+                <button type="button" id="katalog-neu-btn" class="btn btn-ghost btn-sm">Neuer Posten</button>
+              </div>
+            </div>
+            <div id="katalog-liste" class="katalog-posten-liste"></div>
           </section>
         </main>
       </div>
@@ -949,6 +963,26 @@
               <span class="bereich-picker__desc">Rechnungen erstellen &amp; verwalten</span>
             </span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="katalog-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-katalog-modal></div>
+      <div class="modal-panel card katalog-modal-panel" role="dialog" aria-labelledby="katalog-modal-title">
+        <div class="katalog-modal__header card-header">
+          <h2 id="katalog-modal-title">Katalog</h2>
+          <input
+            type="search"
+            id="katalog-modal-suche"
+            class="search katalog-modal__search"
+            placeholder="Im Katalog suchen…"
+            aria-label="Im Katalog suchen"
+          />
+        </div>
+        <div id="katalog-modal-liste" class="katalog-modal-liste"></div>
+        <div class="katalog-modal__footer">
+          <button type="button" class="btn btn-ghost btn-sm" data-close-katalog-modal>Schließen</button>
         </div>
       </div>
     </div>

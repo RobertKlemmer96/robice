@@ -1,4 +1,5 @@
-import { POSTEN, getDefaultEinheit, getPostenPreis } from './data.js';
+import { getDefaultEinheit, getPostenPreis } from './data.js';
+import { findKatalogPosten, getKatalogPosten } from './katalogPosten.js';
 import {
   formatEuro,
   formatMenge,
@@ -31,7 +32,7 @@ export function resolvePostenDetails(postenAuswahl) {
   return postenAuswahl
     .map((item) => {
       const { id, menge, einheit, bezeichnung, beschreibung, preis } = item;
-      const katalog = POSTEN.find((p) => p.id === id);
+      const katalog = findKatalogPosten(id);
       if (katalog) {
         const ein = einheit || getDefaultEinheit(katalog);
         return {
@@ -61,14 +62,14 @@ export function createPostenEditor(editorState, els) {
     const raw = editorState.auswahl.get(id);
     if (raw && typeof raw === 'object') return raw.einheit;
     if (editorState.einheitPrefs.has(id)) return editorState.einheitPrefs.get(id);
-    const posten = POSTEN.find((p) => p.id === id);
+    const posten = findKatalogPosten(id);
     return getDefaultEinheit(posten);
   }
 
   function normalizeAuswahl(id) {
     const raw = editorState.auswahl.get(id);
     if (raw && typeof raw === 'object') return raw;
-    const posten = POSTEN.find((p) => p.id === id);
+    const posten = findKatalogPosten(id);
     return {
       menge: Number(raw) || 1,
       einheit: editorState.einheitPrefs.get(id) || getDefaultEinheit(posten),
@@ -78,7 +79,7 @@ export function createPostenEditor(editorState, els) {
   function getGefiltertePosten() {
     const q = editorState.suche.trim().toLowerCase();
     if (!q) return [];
-    return POSTEN.filter(
+    return getKatalogPosten().filter(
       (p) =>
         !editorState.auswahl.has(p.id) &&
         (p.bezeichnung.toLowerCase().includes(q) ||
@@ -87,7 +88,7 @@ export function createPostenEditor(editorState, els) {
   }
 
   function getAusgewaehltePosten() {
-    const katalog = POSTEN.filter((p) => editorState.auswahl.has(p.id)).map((p) => {
+    const katalog = getKatalogPosten().filter((p) => editorState.auswahl.has(p.id)).map((p) => {
       const sel = normalizeAuswahl(p.id);
       const einheit = sel.einheit;
       return {
@@ -128,7 +129,7 @@ export function createPostenEditor(editorState, els) {
 
     posten.forEach((item) => {
       const { id, menge, einheit, bezeichnung, beschreibung, preis } = item;
-      const katalogPosten = POSTEN.find((p) => p.id === id);
+      const katalogPosten = findKatalogPosten(id);
       if (katalogPosten) {
         const ein = einheit || getDefaultEinheit(katalogPosten);
         editorState.einheitPrefs.set(id, ein);
@@ -260,7 +261,7 @@ export function createPostenEditor(editorState, els) {
     );
 
     for (const id of editorState.auswahl.keys()) {
-      const posten = POSTEN.find((p) => p.id === id);
+      const posten = findKatalogPosten(id);
       if (!posten) continue;
       const sel = normalizeAuswahl(id);
       teile.push(
@@ -307,7 +308,9 @@ export function createPostenEditor(editorState, els) {
           );
         });
       } else {
-        teile.push('<p class="empty posten-suche-leer">Keine Katalog-Posten gefunden.</p>');
+        teile.push(
+          '<p class="empty posten-suche-leer">Keine Katalog-Posten gefunden. Legen Sie welche unter „Katalog“ an.</p>'
+        );
       }
     }
 
@@ -407,6 +410,16 @@ export function createPostenEditor(editorState, els) {
     render();
   }
 
+  function toggleKatalogPosten(id) {
+    if (editorState.auswahl.has(id)) {
+      editorState.auswahl.delete(id);
+      render();
+      return;
+    }
+
+    addPostenEinmal(id);
+  }
+
   function addPostenEinmal(id) {
     if (id === ENTWURF_ID) {
       if (!editorState.entwurf.bezeichnung.trim()) return;
@@ -504,9 +517,9 @@ export function createPostenEditor(editorState, els) {
     if (els.summeMwst) els.summeMwst.textContent = formatEuro(mwst);
     if (els.summeBrutto) els.summeBrutto.textContent = formatEuro(brutto);
 
-    const kannSpeichern = posten.length > 0;
+    const kannSpeichern = posten.length > 0 && (els.canSave?.() ?? true);
     if (els.pdfBtn) {
-      els.pdfBtn.disabled = false;
+      els.pdfBtn.disabled = !kannSpeichern;
       els.pdfBtn.setAttribute('aria-disabled', String(!kannSpeichern));
       els.pdfBtn.classList.toggle('is-disabled', !kannSpeichern);
     }
@@ -603,7 +616,10 @@ export function createPostenEditor(editorState, els) {
 
   return {
     render,
+    refreshSummary: renderZusammenfassung,
     flushEntwurfIfComplete,
+    addKatalogPosten: toggleKatalogPosten,
+    isKatalogPostenSelected: (id) => editorState.auswahl.has(id),
     getAusgewaehltePosten,
     loadPostenFromDocument,
     clearPostenState,

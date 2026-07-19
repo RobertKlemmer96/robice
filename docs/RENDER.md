@@ -14,10 +14,12 @@
 
 | Feld | Wert |
 |------|------|
-| Build Command | `npm install && npm run build` |
-| Start Command | `npm run start` |
+| Build Command | `npm install --include=dev && npm run build` |
+| Start Command | `NODE_ENV=production npm run start` |
 
-Render setzt `PORT` automatisch; `NODE_ENV=production` setzt `npm run start`.
+**Hinweis:** `NODE_ENV=production` darf nicht als Build-Env gesetzt sein — sonst installiert npm keine `devDependencies` (Vite fehlt → `vite: not found`).
+
+Render setzt `PORT` automatisch; `NODE_ENV=production` nur im **Start Command**.
 
 ## Persistente Daten (SQLite)
 

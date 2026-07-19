@@ -7,6 +7,7 @@ import {
   clearAdresseFieldPair,
 } from './adresse.js';
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName } from './auth.js';
+import { initKatalogModal } from './katalogModal.js';
 import { initDatePickers } from './datePicker.js';
 import { initTheme, toggleTheme } from './theme.js';
 import {
@@ -24,6 +25,13 @@ import {
   createKundeId,
 } from './kunden.js';
 import {
+  loadKatalogPosten,
+  getKatalogPostenById,
+  saveKatalogPosten,
+  deleteKatalogPosten,
+  createKatalogPostenId,
+} from './katalogPosten.js';
+import {
   listKundenObjekte,
   saveKundenObjekt,
   deleteKundenObjekt,
@@ -39,6 +47,7 @@ import {
 import {
   formatEuro,
   formatDatum,
+  parsePreisInput,
   berechneSummenAusPosten,
   downloadPdf,
   openPdfPreview,
@@ -101,6 +110,8 @@ const state = {
   kundenSuche: '',
   kundenPickerFor: 'angebot',
   expandedKundeDokumenteId: null,
+  editingKatalogPostenId: null,
+  katalogSuche: '',
   angebot: createDocMeta(),
   rechnung: createRechnungMeta(),
 };
@@ -134,7 +145,8 @@ const els = {
   viewNeu: document.getElementById('view-neu'),
   viewArchiv: document.getElementById('view-archiv'),
   viewKunden: document.getElementById('view-kunden'),
-  viewEinstellungen: document.getElementById('view-einstellungen'),
+  viewKatalog: document.getElementById('view-katalog'),
+  viewPdfVorlage: document.getElementById('view-pdf-vorlage'),
   viewProfil: document.getElementById('view-profil'),
   profilAccountForm: document.getElementById('profil-account-form'),
   profilTenantName: document.getElementById('profil-tenant-name'),
@@ -205,6 +217,17 @@ const els = {
   kundenNeuBtn: document.getElementById('kunden-neu-btn'),
   kundenListe: document.getElementById('kunden-liste'),
   kundenSuche: document.getElementById('kunden-suche'),
+  katalogForm: document.getElementById('katalog-form'),
+  katalogFormSection: document.getElementById('katalog-form-section'),
+  katalogFormTitle: document.getElementById('katalog-form-title'),
+  katalogFormReset: document.getElementById('katalog-form-reset'),
+  katalogFormBezeichnung: document.getElementById('katalog-form-bezeichnung'),
+  katalogFormBeschreibung: document.getElementById('katalog-form-beschreibung'),
+  katalogFormPreisStk: document.getElementById('katalog-form-preis-stk'),
+  katalogFormPreisStd: document.getElementById('katalog-form-preis-std'),
+  katalogNeuBtn: document.getElementById('katalog-neu-btn'),
+  katalogListe: document.getElementById('katalog-liste'),
+  katalogSuche: document.getElementById('katalog-suche'),
   angebotNr: document.getElementById('angebot-nr'),
   gueltigBis: document.getElementById('gueltig-bis'),
   angebotKopf: document.getElementById('angebot-kopf'),
@@ -240,6 +263,11 @@ const els = {
   rechnungAngebotRef: document.getElementById('rechnung-angebot-ref'),
   rechnungArchivSuche: document.getElementById('rechnung-archiv-suche'),
   rechnungArchivListe: document.getElementById('rechnung-archiv-liste'),
+  katalogOeffnenBtn: document.getElementById('katalog-oeffnen-btn'),
+  rechnungKatalogOeffnenBtn: document.getElementById('rechnung-katalog-oeffnen-btn'),
+  katalogModal: document.getElementById('katalog-modal'),
+  katalogModalListe: document.getElementById('katalog-modal-liste'),
+  katalogModalSuche: document.getElementById('katalog-modal-suche'),
 };
 
 const angebotPostenEditor = createPostenEditor(angebotPostenState, {
@@ -250,6 +278,7 @@ const angebotPostenEditor = createPostenEditor(angebotPostenState, {
   summeMwst: els.summeMwst,
   summeBrutto: els.summeBrutto,
   pdfBtn: els.pdfBtn,
+  canSave: () => isAngebotKopfComplete(),
   onUpdate: () => updatePostenKopfSummary(),
 });
 
@@ -261,6 +290,7 @@ const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
   summeMwst: els.rechnungSummeMwst,
   summeBrutto: els.rechnungSummeBrutto,
   pdfBtn: els.rechnungPdfBtn,
+  canSave: () => isRechnungKopfComplete(),
 });
 
 async function generiereAngebotsnummer() {
@@ -1149,6 +1179,45 @@ function isAngebotKopfComplete() {
   );
 }
 
+function isRechnungKopfComplete() {
+  return !!(
+    els.rechnungNr?.value.trim() &&
+    els.rechnungDatum?.value &&
+    els.rechnungFaellig?.value &&
+    els.rechnungKundeName?.value.trim() &&
+    els.rechnungKundeStrasse?.value.trim() &&
+    els.rechnungKundePlzOrt?.value.trim()
+  );
+}
+
+function bindFormPdfValidation() {
+  const refreshAngebotPdf = () => angebotPostenEditor.refreshSummary();
+  const refreshRechnungPdf = () => rechnungPostenEditor.refreshSummary();
+
+  [
+    els.angebotNr,
+    els.gueltigBis,
+    els.kundeName,
+    els.kundeStrasse,
+    els.kundePlzOrt,
+  ].forEach((el) => {
+    el?.addEventListener('input', refreshAngebotPdf);
+    el?.addEventListener('change', refreshAngebotPdf);
+  });
+
+  [
+    els.rechnungNr,
+    els.rechnungDatum,
+    els.rechnungFaellig,
+    els.rechnungKundeName,
+    els.rechnungKundeStrasse,
+    els.rechnungKundePlzOrt,
+  ].forEach((el) => {
+    el?.addEventListener('input', refreshRechnungPdf);
+    el?.addEventListener('change', refreshRechnungPdf);
+  });
+}
+
 function updateAngebotKopfSummary() {
   const name = els.kundeName?.value.trim() || '';
   const strasse = els.kundeStrasse?.value.trim() || '';
@@ -1300,7 +1369,8 @@ const NAV_VIEW_GROUPS = {
   'rechnung-neu': 'rechnungen',
   'rechnung-archiv': 'rechnungen',
   kunden: 'kunden',
-  einstellungen: 'einstellungen',
+  katalog: 'katalog',
+  'pdf-vorlage': 'pdf-vorlage',
 };
 
 function closeNavMenus() {
@@ -1452,6 +1522,9 @@ function bindMainNav() {
     const directTrigger =
       link?.classList.contains('app-nav__trigger') && link.dataset.navView;
     if (link?.dataset.navView && (inMenu || directTrigger)) {
+      if (link.dataset.navView === 'kunden' && !state.editingKundeId) {
+        resetKundenForm();
+      }
       showView(link.dataset.navView);
       closeMobileNav();
       closeNavMenus();
@@ -1481,7 +1554,8 @@ function showView(view) {
     els.viewRechnungNeu.classList.toggle('hidden', view !== 'rechnung-neu');
     els.viewRechnungArchiv.classList.toggle('hidden', view !== 'rechnung-archiv');
     els.viewKunden.classList.toggle('hidden', view !== 'kunden');
-    els.viewEinstellungen.classList.toggle('hidden', view !== 'einstellungen');
+    els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
+    els.viewPdfVorlage?.classList.toggle('hidden', view !== 'pdf-vorlage');
     els.viewProfil?.classList.toggle('hidden', view !== 'profil');
     els.angebotStickyFooter?.classList.add('hidden');
     els.rechnungStickyFooter?.classList.toggle('hidden', view !== 'rechnung-neu');
@@ -1492,7 +1566,9 @@ function showView(view) {
       renderRechnungArchiv();
     } else if (view === 'kunden') {
       renderKundenView();
-    } else if (view === 'einstellungen') {
+    } else if (view === 'katalog') {
+      renderKatalogView();
+    } else if (view === 'pdf-vorlage') {
       renderPdfTemplateSettings();
     } else if (view === 'profil') {
       renderProfilView();
@@ -1509,7 +1585,8 @@ function showView(view) {
   els.viewNeu.classList.toggle('hidden', view !== 'neu');
   els.viewArchiv.classList.toggle('hidden', view !== 'archiv');
   els.viewKunden.classList.toggle('hidden', view !== 'kunden');
-  els.viewEinstellungen.classList.toggle('hidden', view !== 'einstellungen');
+  els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
+  els.viewPdfVorlage?.classList.toggle('hidden', view !== 'pdf-vorlage');
   els.viewProfil?.classList.toggle('hidden', view !== 'profil');
   syncNavState(view);
   syncProfileButton(view);
@@ -1520,7 +1597,10 @@ function showView(view) {
   } else if (view === 'kunden') {
     els.angebotStickyFooter.classList.add('hidden');
     renderKundenView();
-  } else if (view === 'einstellungen') {
+  } else if (view === 'katalog') {
+    els.angebotStickyFooter.classList.add('hidden');
+    renderKatalogView();
+  } else if (view === 'pdf-vorlage') {
     els.angebotStickyFooter.classList.add('hidden');
     renderPdfTemplateSettings();
   } else if (view === 'profil') {
@@ -1634,7 +1714,7 @@ async function handlePdfTemplateSubmit(e) {
   }
   try {
     await savePdfTemplate(templateFromForm(form));
-    setPdfTemplateStatus('Einstellungen gespeichert.');
+    setPdfTemplateStatus('Vorlage gespeichert.');
   } catch (err) {
     setPdfTemplateStatus(err.message, true);
   }
@@ -1811,6 +1891,7 @@ function resetKundenForm() {
 function closeKundenDetail() {
   state.detailKundeId = null;
   resetKundenObjektForm();
+  resetKundenForm();
   els.kundenDetail?.classList.add('hidden');
   els.kundenFormSection?.classList.remove('hidden');
 }
@@ -1877,6 +1958,123 @@ function loadKundeIntoForm(kunde) {
   els.kundenFormTitle.textContent = 'Kunde bearbeiten';
   els.kundenFormReset.classList.remove('hidden');
   showView('kunden');
+}
+
+async function refreshPostenEditors() {
+  angebotPostenEditor.render();
+  rechnungPostenEditor.render();
+}
+
+function resetKatalogForm() {
+  state.editingKatalogPostenId = null;
+  els.katalogForm?.reset();
+  if (els.katalogFormTitle) els.katalogFormTitle.textContent = 'Neuer Katalog-Posten';
+  els.katalogFormReset?.classList.add('hidden');
+}
+
+function fillKatalogForm(posten) {
+  state.editingKatalogPostenId = posten.id;
+  els.katalogFormBezeichnung.value = posten.bezeichnung || '';
+  els.katalogFormBeschreibung.value = posten.beschreibung || '';
+  els.katalogFormPreisStk.value =
+    posten.preisStk != null && posten.preisStk !== '' ? String(posten.preisStk).replace('.', ',') : '';
+  els.katalogFormPreisStd.value =
+    posten.preisStd != null && posten.preisStd !== '' ? String(posten.preisStd).replace('.', ',') : '';
+  if (els.katalogFormTitle) els.katalogFormTitle.textContent = 'Katalog-Posten bearbeiten';
+  els.katalogFormReset?.classList.remove('hidden');
+  els.katalogFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function renderKatalogView() {
+  const q = state.katalogSuche.trim().toLowerCase();
+  els.katalogListe.innerHTML = '<p class="empty">Lade Katalog…</p>';
+
+  try {
+    const posten = await loadKatalogPosten();
+    let filtered = posten;
+
+    if (q) {
+      filtered = posten.filter(
+        (p) =>
+          p.bezeichnung.toLowerCase().includes(q) ||
+          (p.beschreibung || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (filtered.length === 0) {
+      els.katalogListe.innerHTML = `<p class="empty">${
+        q ? 'Keine Posten gefunden.' : 'Noch keine Katalog-Posten angelegt.'
+      }</p>`;
+      return;
+    }
+
+    els.katalogListe.innerHTML = filtered
+      .map((p) => {
+        const preisStk = formatEuro(p.preisStk ?? 0);
+        const preisStd = formatEuro(p.preisStd ?? 0);
+        return `
+        <article class="katalog-posten-item" data-id="${p.id}">
+          <div class="katalog-posten-item__main">
+            <h3>${escapeHtml(p.bezeichnung)}</h3>
+            ${p.beschreibung ? `<p class="katalog-posten-item__desc">${escapeHtml(p.beschreibung)}</p>` : ''}
+            <p class="katalog-posten-item__preise">${preisStk} / Stk. · ${preisStd} / Std.</p>
+          </div>
+          <div class="katalog-posten-item__actions">
+            <button type="button" class="btn btn-ghost btn-sm" data-action="edit-katalog-posten" data-id="${p.id}">Bearbeiten</button>
+            <button type="button" class="btn btn-danger btn-sm" data-action="delete-katalog-posten" data-id="${p.id}">Löschen</button>
+          </div>
+        </article>`;
+      })
+      .join('');
+  } catch (err) {
+    els.katalogListe.innerHTML = `<p class="empty">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function saveKatalogForm(e) {
+  e.preventDefault();
+
+  const bezeichnung = els.katalogFormBezeichnung.value.trim();
+  if (!bezeichnung) {
+    alert('Bitte eine Bezeichnung eingeben.');
+    els.katalogFormBezeichnung.focus();
+    return;
+  }
+
+  const preisStkRaw = parsePreisInput(els.katalogFormPreisStk.value);
+  const preisStdRaw = parsePreisInput(els.katalogFormPreisStd.value);
+  const preisStk = Number.isNaN(preisStkRaw) ? 0 : Math.max(0, preisStkRaw);
+  const preisStd = Number.isNaN(preisStdRaw) ? 0 : Math.max(0, preisStdRaw);
+
+  const jetzt = new Date().toISOString();
+  let erstelltAm = jetzt;
+  if (state.editingKatalogPostenId) {
+    const bestehend = await getKatalogPostenById(state.editingKatalogPostenId);
+    erstelltAm = bestehend?.erstelltAm || jetzt;
+  }
+
+  const posten = {
+    id: state.editingKatalogPostenId || createKatalogPostenId(),
+    bezeichnung,
+    beschreibung: els.katalogFormBeschreibung.value.trim(),
+    preisStk,
+    preisStd,
+    erstelltAm,
+    aktualisiertAm: jetzt,
+  };
+
+  try {
+    await saveKatalogPosten(posten);
+    state.katalogSuche = '';
+    if (els.katalogSuche) els.katalogSuche.value = '';
+    resetKatalogForm();
+    await renderKatalogView();
+    refreshPostenEditors();
+  } catch (err) {
+    alert(
+      `Speichern fehlgeschlagen: ${err.message}\n\nBitte prüfen, ob der Server läuft (npm run dev).`
+    );
+  }
 }
 
 async function renderKundenView() {
@@ -2028,11 +2226,12 @@ async function saveKundenForm(e) {
   }
 
   const jetzt = new Date().toISOString();
-  const bestehend = state.editingKundeId ? await getKunde(state.editingKundeId) : null;
+  const isEdit = Boolean(state.editingKundeId);
+  const bestehend = isEdit ? await getKunde(state.editingKundeId) : null;
 
   const formAdresse = readAdresseFieldPair(els.kundenFormStrasse, els.kundenFormPlzOrt);
   const kunde = {
-    id: state.editingKundeId || createKundeId(),
+    id: isEdit ? state.editingKundeId : createKundeId(),
     name,
     strasse: formAdresse.strasse,
     plzOrt: formAdresse.plzOrt,
@@ -2104,7 +2303,7 @@ async function saveKundenObjektForm(e) {
 async function speichernUndPdf() {
   angebotPostenEditor.flushEntwurfIfComplete();
   const posten = angebotPostenEditor.getAusgewaehltePosten();
-  if (posten.length === 0) return;
+  if (posten.length === 0 || !isAngebotKopfComplete()) return;
 
   els.pdfBtn.disabled = true;
 
@@ -2134,7 +2333,7 @@ async function speichernUndPdf() {
 async function speichernUndRechnungPdf() {
   rechnungPostenEditor.flushEntwurfIfComplete();
   const posten = rechnungPostenEditor.getAusgewaehltePosten();
-  if (posten.length === 0) return;
+  if (posten.length === 0 || !isRechnungKopfComplete()) return;
 
   els.rechnungPdfBtn.disabled = true;
 
@@ -2179,6 +2378,7 @@ async function showApp() {
     rechnungPostenEditor.bindEvents();
     try {
       await loadPdfTemplate();
+      await loadKatalogPosten();
       await resetForm();
       await resetRechnungForm();
     } catch (err) {
@@ -2194,6 +2394,16 @@ function bindAppEvents() {
   bindMainNav();
   bindAngebotKopfToggle();
   bindPostenKopfToggle();
+  bindFormPdfValidation();
+  initKatalogModal({
+    modal: els.katalogModal,
+    liste: els.katalogModalListe,
+    suche: els.katalogModalSuche,
+    openButtons: [
+      { button: els.katalogOeffnenBtn, editor: angebotPostenEditor },
+      { button: els.rechnungKatalogOeffnenBtn, editor: rechnungPostenEditor },
+    ],
+  });
   els.profileBtn?.addEventListener('click', () => showView('profil'));
   els.profilAccountForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -2234,6 +2444,28 @@ function bindAppEvents() {
       setProfilPasswordStatus(err.message || 'Passwort konnte nicht geändert werden.', true);
     }
   });
+
+  if (els.pdfTemplateForm) {
+    bindColorFieldSync(els.pdfTemplateForm);
+    els.pdfTemplateForm.addEventListener('submit', handlePdfTemplateSubmit);
+    els.pdfTemplateReset?.addEventListener('click', handlePdfTemplateReset);
+    els.pdfTemplateForm.elements['angebot-nummer-schema']?.addEventListener('input', () => {
+      updateAngebotSchemaPreview();
+    });
+    els.pdfTemplateForm.elements['rechnung-nummer-schema']?.addEventListener('input', () => {
+      updateRechnungSchemaPreview();
+    });
+    els.pdfLogoFile?.addEventListener('change', (e) => {
+      handlePdfTemplateImage('logo', e.target.files?.[0]);
+    });
+    els.pdfHeaderFile?.addEventListener('change', (e) => {
+      handlePdfTemplateImage('header', e.target.files?.[0]);
+    });
+    els.pdfTemplateForm.querySelectorAll('[data-clear-image]').forEach((btn) => {
+      btn.addEventListener('click', () => clearPdfTemplateImage(btn.dataset.clearImage));
+    });
+  }
+
   els.resetBtn.addEventListener('click', () => resetForm());
   els.pdfBtn.addEventListener('click', () => speichernUndPdf());
   els.rechnungResetBtn?.addEventListener('click', () => resetRechnungForm());
@@ -2279,8 +2511,49 @@ function bindAppEvents() {
   els.kundenForm?.addEventListener('submit', saveKundenForm);
   els.kundenFormReset?.addEventListener('click', resetKundenForm);
 
+  els.katalogForm?.addEventListener('submit', saveKatalogForm);
+  els.katalogFormReset?.addEventListener('click', resetKatalogForm);
+  els.katalogNeuBtn?.addEventListener('click', () => {
+    resetKatalogForm();
+    els.katalogFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    els.katalogFormBezeichnung?.focus();
+  });
+  els.katalogSuche?.addEventListener('input', (e) => {
+    state.katalogSuche = e.target.value;
+    renderKatalogView();
+  });
+  els.katalogListe?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const { action, id } = btn.dataset;
+
+    try {
+      if (action === 'edit-katalog-posten') {
+        const posten = await getKatalogPostenById(id);
+        if (posten) fillKatalogForm(posten);
+        return;
+      }
+
+      if (action === 'delete-katalog-posten') {
+        const posten = await getKatalogPostenById(id);
+        if (!posten) return;
+        if (!confirm(`Katalog-Posten „${posten.bezeichnung}" wirklich löschen?`)) return;
+        await deleteKatalogPosten(id);
+        if (state.editingKatalogPostenId === id) resetKatalogForm();
+        await renderKatalogView();
+        refreshPostenEditors();
+      }
+    } catch (err) {
+      alert(`Fehler: ${err.message}`);
+    }
+  });
+
   els.kundenNeuBtn?.addEventListener('click', () => {
-    closeKundenDetail();
+    if (state.detailKundeId) {
+      state.detailKundeId = null;
+      els.kundenDetail?.classList.add('hidden');
+      els.kundenFormSection?.classList.remove('hidden');
+    }
     resetKundenForm();
     els.kundenFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
@@ -2379,27 +2652,6 @@ function bindAppEvents() {
       alert(`Fehler: ${err.message}`);
     }
   });
-
-  if (els.pdfTemplateForm) {
-    bindColorFieldSync(els.pdfTemplateForm);
-    els.pdfTemplateForm.addEventListener('submit', handlePdfTemplateSubmit);
-    els.pdfTemplateReset?.addEventListener('click', handlePdfTemplateReset);
-    els.pdfTemplateForm.elements['angebot-nummer-schema']?.addEventListener('input', () => {
-      updateAngebotSchemaPreview();
-    });
-    els.pdfTemplateForm.elements['rechnung-nummer-schema']?.addEventListener('input', () => {
-      updateRechnungSchemaPreview();
-    });
-    els.pdfLogoFile?.addEventListener('change', (e) => {
-      handlePdfTemplateImage('logo', e.target.files?.[0]);
-    });
-    els.pdfHeaderFile?.addEventListener('change', (e) => {
-      handlePdfTemplateImage('header', e.target.files?.[0]);
-    });
-    els.pdfTemplateForm.querySelectorAll('[data-clear-image]').forEach((btn) => {
-      btn.addEventListener('click', () => clearPdfTemplateImage(btn.dataset.clearImage));
-    });
-  }
 
   els.kundenSuche?.addEventListener('input', (e) => {
     state.kundenSuche = e.target.value;
