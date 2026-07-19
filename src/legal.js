@@ -269,8 +269,10 @@ export function initLegal({ onClose } = {}) {
 
   document.querySelectorAll('[data-legal-page]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const fromApp = !document.getElementById('app')?.classList.contains('hidden');
-      openLegalPage(btn.dataset.legalPage, fromApp ? 'app' : 'login');
+      const appVisible = !document.getElementById('app')?.classList.contains('hidden');
+      const loginVisible = !document.getElementById('login-screen')?.classList.contains('hidden');
+      const returnTo = appVisible ? 'app' : loginVisible ? 'login' : 'landing';
+      openLegalPage(btn.dataset.legalPage, returnTo);
     });
   });
 

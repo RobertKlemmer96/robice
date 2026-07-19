@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Angebot erstellen</title>
+    <title>Klemware – Angebote &amp; Rechnungen</title>
     <script>
       (function () {
         var theme = localStorage.getItem('angebot_theme') || 'dark';
@@ -13,8 +13,178 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
+    <div id="landing" class="landing">
+      <header class="landing-header">
+        <div class="landing-brand">
+          <span class="landing-brand__mark" aria-hidden="true">K</span>
+          <span class="landing-brand__text">
+            <strong class="landing-brand__name">Klemware</strong>
+            <span class="landing-brand__tag">Angebote &amp; Rechnungen</span>
+          </span>
+        </div>
+        <div class="landing-header__actions">
+          <button type="button" class="btn btn-ghost btn-sm" data-theme-toggle aria-label="Design umschalten">
+            Theme
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm" data-landing-action="login">Anmelden</button>
+          <button type="button" class="btn btn-primary btn-sm" data-landing-action="register">Kostenlos starten</button>
+        </div>
+      </header>
+
+      <main class="landing-main">
+        <section class="landing-hero">
+          <div class="landing-hero__content">
+            <p class="landing-eyebrow">Kostenlos · Sofort startklar · Für Handwerk &amp; Dienstleistung</p>
+            <h1 class="landing-hero__title">
+              Angebote und Rechnungen erstellen —<br />
+              <span class="landing-hero__accent">professionell als PDF</span>
+            </h1>
+            <p class="landing-hero__lead">
+              Klemware bündelt Kunden, Katalog und Dokumente in einer Oberfläche.
+              Registrieren, einloggen und in wenigen Minuten das erste Angebot versenden.
+            </p>
+            <div class="landing-hero__actions">
+              <button type="button" class="btn btn-primary" data-landing-action="register">
+                Jetzt kostenlos registrieren
+              </button>
+              <button type="button" class="btn btn-ghost" data-landing-action="login">Bereits Konto? Anmelden</button>
+            </div>
+            <ul class="landing-badges" aria-label="Vorteile">
+              <li class="landing-badge">100&nbsp;% kostenlos nutzbar</li>
+              <li class="landing-badge">Eigener Mandant &amp; getrennte Daten</li>
+              <li class="landing-badge">Keine Installation nötig</li>
+            </ul>
+          </div>
+          <div class="landing-hero__visual" aria-hidden="true">
+            <div class="landing-preview">
+              <div class="landing-preview__bar">
+                <span class="landing-preview__dot"></span>
+                <span class="landing-preview__dot"></span>
+                <span class="landing-preview__dot"></span>
+              </div>
+              <div class="landing-preview__body">
+                <div class="landing-preview__doc landing-preview__doc--angebot">
+                  <span class="landing-preview__label">Angebot</span>
+                  <span class="landing-preview__line landing-preview__line--wide"></span>
+                  <span class="landing-preview__line"></span>
+                  <span class="landing-preview__line"></span>
+                </div>
+                <div class="landing-preview__doc landing-preview__doc--rechnung">
+                  <span class="landing-preview__label landing-preview__label--rechnung">Rechnung</span>
+                  <span class="landing-preview__line landing-preview__line--wide"></span>
+                  <span class="landing-preview__line"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="landing-section" aria-labelledby="landing-features-title">
+          <div class="landing-section__head">
+            <h2 id="landing-features-title">Alles für den Büroalltag</h2>
+            <p>Von der Kundenanfrage bis zum PDF — ohne Medienbruch.</p>
+          </div>
+          <div class="landing-features">
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M14 3v5h5M9 13h6M9 17h4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Angebote &amp; Rechnungen</h3>
+              <p>Dokumente anlegen, Posten aus dem Katalog wählen und Summen automatisch berechnen lassen.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M9 8h6M9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>PDF-Export</h3>
+              <p>Professionelle PDFs mit Logo, Firmendaten, Farben und eigenen Textbausteinen — direkt aus der App.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Kundenverwaltung</h3>
+              <p>Stammdaten, Adressen und Einsatzorte zentral pflegen und bei neuen Dokumenten wiederverwenden.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Eigener Katalog</h3>
+              <p>Jeder Mandant pflegt seine Leistungen und Preise — Stück- und Stundensätze inklusive.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M8 10h8M8 14h5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Archiv &amp; Suche</h3>
+              <p>Alle Angebote und Rechnungen durchsuchbar ablegen, bearbeiten und erneut als PDF exportieren.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon landing-feature__icon--success" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3l2.4 4.9 5.4.8-3.9 3.8.9 5.3L12 15.8 7.2 17.8l.9-5.3L4.2 8.7l5.4-.8L12 3z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>
+              </div>
+              <h3>Kostenlos nutzen</h3>
+              <p>Account in Sekunden anlegen — mit eigenem Firmenbereich und getrennten Daten pro Mandant.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="landing-section landing-section--steps" aria-labelledby="landing-steps-title">
+          <div class="landing-section__head">
+            <h2 id="landing-steps-title">In drei Schritten loslegen</h2>
+          </div>
+          <ol class="landing-steps">
+            <li class="landing-step">
+              <span class="landing-step__num">1</span>
+              <div>
+                <h3>Kostenlos registrieren</h3>
+                <p>Firmenname, E-Mail und Passwort — fertig ist Ihr eigener Mandant.</p>
+              </div>
+            </li>
+            <li class="landing-step">
+              <span class="landing-step__num">2</span>
+              <div>
+                <h3>Kunden &amp; Katalog anlegen</h3>
+                <p>Stammdaten und Leistungen einmal pflegen, danach immer wieder verwenden.</p>
+              </div>
+            </li>
+            <li class="landing-step">
+              <span class="landing-step__num">3</span>
+              <div>
+                <h3>Angebot oder Rechnung als PDF</h3>
+                <p>Posten wählen, PDF erstellen — inklusive MwSt. und Ihrer Vorlage.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="landing-cta">
+          <div class="landing-cta__card">
+            <h2>Bereit für das erste Angebot?</h2>
+            <p>Registrierung dauert unter einer Minute. Klemware ist aktuell kostenlos nutzbar.</p>
+            <div class="landing-cta__actions">
+              <button type="button" class="btn btn-primary" data-landing-action="register">Kostenlos registrieren</button>
+              <button type="button" class="btn btn-ghost" data-landing-action="login">Anmelden</button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="landing-footer">
+        <nav class="legal-nav" aria-label="Rechtliches">
+          <button type="button" class="legal-nav__link" data-legal-page="impressum">Impressum</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="datenschutz">Datenschutz</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="agb">AGB</button>
+        </nav>
+      </footer>
+    </div>
+
     <div id="login-screen" class="login-screen hidden">
       <div class="login-screen__inner">
+        <button type="button" class="login-back btn btn-ghost btn-sm" id="login-back-btn">← Zur Startseite</button>
         <div class="login-card">
           <div class="login-header">
             <h1 id="auth-title">Anmelden</h1>

@@ -120,7 +120,9 @@ const angebotPostenState = createEditorState();
 const rechnungPostenState = createEditorState();
 
 const els = {
+  landing: document.getElementById('landing'),
   loginScreen: document.getElementById('login-screen'),
+  loginBackBtn: document.getElementById('login-back-btn'),
   app: document.getElementById('app'),
   loginForm: document.getElementById('login-form'),
   registerForm: document.getElementById('register-form'),
@@ -2360,14 +2362,34 @@ async function speichernUndRechnungPdf() {
   }
 }
 
-function showLogin() {
+function showLanding() {
+  els.landing?.classList.remove('hidden');
+  els.loginScreen.classList.add('hidden');
+  els.app.classList.add('hidden');
+}
+
+function setAuthTab(mode) {
+  const isLogin = mode !== 'register';
+  document.querySelectorAll('[data-auth-tab]').forEach((tab) => {
+    tab.classList.toggle('is-active', tab.dataset.authTab === (isLogin ? 'login' : 'register'));
+  });
+  els.loginForm.classList.toggle('hidden', !isLogin);
+  els.registerForm.classList.toggle('hidden', isLogin);
+  els.authTitle.textContent = isLogin ? 'Anmelden' : 'Registrieren';
+  els.loginError.classList.add('hidden');
+  els.registerError.classList.add('hidden');
+}
+
+function showLogin(mode = 'login') {
+  els.landing?.classList.add('hidden');
   els.loginScreen.classList.remove('hidden');
   els.app.classList.add('hidden');
-  els.loginError.classList.add('hidden');
+  setAuthTab(mode);
   els.loginPass.value = '';
 }
 
 async function showApp() {
+  els.landing?.classList.add('hidden');
   els.loginScreen.classList.add('hidden');
   els.app.classList.remove('hidden');
   syncProfileButton();
@@ -2814,18 +2836,17 @@ function bindAppEvents() {
 }
 
 function bindAuthEvents() {
+  document.querySelectorAll('[data-landing-action]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      showLogin(btn.dataset.landingAction === 'register' ? 'register' : 'login');
+    });
+  });
+
+  els.loginBackBtn?.addEventListener('click', showLanding);
+
   document.querySelectorAll('[data-auth-tab]').forEach((tab) => {
     tab.addEventListener('click', () => {
-      const mode = tab.dataset.authTab;
-      document.querySelectorAll('[data-auth-tab]').forEach((t) => {
-        t.classList.toggle('is-active', t === tab);
-      });
-      const isLogin = mode === 'login';
-      els.loginForm.classList.toggle('hidden', !isLogin);
-      els.registerForm.classList.toggle('hidden', isLogin);
-      els.authTitle.textContent = isLogin ? 'Anmelden' : 'Registrieren';
-      els.loginError.classList.add('hidden');
-      els.registerError.classList.add('hidden');
+      setAuthTab(tab.dataset.authTab);
     });
   });
 
@@ -2858,7 +2879,7 @@ function bindAuthEvents() {
 
   els.logoutBtn.addEventListener('click', async () => {
     await logout();
-    showLogin();
+    showLanding();
   });
 
   document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
@@ -2873,7 +2894,7 @@ async function bootstrap() {
   bindAuthEvents();
   const session = await refreshSession();
   if (session) await showApp();
-  else showLogin();
+  else showLanding();
 }
 
 bootstrap();
