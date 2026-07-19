@@ -166,7 +166,8 @@ export function createPostenEditor(editorState, els) {
         type="text"
         class="posten-info-input posten-info-input--title"
         value="${bezeichnung}"
-        placeholder=""
+        placeholder="Tätigkeit"
+        aria-label="Tätigkeit"
         data-action="${bezeichnungAction}"
         data-id="${id}"
       />

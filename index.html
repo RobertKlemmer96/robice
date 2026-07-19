@@ -232,6 +232,7 @@
     <div id="app" class="app hidden">
       <header class="app-header">
         <div class="app-header__inner">
+          <div class="app-header__brand-mobile" aria-hidden="true">KlemDesk</div>
           <button
             type="button"
             class="app-brand"
@@ -286,11 +287,13 @@
                 </button>
                 <div class="app-nav__menu" role="menu">
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="neu">
-                    <span class="app-nav__link-title">Neues Angebot</span>
+                    <span class="app-nav__link-title app-nav__link-title--desktop">Neues Angebot</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile">Neu</span>
                     <span class="app-nav__link-desc">Angebot &amp; PDF erstellen</span>
                   </button>
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="archiv">
-                    <span class="app-nav__link-title">Alle Angebote</span>
+                    <span class="app-nav__link-title app-nav__link-title--desktop">Alle Angebote</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile">Archiv</span>
                     <span class="app-nav__link-desc">Archiv durchsuchen</span>
                   </button>
                 </div>
@@ -310,28 +313,33 @@
                 </button>
                 <div class="app-nav__menu" role="menu">
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-neu">
-                    <span class="app-nav__link-title">Neue Rechnung</span>
+                    <span class="app-nav__link-title app-nav__link-title--desktop">Neue Rechnung</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile">Neu</span>
                     <span class="app-nav__link-desc">Rechnung &amp; PDF erstellen</span>
                   </button>
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-archiv">
-                    <span class="app-nav__link-title">Alle Rechnungen</span>
+                    <span class="app-nav__link-title app-nav__link-title--desktop">Alle Rechnungen</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile">Archiv</span>
                     <span class="app-nav__link-desc">Archiv durchsuchen</span>
                   </button>
                 </div>
               </li>
               <li class="app-nav__group app-nav__group--direct" data-nav-group="katalog">
                 <button type="button" class="app-nav__trigger" data-nav-view="katalog">
-                  <span>Katalog</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">Katalog</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">Katalog</span>
                 </button>
               </li>
               <li class="app-nav__group app-nav__group--direct" data-nav-group="kunden">
                 <button type="button" class="app-nav__trigger" data-nav-view="kunden">
-                  <span>Kunden</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">Kunden</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">Kunden</span>
                 </button>
               </li>
               <li class="app-nav__group app-nav__group--direct" data-nav-group="pdf-vorlage">
                 <button type="button" class="app-nav__trigger" data-nav-view="pdf-vorlage">
-                  <span>PDF-Vorlage</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">PDF-Vorlage</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">PDF</span>
                 </button>
               </li>
             </ul>
@@ -341,11 +349,11 @@
             <button
               type="button"
               id="profile-btn"
-              class="btn btn-ghost btn-icon profile-btn"
+              class="btn btn-ghost app-header__action-btn app-header__action-btn--profile profile-btn"
               aria-label="Profil"
               title="Profil"
             >
-              <svg class="profile-btn__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="profile-btn__icon app-header__action-icon--desktop" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.75" />
                 <path
                   d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"
@@ -355,11 +363,40 @@
                   stroke-linecap="round"
                 />
               </svg>
+              <span class="app-header__action-label app-header__action-label--mobile">Profil</span>
             </button>
-            <button type="button" id="logout-btn" class="btn btn-ghost btn-icon" aria-label="Abmelden" title="Abmelden">
-              <span aria-hidden="true">🚪</span>
+            <button
+              type="button"
+              id="logout-btn"
+              class="btn btn-ghost app-header__action-btn app-header__action-btn--logout"
+              aria-label="Abmelden"
+              title="Abmelden"
+            >
+              <span class="app-header__action-label app-header__action-label--desktop" aria-hidden="true">🚪</span>
+              <span class="app-header__action-label app-header__action-label--mobile">Abmelden</span>
             </button>
           </div>
+        </div>
+
+        <div class="app-bereich-segment" role="tablist" aria-label="Bereich wählen">
+          <button
+            type="button"
+            class="app-bereich-segment__btn is-active"
+            data-bereich="angebote"
+            role="tab"
+            aria-selected="true"
+          >
+            Angebote
+          </button>
+          <button
+            type="button"
+            class="app-bereich-segment__btn"
+            data-bereich="rechnungen"
+            role="tab"
+            aria-selected="false"
+          >
+            Rechnungen
+          </button>
         </div>
       </header>
 
@@ -1101,7 +1138,7 @@
     </div>
 
     <div id="katalog-modal" class="modal hidden" aria-hidden="true">
-      <div class="modal-backdrop" data-close-katalog-modal></div>
+      <div class="modal-backdrop" aria-hidden="true"></div>
       <div class="modal-panel card katalog-modal-panel" role="dialog" aria-labelledby="katalog-modal-title">
         <div class="katalog-modal__header card-header">
           <h2 id="katalog-modal-title">Katalog</h2>
