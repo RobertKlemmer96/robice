@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: robice
+    name: klemdesk
     runtime: node
     buildCommand: npm install --include=dev && npm run build
     startCommand: NODE_ENV=production npm run start
