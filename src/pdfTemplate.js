@@ -119,6 +119,36 @@ export async function savePdfTemplate(template) {
   return cachedTemplate;
 }
 
+export function templatePatchFromAngebotPage(form) {
+  let patch = {};
+  for (const section of ['bilder', 'firma', 'farben', 'angebot-nummer', 'angebot-texte']) {
+    patch = { ...patch, ...templatePatchFromForm(form, section) };
+  }
+  return patch;
+}
+
+export function templatePatchFromRechnungPage(form) {
+  let patch = {};
+  for (const section of ['bilder', 'firma', 'farben', 'rechnung-nummer', 'rechnung-texte']) {
+    patch = { ...patch, ...templatePatchFromForm(form, section) };
+  }
+  return patch;
+}
+
+export function fillPdfTemplateAngebotForm(form, template) {
+  const tpl = mergePdfTemplate(template);
+  for (const section of ['bilder', 'firma', 'farben', 'angebot-nummer', 'angebot-texte']) {
+    fillPdfTemplateSectionForm(form, tpl, section);
+  }
+}
+
+export function fillPdfTemplateRechnungForm(form, template) {
+  const tpl = mergePdfTemplate(template);
+  for (const section of ['bilder', 'firma', 'farben', 'rechnung-nummer', 'rechnung-texte']) {
+    fillPdfTemplateSectionForm(form, tpl, section);
+  }
+}
+
 export function templatePatchFromForm(form, section) {
   const fd = new FormData(form);
   switch (section) {

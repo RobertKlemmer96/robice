@@ -9,7 +9,7 @@ import {
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName } from './auth.js';
 import { initKatalogModal } from './katalogModal.js';
 import { initDatePickers } from './datePicker.js';
-import { initTheme, toggleTheme } from './theme.js';
+import { initTheme } from './theme.js';
 import {
   getAllAngebote,
   getAngebot,
@@ -48,6 +48,7 @@ import {
   formatEuro,
   formatDatum,
   parsePreisInput,
+  formatPreisInputDisplay,
   berechneSummenAusPosten,
   downloadPdf,
   openPdfPreview,
@@ -58,11 +59,20 @@ import {
   loadPdfTemplate,
   savePdfTemplate,
   getDefaultPdfTemplate,
-  fillPdfTemplateForm,
-  templateFromForm,
+  getPdfTemplate,
+  templatePatchFromAngebotPage,
+  templatePatchFromRechnungPage,
+  fillPdfTemplateAngebotForm,
+  fillPdfTemplateRechnungForm,
   readImageFileAsDataUrl,
   updateImagePreview,
 } from './pdfTemplate.js';
+import {
+  bindPdfTemplatePreview,
+  createPdfLayoutPreviewMarkup,
+  mountSharedPdfTemplateFields,
+  updatePdfTemplatePreview,
+} from './pdfTemplatePreview.js';
 import {
   generiereAngebotsnummer as erzeugeAngebotsnummer,
   previewAngebotsnummer,
@@ -77,6 +87,39 @@ import {
   createPostenEditor,
   resolvePostenDetails,
 } from './postenEditor.js';
+
+const PDF_VORLAGE_VIEWS = ['pdf-vorlage-angebot', 'pdf-vorlage-rechnung'];
+const DOC_KOPF_LABEL = 'Allgemeine Informationen';
+
+function isPdfVorlageView(view) {
+  return PDF_VORLAGE_VIEWS.includes(view);
+}
+
+function pdfVorlageViewForBereich(view) {
+  if (state.bereich === 'rechnungen' && view === 'pdf-vorlage-angebot') {
+    return 'pdf-vorlage-rechnung';
+  }
+  if (state.bereich === 'angebote' && view === 'pdf-vorlage-rechnung') {
+    return 'pdf-vorlage-angebot';
+  }
+  return view;
+}
+
+function resolvePdfVorlageView(view) {
+  if (view === 'pdf-vorlage') {
+    return state.bereich === 'rechnungen' ? 'pdf-vorlage-rechnung' : 'pdf-vorlage-angebot';
+  }
+  if (isPdfVorlageView(view)) {
+    return pdfVorlageViewForBereich(view);
+  }
+  return view;
+}
+
+function syncPdfVorlageViews(activeView) {
+  for (const viewId of PDF_VORLAGE_VIEWS) {
+    document.getElementById(`view-${viewId}`)?.classList.toggle('hidden', activeView !== viewId);
+  }
+}
 
 function createDocMeta() {
   return {
@@ -148,7 +191,10 @@ const els = {
   viewArchiv: document.getElementById('view-archiv'),
   viewKunden: document.getElementById('view-kunden'),
   viewKatalog: document.getElementById('view-katalog'),
-  viewPdfVorlage: document.getElementById('view-pdf-vorlage'),
+  pdfAngebotForm: document.getElementById('pdf-angebot-form'),
+  pdfRechnungForm: document.getElementById('pdf-rechnung-form'),
+  pdfPreviewAngebot: document.getElementById('pdf-preview-angebot'),
+  pdfPreviewRechnung: document.getElementById('pdf-preview-rechnung'),
   viewProfil: document.getElementById('view-profil'),
   profilAccountForm: document.getElementById('profil-account-form'),
   profilTenantName: document.getElementById('profil-tenant-name'),
@@ -160,11 +206,6 @@ const els = {
   profilNewPassword: document.getElementById('profil-new-password'),
   profilConfirmPassword: document.getElementById('profil-confirm-password'),
   profilPasswordStatus: document.getElementById('profil-password-status'),
-  pdfTemplateForm: document.getElementById('pdf-template-form'),
-  pdfTemplateReset: document.getElementById('pdf-template-reset'),
-  pdfTemplateStatus: document.getElementById('pdf-template-status'),
-  pdfLogoFile: document.getElementById('pdf-logo-file'),
-  pdfHeaderFile: document.getElementById('pdf-header-file'),
   archivSuche: document.getElementById('archiv-suche'),
   archivListe: document.getElementById('archiv-liste'),
   resetBtn: document.getElementById('reset-btn'),
@@ -231,6 +272,7 @@ const els = {
   katalogListe: document.getElementById('katalog-liste'),
   katalogSuche: document.getElementById('katalog-suche'),
   angebotNr: document.getElementById('angebot-nr'),
+  angebotDatum: document.getElementById('angebot-datum'),
   gueltigBis: document.getElementById('gueltig-bis'),
   angebotKopf: document.getElementById('angebot-kopf'),
   angebotKopfToggle: document.getElementById('angebot-kopf-toggle'),
@@ -241,13 +283,18 @@ const els = {
   postenKopfSummaryMeta: document.getElementById('posten-kopf-summary-meta'),
   postenKopfSummaryCount: document.getElementById('posten-kopf-summary-count'),
   postenKopfBody: document.getElementById('posten-kopf-body'),
-  angebotSchemaPreview: document.getElementById('angebot-schema-preview'),
-  rechnungSchemaPreview: document.getElementById('rechnung-schema-preview'),
   rechnungResetBtn: document.getElementById('rechnung-reset-btn'),
   rechnungStickyFooter: document.getElementById('rechnung-sticky-footer'),
   rechnungPdfBtn: document.getElementById('rechnung-pdf-btn'),
+  rechnungKopf: document.getElementById('rechnung-kopf'),
+  rechnungKopfToggle: document.getElementById('rechnung-kopf-toggle'),
+  rechnungKopfSummaryMeta: document.getElementById('rechnung-kopf-summary-meta'),
+  rechnungKopfSummaryKunde: document.getElementById('rechnung-kopf-summary-kunde'),
+  rechnungPostenKopf: document.getElementById('rechnung-posten-kopf'),
+  rechnungPostenKopfToggle: document.getElementById('rechnung-posten-kopf-toggle'),
+  rechnungPostenKopfSummaryCount: document.getElementById('rechnung-posten-kopf-summary-count'),
+  rechnungPostenKopfBody: document.getElementById('rechnung-posten-kopf-body'),
   rechnungPostenListe: document.getElementById('rechnung-posten-liste'),
-  rechnungZusammenfassung: document.getElementById('rechnung-zusammenfassung'),
   rechnungSummeNetto: document.getElementById('rechnung-summe-netto'),
   rechnungSummeMwst: document.getElementById('rechnung-summe-mwst'),
   rechnungSummeBrutto: document.getElementById('rechnung-summe-brutto'),
@@ -287,12 +334,12 @@ const angebotPostenEditor = createPostenEditor(angebotPostenState, {
 const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
   postenListe: els.rechnungPostenListe,
   suche: els.rechnungSuche,
-  zusammenfassung: els.rechnungZusammenfassung,
   summeNetto: els.rechnungSummeNetto,
   summeMwst: els.rechnungSummeMwst,
   summeBrutto: els.rechnungSummeBrutto,
   pdfBtn: els.rechnungPdfBtn,
   canSave: () => isRechnungKopfComplete(),
+  onUpdate: () => updateRechnungPostenKopfSummary(),
 });
 
 async function generiereAngebotsnummer() {
@@ -857,6 +904,7 @@ async function getFormAngebot() {
     angebotNr: els.angebotNr.value.trim() || (await generiereAngebotsnummer()),
     erstelltAm: bestehend?.erstelltAm || jetzt,
     aktualisiertAm: jetzt,
+    angebotsdatum: els.angebotDatum.value,
     gueltigBis: els.gueltigBis.value,
     kundeId: state.angebot.selectedKundeId,
     kunde: buildKundePayload(
@@ -946,7 +994,10 @@ async function setupRechnungKundeAdressen(kunde) {
 
 function applyPickerKunde(kunde) {
   if (state.kundenPickerFor === 'rechnung') {
-    void setupRechnungKundeAdressen(kunde).then(() => updateRechnungKundeHinweis());
+    void setupRechnungKundeAdressen(kunde).then(() => {
+      updateRechnungKundeHinweis();
+      updateRechnungKopfSummary();
+    });
   } else {
     void setupAngebotKundeAdressen(kunde).then(() => {
       updateKundeHinweis();
@@ -968,6 +1019,7 @@ async function startNeueRechnungForKunde(kunde) {
   await resetRechnungForm();
   await setupRechnungKundeAdressen(kunde);
   updateRechnungKundeHinweis();
+  updateRechnungKopfSummary();
   setBereich('rechnungen', 'rechnung-neu');
 }
 
@@ -995,6 +1047,7 @@ function clearRechnungKundeAuswahl() {
     rechnungAdresseFields()
   );
   updateRechnungKundeHinweis();
+  updateRechnungKopfSummary();
 }
 
 async function resetForm() {
@@ -1006,7 +1059,9 @@ async function resetForm() {
   clearAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt);
   els.angebotNr.value = await generiereAngebotsnummer();
 
-  const gueltig = new Date();
+  const heute = new Date();
+  els.angebotDatum.value = heute.toISOString().split('T')[0];
+  const gueltig = new Date(heute);
   gueltig.setDate(gueltig.getDate() + 30);
   els.gueltigBis.value = gueltig.toISOString().split('T')[0];
 
@@ -1016,6 +1071,8 @@ async function resetForm() {
 
 async function resetRechnungForm() {
   state.rechnung = createRechnungMeta();
+  setRechnungKopfCollapsed(false);
+  setRechnungPostenKopfCollapsed(false);
   rechnungPostenEditor.clearPostenState();
   els.rechnungKundeName.value = '';
   clearAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt);
@@ -1035,6 +1092,8 @@ async function resetRechnungForm() {
   updateRechnungKundeHinweis();
   updateRechnungAngebotRef();
   updateRechnungPageHeader();
+  updateRechnungKopfSummary();
+  updateRechnungPostenKopfSummary();
   rechnungPostenEditor.render();
 }
 
@@ -1048,6 +1107,8 @@ async function loadAngebotIntoForm(angebot) {
   els.kundeName.value = angebot.kunde.name;
   setAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt, angebot.kunde);
   els.angebotNr.value = angebot.angebotNr;
+  els.angebotDatum.value =
+    angebot.angebotsdatum || angebot.erstelltAm?.split('T')[0] || '';
   els.gueltigBis.value = angebot.gueltigBis;
   if (angebot.kundeId) {
     const stamm = await getKunde(angebot.kundeId);
@@ -1078,6 +1139,7 @@ async function loadAngebotIntoForm(angebot) {
 
 async function loadRechnungIntoForm(rechnung) {
   state.rechnung.editingId = rechnung.id;
+  setRechnungKopfCollapsed(false);
   state.rechnung.selectedKundeId = rechnung.kundeId || null;
   setBillingSnapshot(state.rechnung, rechnung.kunde);
   state.rechnung.angebotId = rechnung.angebotId || null;
@@ -1114,12 +1176,16 @@ async function loadRechnungIntoForm(rechnung) {
 
   setBereich('rechnungen', 'rechnung-neu');
   updateRechnungPageHeader();
+  updateRechnungKopfSummary();
+  updateRechnungPostenKopfSummary();
   rechnungPostenEditor.render();
 }
 
 async function loadAngebotAsRechnungEntwurf(angebot) {
   setBereich('rechnungen', 'rechnung-neu');
   state.rechnung = createRechnungMeta();
+  setRechnungKopfCollapsed(false);
+  setRechnungPostenKopfCollapsed(false);
   state.rechnung.angebotId = angebot.id;
   state.rechnung.angebotNr = angebot.angebotNr;
   state.rechnung.selectedKundeId = angebot.kundeId || null;
@@ -1157,6 +1223,8 @@ async function loadAngebotAsRechnungEntwurf(angebot) {
   updateRechnungKundeHinweis();
   updateRechnungAngebotRef();
   updateRechnungPageHeader();
+  updateRechnungKopfSummary();
+  updateRechnungPostenKopfSummary();
   rechnungPostenEditor.render();
 }
 
@@ -1174,6 +1242,7 @@ function updatePageHeader() {
 function isAngebotKopfComplete() {
   return !!(
     els.angebotNr?.value.trim() &&
+    els.angebotDatum?.value &&
     els.gueltigBis?.value &&
     els.kundeName?.value.trim() &&
     els.kundeStrasse?.value.trim() &&
@@ -1198,6 +1267,7 @@ function bindFormPdfValidation() {
 
   [
     els.angebotNr,
+    els.angebotDatum,
     els.gueltigBis,
     els.kundeName,
     els.kundeStrasse,
@@ -1225,9 +1295,21 @@ function updateAngebotKopfSummary() {
   const strasse = els.kundeStrasse?.value.trim() || '';
   const plzOrt = els.kundePlzOrt?.value.trim() || '';
   const parts = [name, strasse, plzOrt].filter(Boolean);
-  const summary = parts.join(' – ');
+  const hasKundeData = parts.length > 0;
+  const summary = hasKundeData ? parts.join(' – ') : DOC_KOPF_LABEL;
   if (els.angebotKopfSummaryKunde) els.angebotKopfSummaryKunde.textContent = summary;
-  els.angebotKopfSummaryMeta?.classList.toggle('is-empty', parts.length === 0);
+  els.angebotKopfSummaryMeta?.classList.toggle('is-empty', !hasKundeData);
+}
+
+function updateRechnungKopfSummary() {
+  const name = els.rechnungKundeName?.value.trim() || '';
+  const strasse = els.rechnungKundeStrasse?.value.trim() || '';
+  const plzOrt = els.rechnungKundePlzOrt?.value.trim() || '';
+  const parts = [name, strasse, plzOrt].filter(Boolean);
+  const hasKundeData = parts.length > 0;
+  const summary = hasKundeData ? parts.join(' – ') : DOC_KOPF_LABEL;
+  if (els.rechnungKopfSummaryKunde) els.rechnungKopfSummaryKunde.textContent = summary;
+  els.rechnungKopfSummaryMeta?.classList.toggle('is-empty', !hasKundeData);
 }
 
 function setAngebotKopfCollapsed(collapsed) {
@@ -1248,10 +1330,34 @@ function setPostenKopfCollapsed(collapsed) {
   els.postenKopfToggle?.setAttribute('aria-expanded', String(!collapsed));
 }
 
+function setRechnungKopfCollapsed(collapsed) {
+  els.rechnungKopf?.classList.toggle('is-collapsed', collapsed);
+  els.rechnungKopfToggle?.setAttribute('aria-expanded', String(!collapsed));
+}
+
+function updateRechnungPostenKopfSummary() {
+  const count = rechnungPostenEditor.getAusgewaehltePosten().length;
+  if (!els.rechnungPostenKopfSummaryCount) return;
+  if (count === 0) els.rechnungPostenKopfSummaryCount.textContent = 'Keine Posten';
+  else if (count === 1) els.rechnungPostenKopfSummaryCount.textContent = '1 Posten';
+  else els.rechnungPostenKopfSummaryCount.textContent = `${count} Posten`;
+}
+
+function setRechnungPostenKopfCollapsed(collapsed) {
+  els.rechnungPostenKopf?.classList.toggle('is-collapsed', collapsed);
+  els.rechnungPostenKopfToggle?.setAttribute('aria-expanded', String(!collapsed));
+}
+
 function collapseAngebotWhenEnteringPosten() {
   if (!isAngebotKopfComplete()) return;
   setAngebotKopfCollapsed(true);
   setPostenKopfCollapsed(false);
+}
+
+function collapseRechnungWhenEnteringPosten() {
+  if (!isRechnungKopfComplete()) return;
+  setRechnungKopfCollapsed(true);
+  setRechnungPostenKopfCollapsed(false);
 }
 
 function bindAngebotKopfToggle() {
@@ -1296,6 +1402,48 @@ function bindPostenKopfToggle() {
   updatePostenKopfSummary();
 }
 
+function bindRechnungKopfToggle() {
+  if (!els.rechnungKopfToggle) return;
+
+  setRechnungKopfCollapsed(false);
+
+  els.rechnungKopfToggle.addEventListener('click', () => {
+    const collapsed = !els.rechnungKopf?.classList.contains('is-collapsed');
+    setRechnungKopfCollapsed(collapsed);
+  });
+
+  els.rechnungKundeName?.addEventListener('input', updateRechnungKopfSummary);
+  els.rechnungKundeStrasse?.addEventListener('input', updateRechnungKopfSummary);
+  els.rechnungKundePlzOrt?.addEventListener('input', updateRechnungKopfSummary);
+  updateRechnungKopfSummary();
+}
+
+function bindRechnungPostenKopfToggle() {
+  if (!els.rechnungPostenKopfToggle) return;
+
+  setRechnungPostenKopfCollapsed(false);
+
+  els.rechnungPostenKopfToggle.addEventListener('click', () => {
+    const collapsed = !els.rechnungPostenKopf?.classList.contains('is-collapsed');
+    setRechnungPostenKopfCollapsed(collapsed);
+    if (!collapsed) collapseRechnungWhenEnteringPosten();
+  });
+
+  els.rechnungPostenKopf?.addEventListener('focusin', (e) => {
+    if (els.rechnungPostenKopfToggle?.contains(e.target)) return;
+    if (!els.rechnungPostenKopfBody?.contains(e.target)) return;
+    collapseRechnungWhenEnteringPosten();
+  });
+
+  els.rechnungPostenKopf?.addEventListener('pointerdown', (e) => {
+    if (els.rechnungPostenKopfToggle?.contains(e.target)) return;
+    if (!els.rechnungPostenKopfBody?.contains(e.target)) return;
+    collapseRechnungWhenEnteringPosten();
+  });
+
+  updateRechnungPostenKopfSummary();
+}
+
 function updateRechnungPageHeader() {
   if (state.rechnung.editingId) {
     els.rechnungPdfBtn.textContent = 'PDF aktualisieren';
@@ -1304,6 +1452,7 @@ function updateRechnungPageHeader() {
     els.rechnungPdfBtn.textContent = 'PDF erstellen';
     els.rechnungResetBtn.classList.add('hidden');
   }
+  updateRechnungKopfSummary();
 }
 
 const PLAN_LABELS = {
@@ -1373,6 +1522,8 @@ const NAV_VIEW_GROUPS = {
   kunden: 'kunden',
   katalog: 'katalog',
   'pdf-vorlage': 'pdf-vorlage',
+  'pdf-vorlage-angebot': 'pdf-vorlage',
+  'pdf-vorlage-rechnung': 'pdf-vorlage',
 };
 
 function closeNavMenus() {
@@ -1393,7 +1544,10 @@ function closeMobileNav() {
 
 function syncNavState(view) {
   document.querySelectorAll('[data-nav-view]').forEach((el) => {
-    el.classList.toggle('is-current', el.dataset.navView === view);
+    const navView = el.dataset.navView;
+    const isCurrent =
+      navView === view || (navView === 'pdf-vorlage' && isPdfVorlageView(view));
+    el.classList.toggle('is-current', isCurrent);
   });
 
   document.querySelectorAll('[data-nav-group]').forEach((group) => {
@@ -1466,13 +1620,17 @@ function setBereich(bereich, viewAfter) {
 
   if (bereich === 'rechnungen') {
     closeMobileNav();
-    showView(viewAfter ?? 'rechnung-neu');
+    const nextView =
+      viewAfter ?? (isPdfVorlageView(state.view) ? 'pdf-vorlage-rechnung' : 'rechnung-neu');
+    showView(nextView);
     return;
   }
 
   els.viewRechnungNeu?.classList.add('hidden');
   els.viewRechnungArchiv?.classList.add('hidden');
-  showView(viewAfter ?? state.view);
+  const nextView =
+    viewAfter ?? (isPdfVorlageView(state.view) ? 'pdf-vorlage-angebot' : state.view);
+  showView(nextView);
 }
 
 function bindBereichSwitch() {
@@ -1488,9 +1646,11 @@ function bindBereichSwitch() {
       closeBereichModal();
       if (next === state.bereich) return;
       if (next === 'angebote') {
-        setBereich('angebote', 'neu');
+        const viewAfter = isPdfVorlageView(state.view) ? 'pdf-vorlage-angebot' : 'neu';
+        setBereich('angebote', viewAfter);
       } else {
-        setBereich('rechnungen', 'rechnung-neu');
+        const viewAfter = isPdfVorlageView(state.view) ? 'pdf-vorlage-rechnung' : 'rechnung-neu';
+        setBereich('rechnungen', viewAfter);
       }
     });
   });
@@ -1549,6 +1709,7 @@ function bindMainNav() {
 }
 
 function showView(view) {
+  view = resolvePdfVorlageView(view);
   if (state.bereich === 'rechnungen') {
     state.view = view;
     els.viewNeu.classList.add('hidden');
@@ -1557,7 +1718,7 @@ function showView(view) {
     els.viewRechnungArchiv.classList.toggle('hidden', view !== 'rechnung-archiv');
     els.viewKunden.classList.toggle('hidden', view !== 'kunden');
     els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
-    els.viewPdfVorlage?.classList.toggle('hidden', view !== 'pdf-vorlage');
+    syncPdfVorlageViews(view);
     els.viewProfil?.classList.toggle('hidden', view !== 'profil');
     els.angebotStickyFooter?.classList.add('hidden');
     els.rechnungStickyFooter?.classList.toggle('hidden', view !== 'rechnung-neu');
@@ -1570,8 +1731,8 @@ function showView(view) {
       renderKundenView();
     } else if (view === 'katalog') {
       renderKatalogView();
-    } else if (view === 'pdf-vorlage') {
-      renderPdfTemplateSettings();
+    } else if (isPdfVorlageView(view)) {
+      renderPdfTemplateView(view);
     } else if (view === 'profil') {
       renderProfilView();
     } else if (view === 'rechnung-neu') {
@@ -1588,7 +1749,7 @@ function showView(view) {
   els.viewArchiv.classList.toggle('hidden', view !== 'archiv');
   els.viewKunden.classList.toggle('hidden', view !== 'kunden');
   els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
-  els.viewPdfVorlage?.classList.toggle('hidden', view !== 'pdf-vorlage');
+  syncPdfVorlageViews(view);
   els.viewProfil?.classList.toggle('hidden', view !== 'profil');
   syncNavState(view);
   syncProfileButton(view);
@@ -1602,9 +1763,9 @@ function showView(view) {
   } else if (view === 'katalog') {
     els.angebotStickyFooter.classList.add('hidden');
     renderKatalogView();
-  } else if (view === 'pdf-vorlage') {
+  } else if (isPdfVorlageView(view)) {
     els.angebotStickyFooter.classList.add('hidden');
-    renderPdfTemplateSettings();
+    renderPdfTemplateView(view);
   } else if (view === 'profil') {
     els.angebotStickyFooter.classList.add('hidden');
     renderProfilView();
@@ -1614,16 +1775,17 @@ function showView(view) {
   }
 }
 
-function setPdfTemplateStatus(message, isError = false) {
-  if (!els.pdfTemplateStatus) return;
+function setPdfTemplateStatus(form, message, isError = false) {
+  const status = form?.querySelector('.pdf-template-status');
+  if (!status) return;
   if (!message) {
-    els.pdfTemplateStatus.classList.add('hidden');
-    els.pdfTemplateStatus.textContent = '';
+    status.classList.add('hidden');
+    status.textContent = '';
     return;
   }
-  els.pdfTemplateStatus.textContent = message;
-  els.pdfTemplateStatus.classList.toggle('settings-status--error', isError);
-  els.pdfTemplateStatus.classList.remove('hidden');
+  status.textContent = message;
+  status.classList.toggle('settings-status--error', isError);
+  status.classList.remove('hidden');
 }
 
 function syncColorHexFields(form) {
@@ -1652,95 +1814,118 @@ function bindColorFieldSync(form) {
   });
 }
 
-async function renderPdfTemplateSettings() {
-  if (!els.pdfTemplateForm) return;
+function bindPdfTemplateFormHighlight(form, previewRoot) {
+  if (!form || !previewRoot || form.dataset.highlightBound === 'true') return;
+  form.dataset.highlightBound = 'true';
+  const setActiveRegions = (regions) => {
+    previewRoot.querySelectorAll('.pdf-layout-preview__region').forEach((el) => {
+      el.classList.toggle('is-active', regions.includes(el.dataset.region));
+    });
+  };
+  form.querySelectorAll('[data-preview-region]').forEach((fieldset) => {
+    fieldset.addEventListener('focusin', () => {
+      const region = fieldset.dataset.previewRegion;
+      const regions = region === 'text' ? ['text', 'fuss'] : [region];
+      setActiveRegions(regions);
+    });
+  });
+  form.addEventListener('focusout', () => {
+    window.setTimeout(() => {
+      if (!form.contains(document.activeElement)) setActiveRegions([]);
+    }, 0);
+  });
+}
+
+function updateSchemaPreviewInForm(form, isAngebot) {
+  const inputName = isAngebot ? 'angebot-nummer-schema' : 'rechnung-nummer-schema';
+  const previewSelector = isAngebot ? '.angebot-schema-preview' : '.rechnung-schema-preview';
+  const input = form.elements[inputName];
+  const preview = form.querySelector(previewSelector);
+  if (!input || !preview) return;
+  const schema = String(input.value || '').trim();
+  if (!schema) {
+    preview.textContent = '—';
+    return;
+  }
+  try {
+    preview.textContent = isAngebot
+      ? previewAngebotsnummer(schema, new Date(), 1)
+      : previewRechnungsnummer(schema, new Date(), 1);
+  } catch {
+    preview.textContent = 'Ungültiges Schema';
+  }
+}
+
+function ensurePdfTemplatePreview(form, previewRoot, type) {
+  form.querySelectorAll('[data-pdf-shared-fields]').forEach(mountSharedPdfTemplateFields);
+  if (!previewRoot.querySelector('.pdf-layout-preview__sheet')) {
+    previewRoot.innerHTML = createPdfLayoutPreviewMarkup(type);
+  }
+}
+
+async function renderPdfTemplateView(view) {
+  const isAngebot = view === 'pdf-vorlage-angebot';
+  const form = isAngebot ? els.pdfAngebotForm : els.pdfRechnungForm;
+  const previewRoot = isAngebot ? els.pdfPreviewAngebot : els.pdfPreviewRechnung;
+  const type = isAngebot ? 'angebot' : 'rechnung';
+  if (!form || !previewRoot) return;
+
+  ensurePdfTemplatePreview(form, previewRoot, type);
   const tpl = await loadPdfTemplate();
-  fillPdfTemplateForm(els.pdfTemplateForm, tpl);
-  syncColorHexFields(els.pdfTemplateForm);
-  updateAngebotSchemaPreview();
-  updateRechnungSchemaPreview();
-  setPdfTemplateStatus('');
+  if (isAngebot) fillPdfTemplateAngebotForm(form, tpl);
+  else fillPdfTemplateRechnungForm(form, tpl);
+  syncColorHexFields(form);
+  updateSchemaPreviewInForm(form, isAngebot);
+  updatePdfTemplatePreview(form, previewRoot, type);
+  setPdfTemplateStatus(form, '');
 }
 
-function updateRechnungSchemaPreview() {
-  const input = els.pdfTemplateForm?.elements['rechnung-nummer-schema'];
-  const preview = els.rechnungSchemaPreview;
-  if (!input || !preview) return;
-  const schema = String(input.value || '').trim();
-  if (!schema) {
-    preview.textContent = '—';
-    return;
-  }
-  try {
-    preview.textContent = previewRechnungsnummer(schema, new Date(), 1);
-  } catch {
-    preview.textContent = 'Ungültiges Schema';
-  }
-}
-
-function updateAngebotSchemaPreview() {
-  const input = els.pdfTemplateForm?.elements['angebot-nummer-schema'];
-  const preview = els.angebotSchemaPreview;
-  if (!input || !preview) return;
-  const schema = String(input.value || '').trim();
-  if (!schema) {
-    preview.textContent = '—';
-    return;
-  }
-  try {
-    preview.textContent = previewAngebotsnummer(schema, new Date(), 1);
-  } catch {
-    preview.textContent = 'Ungültiges Schema';
-  }
-}
-
-async function handlePdfTemplateSubmit(e) {
+async function handlePdfTemplateSubmit(e, type) {
   e.preventDefault();
-  const form = els.pdfTemplateForm;
-  if (!form) return;
-  const schema = String(form.elements['angebot-nummer-schema']?.value || '').trim();
-  const rechnungSchema = String(form.elements['rechnung-nummer-schema']?.value || '').trim();
+  const form = e.target;
+  const isAngebot = type === 'angebot';
+  const schemaName = isAngebot ? 'angebot-nummer-schema' : 'rechnung-nummer-schema';
+  const schema = String(form.elements[schemaName]?.value || '').trim();
   if (schema && !schemaHasSequenceToken(schema)) {
     setPdfTemplateStatus(
-      'Das Angebots-Schema braucht eine Laufnummer, z. B. {NR:3} oder {NNN}.',
-      true
-    );
-    return;
-  }
-  if (rechnungSchema && !schemaHasSequenceToken(rechnungSchema)) {
-    setPdfTemplateStatus(
-      'Das Rechnungs-Schema braucht eine Laufnummer, z. B. {NR:3} oder {NNN}.',
+      form,
+      'Das Schema braucht eine Laufnummer, z. B. {NR:3} oder {NNN}.',
       true
     );
     return;
   }
   try {
-    await savePdfTemplate(templateFromForm(form));
-    setPdfTemplateStatus('Vorlage gespeichert.');
+    const patch = isAngebot
+      ? templatePatchFromAngebotPage(form)
+      : templatePatchFromRechnungPage(form);
+    await savePdfTemplate({ ...getPdfTemplate(), ...patch });
+    setPdfTemplateStatus(form, 'Vorlage gespeichert.');
   } catch (err) {
-    setPdfTemplateStatus(err.message, true);
+    setPdfTemplateStatus(form, err.message, true);
   }
 }
 
-async function handlePdfTemplateReset() {
+async function handlePdfTemplateReset(form, type) {
   if (!confirm('PDF-Vorlage auf Standardwerte zurücksetzen? Gespeicherte Bilder gehen verloren.')) {
     return;
   }
   const defaults = getDefaultPdfTemplate();
+  const isAngebot = type === 'angebot';
+  const previewRoot = isAngebot ? els.pdfPreviewAngebot : els.pdfPreviewRechnung;
   try {
     await savePdfTemplate(defaults);
-    fillPdfTemplateForm(els.pdfTemplateForm, defaults);
-    syncColorHexFields(els.pdfTemplateForm);
-    updateAngebotSchemaPreview();
-    updateRechnungSchemaPreview();
-    setPdfTemplateStatus('Standardvorlage wiederhergestellt.');
+    if (isAngebot) fillPdfTemplateAngebotForm(form, defaults);
+    else fillPdfTemplateRechnungForm(form, defaults);
+    syncColorHexFields(form);
+    updateSchemaPreviewInForm(form, isAngebot);
+    updatePdfTemplatePreview(form, previewRoot, type);
+    setPdfTemplateStatus(form, 'Standardvorlage wiederhergestellt.');
   } catch (err) {
-    setPdfTemplateStatus(err.message, true);
+    setPdfTemplateStatus(form, err.message, true);
   }
 }
 
-async function handlePdfTemplateImage(kind, file) {
-  const form = els.pdfTemplateForm;
+async function handlePdfTemplateImage(form, previewRoot, type, kind, file) {
   if (!form || !file) return;
   try {
     const dataUrl = await readImageFileAsDataUrl(file, kind);
@@ -1751,24 +1936,71 @@ async function handlePdfTemplateImage(kind, file) {
       form.dataset.headerData = dataUrl;
       updateImagePreview(form.querySelector('[data-preview="header"]'), dataUrl);
     }
-    setPdfTemplateStatus('');
+    updatePdfTemplatePreview(form, previewRoot, type);
+    setPdfTemplateStatus(form, '');
   } catch (err) {
-    setPdfTemplateStatus(err.message, true);
+    setPdfTemplateStatus(form, err.message, true);
   }
 }
 
-function clearPdfTemplateImage(kind) {
-  const form = els.pdfTemplateForm;
+function clearPdfTemplateImage(form, previewRoot, type, kind, fileInput) {
   if (!form) return;
   if (kind === 'logo') {
     form.dataset.logoData = '';
-    if (els.pdfLogoFile) els.pdfLogoFile.value = '';
+    if (fileInput) fileInput.value = '';
     updateImagePreview(form.querySelector('[data-preview="logo"]'), '');
   } else {
     form.dataset.headerData = '';
-    if (els.pdfHeaderFile) els.pdfHeaderFile.value = '';
+    if (fileInput) fileInput.value = '';
     updateImagePreview(form.querySelector('[data-preview="header"]'), '');
   }
+  updatePdfTemplatePreview(form, previewRoot, type);
+}
+
+function bindPdfTemplateForm(form, previewRoot, type) {
+  if (!form || form.dataset.bound === 'true') return;
+  form.dataset.bound = 'true';
+  const isAngebot = type === 'angebot';
+
+  bindColorFieldSync(form);
+  bindPdfTemplatePreview(form, previewRoot, type);
+  bindPdfTemplateFormHighlight(form, previewRoot);
+
+  form.addEventListener('submit', (e) => handlePdfTemplateSubmit(e, type));
+  form.querySelector('.pdf-template-reset')?.addEventListener('click', () => {
+    handlePdfTemplateReset(form, type);
+  });
+
+  const schemaInput = form.elements[isAngebot ? 'angebot-nummer-schema' : 'rechnung-nummer-schema'];
+  schemaInput?.addEventListener('input', () => updateSchemaPreviewInForm(form, isAngebot));
+
+  const logoFile = form.querySelector('.pdf-logo-file-input');
+  const headerFile = form.querySelector('.pdf-header-file-input');
+  logoFile?.addEventListener('change', (e) => {
+    handlePdfTemplateImage(form, previewRoot, type, 'logo', e.target.files?.[0]);
+  });
+  headerFile?.addEventListener('change', (e) => {
+    handlePdfTemplateImage(form, previewRoot, type, 'header', e.target.files?.[0]);
+  });
+  form.querySelectorAll('[data-clear-image]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const kind = btn.dataset.clearImage;
+      clearPdfTemplateImage(
+        form,
+        previewRoot,
+        type,
+        kind,
+        kind === 'logo' ? logoFile : headerFile
+      );
+    });
+  });
+}
+
+function bindPdfTemplateForms() {
+  ensurePdfTemplatePreview(els.pdfAngebotForm, els.pdfPreviewAngebot, 'angebot');
+  ensurePdfTemplatePreview(els.pdfRechnungForm, els.pdfPreviewRechnung, 'rechnung');
+  bindPdfTemplateForm(els.pdfAngebotForm, els.pdfPreviewAngebot, 'angebot');
+  bindPdfTemplateForm(els.pdfRechnungForm, els.pdfPreviewRechnung, 'rechnung');
 }
 
 async function renderArchiv() {
@@ -2031,6 +2263,15 @@ async function renderKatalogView() {
   } catch (err) {
     els.katalogListe.innerHTML = `<p class="empty">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
   }
+}
+
+function bindPreisBlurFormat(...fields) {
+  fields.forEach((field) => {
+    field?.addEventListener('focusout', () => {
+      const formatted = formatPreisInputDisplay(field.value);
+      if (formatted !== null) field.value = formatted;
+    });
+  });
 }
 
 async function saveKatalogForm(e) {
@@ -2416,6 +2657,8 @@ function bindAppEvents() {
   bindMainNav();
   bindAngebotKopfToggle();
   bindPostenKopfToggle();
+  bindRechnungKopfToggle();
+  bindRechnungPostenKopfToggle();
   bindFormPdfValidation();
   initKatalogModal({
     modal: els.katalogModal,
@@ -2467,25 +2710,8 @@ function bindAppEvents() {
     }
   });
 
-  if (els.pdfTemplateForm) {
-    bindColorFieldSync(els.pdfTemplateForm);
-    els.pdfTemplateForm.addEventListener('submit', handlePdfTemplateSubmit);
-    els.pdfTemplateReset?.addEventListener('click', handlePdfTemplateReset);
-    els.pdfTemplateForm.elements['angebot-nummer-schema']?.addEventListener('input', () => {
-      updateAngebotSchemaPreview();
-    });
-    els.pdfTemplateForm.elements['rechnung-nummer-schema']?.addEventListener('input', () => {
-      updateRechnungSchemaPreview();
-    });
-    els.pdfLogoFile?.addEventListener('change', (e) => {
-      handlePdfTemplateImage('logo', e.target.files?.[0]);
-    });
-    els.pdfHeaderFile?.addEventListener('change', (e) => {
-      handlePdfTemplateImage('header', e.target.files?.[0]);
-    });
-    els.pdfTemplateForm.querySelectorAll('[data-clear-image]').forEach((btn) => {
-      btn.addEventListener('click', () => clearPdfTemplateImage(btn.dataset.clearImage));
-    });
+  if (els.pdfAngebotForm) {
+    bindPdfTemplateForms();
   }
 
   els.resetBtn.addEventListener('click', () => resetForm());
@@ -2535,6 +2761,7 @@ function bindAppEvents() {
 
   els.katalogForm?.addEventListener('submit', saveKatalogForm);
   els.katalogFormReset?.addEventListener('click', resetKatalogForm);
+  bindPreisBlurFormat(els.katalogFormPreisStk, els.katalogFormPreisStd);
   els.katalogNeuBtn?.addEventListener('click', () => {
     resetKatalogForm();
     els.katalogFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2880,10 +3107,6 @@ function bindAuthEvents() {
   els.logoutBtn.addEventListener('click', async () => {
     await logout();
     showLanding();
-  });
-
-  document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
-    btn.addEventListener('click', toggleTheme);
   });
 }
 

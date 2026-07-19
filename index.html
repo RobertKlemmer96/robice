@@ -23,9 +23,6 @@
           </span>
         </div>
         <div class="landing-header__actions">
-          <button type="button" class="btn btn-ghost btn-sm" data-theme-toggle aria-label="Design umschalten">
-            Theme
-          </button>
           <button type="button" class="btn btn-ghost btn-sm" data-landing-action="login">Anmelden</button>
           <button type="button" class="btn btn-primary btn-sm" data-landing-action="register">Kostenlos starten</button>
         </div>
@@ -368,71 +365,127 @@
 
       <div id="view-rechnung-neu" class="hidden">
         <main class="main">
-          <section class="card">
-            <h2>Rechnung</h2>
-            <div class="form-grid">
-              <label class="full">
-                Kunde
-                <div class="input-row">
-                  <input type="text" id="rechnung-kunde-name" placeholder="Freiname oder Kunde wählen" />
-                  <button type="button" id="rechnung-kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
+          <section class="card angebot-kopf" id="rechnung-kopf">
+            <button
+              type="button"
+              class="angebot-kopf__bar"
+              id="rechnung-kopf-toggle"
+              aria-expanded="true"
+              aria-controls="rechnung-kopf-body"
+            >
+              <span class="angebot-kopf__summary">
+                <span class="angebot-kopf__title">Allgemeine Informationen</span>
+                <span class="angebot-kopf__meta" id="rechnung-kopf-summary-meta">
+                  <span id="rechnung-kopf-summary-kunde" class="angebot-kopf__kunde"></span>
+                </span>
+              </span>
+              <svg class="angebot-kopf__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  d="M4 6l4 4 4-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div class="angebot-kopf__collapse" id="rechnung-kopf-body">
+              <div class="angebot-kopf__body">
+                <div class="angebot-kopf__split">
+                  <div class="angebot-kopf__col angebot-kopf__col--meta">
+                    <label>
+                      Rechnungsnummer
+                      <input type="text" id="rechnung-nr" />
+                    </label>
+                    <label>
+                      Rechnungsdatum
+                      <input type="date" id="rechnung-datum" />
+                    </label>
+                    <label>
+                      Fällig am
+                      <input type="date" id="rechnung-faellig" />
+                    </label>
+                    <p id="rechnung-angebot-ref" class="field-hint hidden"></p>
+                  </div>
+                  <div class="angebot-kopf__divider" aria-hidden="true"></div>
+                  <div class="angebot-kopf__col angebot-kopf__col--kunde">
+                    <label>
+                      Kunde
+                      <div class="input-row">
+                        <input type="text" id="rechnung-kunde-name" placeholder="Freiname oder Kunde wählen" />
+                        <button type="button" id="rechnung-kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
+                      </div>
+                      <span id="rechnung-kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
+                    </label>
+                    <div class="adresse-fields">
+                      <div id="rechnung-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
+                      <p id="rechnung-einsatzort-hinweis" class="adresse-auswahl__active hidden"></p>
+                      <label>
+                        Straße, Hausnummer
+                        <input
+                          type="text"
+                          id="rechnung-kunde-strasse"
+                          placeholder="Musterstraße 12"
+                          autocomplete="street-address"
+                        />
+                      </label>
+                      <label>
+                        PLZ, Ort
+                        <input
+                          type="text"
+                          id="rechnung-kunde-plz-ort"
+                          placeholder="12345 Musterstadt"
+                          autocomplete="postal-code"
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
-                <span id="rechnung-kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
-              </label>
-              <div class="adresse-fields full">
-                <div id="rechnung-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
-                <p id="rechnung-einsatzort-hinweis" class="adresse-auswahl__active hidden"></p>
-                <label>
-                  Straße, Hausnummer
-                  <input
-                    type="text"
-                    id="rechnung-kunde-strasse"
-                    placeholder="Musterstraße 12"
-                    autocomplete="street-address"
-                  />
-                </label>
-                <label>
-                  PLZ, Ort
-                  <input
-                    type="text"
-                    id="rechnung-kunde-plz-ort"
-                    placeholder="12345 Musterstadt"
-                    autocomplete="postal-code"
-                  />
-                </label>
               </div>
-              <label>
-                Rechnungsnummer
-                <input type="text" id="rechnung-nr" />
-              </label>
-              <label>
-                Rechnungsdatum
-                <input type="date" id="rechnung-datum" />
-              </label>
-              <label>
-                Fällig am
-                <input type="date" id="rechnung-faellig" />
-              </label>
-              <p id="rechnung-angebot-ref" class="field-hint full hidden"></p>
             </div>
           </section>
 
-          <section class="card">
-            <div class="card-header card-header--search posten-suche-row">
-              <input type="search" id="rechnung-suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
-              <button type="button" id="rechnung-katalog-oeffnen-btn" class="btn btn-ghost btn-sm posten-suche-row__btn" aria-label="Gesamten Katalog anzeigen">
-                Katalog
-              </button>
+          <section class="card posten-kopf" id="rechnung-posten-kopf">
+            <button
+              type="button"
+              class="posten-kopf__bar"
+              id="rechnung-posten-kopf-toggle"
+              aria-expanded="true"
+              aria-controls="rechnung-posten-kopf-body"
+            >
+              <span class="posten-kopf__summary">
+                <span class="posten-kopf__title">Posten</span>
+                <span class="posten-kopf__meta" id="rechnung-posten-kopf-summary-meta">
+                  <span id="rechnung-posten-kopf-summary-count" class="posten-kopf__count">Keine Posten</span>
+                </span>
+              </span>
+              <svg class="posten-kopf__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  d="M4 6l4 4 4-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div class="posten-kopf__collapse" id="rechnung-posten-kopf-body">
+              <div class="posten-kopf__body">
+                <div class="card-header card-header--search posten-suche-row">
+                  <input type="search" id="rechnung-suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
+                  <button type="button" id="rechnung-katalog-oeffnen-btn" class="btn btn-ghost btn-sm posten-suche-row__btn" aria-label="Gesamten Katalog anzeigen">
+                    Katalog
+                  </button>
+                </div>
+                <div id="rechnung-posten-liste" class="posten-liste"></div>
+              </div>
             </div>
-            <div id="rechnung-posten-liste" class="posten-liste"></div>
           </section>
 
           <div id="rechnung-sticky-footer" class="angebot-sticky-footer rechnung-sticky-footer">
             <section class="card summary-card">
-              <h2>Zusammenfassung</h2>
-              <div id="rechnung-zusammenfassung" class="zusammenfassung">
-                <p class="empty">Noch keine Posten ausgewählt.</p>
-              </div>
               <div class="totals">
                 <div class="total-row">
                   <span>Netto</span>
@@ -480,7 +533,7 @@
               aria-controls="angebot-kopf-body"
             >
               <span class="angebot-kopf__summary">
-                <span class="angebot-kopf__title">Angebot</span>
+                <span class="angebot-kopf__title">Allgemeine Informationen</span>
                 <span class="angebot-kopf__meta" id="angebot-kopf-summary-meta">
                   <span id="angebot-kopf-summary-kunde" class="angebot-kopf__kunde"></span>
                 </span>
@@ -503,6 +556,10 @@
                     <label>
                       Angebotsnummer
                       <input type="text" id="angebot-nr" />
+                    </label>
+                    <label>
+                      Angebotsdatum
+                      <input type="date" id="angebot-datum" />
                     </label>
                     <label>
                       Gültig bis
@@ -622,228 +679,134 @@
           </section>
         </main>
       </div>
-      <div id="view-pdf-vorlage" class="hidden">
+      <div id="view-pdf-vorlage-angebot" class="hidden">
         <main class="main">
-          <section class="card">
-            <h2>PDF-Vorlage</h2>
+          <section class="card pdf-vorlage-card">
+            <h2>PDF-Vorlage · Angebot</h2>
             <p class="settings-lead">
-              Firmendaten, Nummern, Farben, Texte und Bilder für Angebots- und Rechnungs-PDFs.
-              Änderungen gelten für neu erstellte PDFs.
+              Links sehen Sie eine Vorschau des Angebots-PDFs. Rechts pflegen Sie die Bereiche —
+              Briefkopf, Dokumentkopf, Texte und Farben.
             </p>
-            <form id="pdf-template-form" class="pdf-template-form">
-              <fieldset class="form-section">
-                <legend>Angebotsnummer</legend>
-                <div class="form-grid">
-                  <label class="full">
-                    Schema (automatische Vergabe)
-                    <input
-                      type="text"
-                      name="angebot-nummer-schema"
-                      id="angebot-nummer-schema"
-                      spellcheck="false"
-                      autocomplete="off"
-                      placeholder="ANG-{YYYY}{MM}{DD}-{NR:3}"
-                    />
-                  </label>
-                </div>
-                <p class="schema-hint">
-                  <strong>Pflicht:</strong> eine Laufnummer, z. B. <code>{NR:3}</code> oder <code>{NNN}</code>.
-                  Vorschau: <strong id="angebot-schema-preview">—</strong>
-                </p>
-              </fieldset>
-
-              <fieldset class="form-section">
-                <legend>Rechnungsnummer</legend>
-                <div class="form-grid">
-                  <label class="full">
-                    Schema (automatische Vergabe)
-                    <input
-                      type="text"
-                      name="rechnung-nummer-schema"
-                      id="rechnung-nummer-schema"
-                      spellcheck="false"
-                      autocomplete="off"
-                      placeholder="RE-{YYYY}{MM}{DD}-{NR:3}"
-                    />
-                  </label>
-                  <label>
-                    Zahlungsziel (Tage)
-                    <input
-                      type="number"
-                      name="rechnung-zahlungsziel-tage"
-                      id="rechnung-zahlungsziel-tage"
-                      min="0"
-                      max="365"
-                      step="1"
-                    />
-                  </label>
-                </div>
-                <p class="schema-hint">
-                  Vorschau: <strong id="rechnung-schema-preview">—</strong>
-                </p>
-              </fieldset>
-
-              <fieldset class="form-section">
-                <legend>Rechnungstexte (PDF)</legend>
-                <div class="form-grid">
-                  <label class="full">
-                    Titel
-                    <input type="text" name="rechnung-text-titel" autocomplete="off" />
-                  </label>
-                  <label class="full">
-                    Einleitung
-                    <textarea name="rechnung-text-einleitung" rows="2"></textarea>
-                  </label>
-                  <label class="full">
-                    Fußzeile 1
-                    <textarea name="rechnung-text-fuss1" rows="2"></textarea>
-                  </label>
-                  <label class="full">
-                    Fußzeile 2
-                    <textarea name="rechnung-text-fuss2" rows="2"></textarea>
-                  </label>
-                </div>
-              </fieldset>
-
-              <fieldset class="form-section">
-                <legend>Firmendaten (Briefkopf)</legend>
-                <div class="form-grid">
-                  <label class="full">
-                    Firmenname
-                    <input type="text" name="firma-name" autocomplete="organization" />
-                  </label>
-                  <label class="full">
-                    Straße
-                    <input type="text" name="firma-strasse" />
-                  </label>
-                  <label>
-                    PLZ &amp; Ort
-                    <input type="text" name="firma-plzOrt" />
-                  </label>
-                  <label>
-                    Telefon
-                    <input type="text" name="firma-telefon" />
-                  </label>
-                  <label>
-                    E-Mail
-                    <input type="email" name="firma-email" autocomplete="email" />
-                  </label>
-                  <label>
-                    Webseite
-                    <input type="text" name="firma-web" />
-                  </label>
-                  <label class="full">
-                    USt-IdNr.
-                    <input type="text" name="firma-ustId" />
-                  </label>
-                </div>
-              </fieldset>
-
-              <fieldset class="form-section">
-                <legend>Farben</legend>
-                <div class="form-grid form-grid--colors">
-                  <label class="color-field">
-                    Primärfarbe (Tabellenkopf)
-                    <span class="color-field-row">
-                      <input type="color" name="farbe-primaer" />
-                      <input type="text" class="color-hex" data-sync-color="farbe-primaer" />
-                    </span>
-                  </label>
-                  <label class="color-field">
-                    Gedämpfter Text
-                    <span class="color-field-row">
-                      <input type="color" name="farbe-textMuted" />
-                      <input type="text" class="color-hex" data-sync-color="farbe-textMuted" />
-                    </span>
-                  </label>
-                  <label class="color-field">
-                    Fußzeile
-                    <span class="color-field-row">
-                      <input type="color" name="farbe-fusszeile" />
-                      <input type="text" class="color-hex" data-sync-color="farbe-fusszeile" />
-                    </span>
-                  </label>
-                  <label class="color-field">
-                    Trennlinie
-                    <span class="color-field-row">
-                      <input type="color" name="farbe-trennlinie" />
-                      <input type="text" class="color-hex" data-sync-color="farbe-trennlinie" />
-                    </span>
-                  </label>
-                </div>
-              </fieldset>
-
-              <fieldset class="form-section">
-                <legend>Angebotstexte (PDF)</legend>
-                <div class="form-grid">
-                  <label>
-                    Dokumenttitel
-                    <input type="text" name="text-titel" placeholder="ANGEBOT" />
-                  </label>
-                  <label class="full">
-                    Einleitungstext
-                    <textarea name="text-einleitung" rows="2"></textarea>
-                  </label>
-                  <label class="full">
-                    Fußzeile Zeile 1
-                    <textarea name="text-fuss1" rows="2"></textarea>
-                  </label>
-                  <label class="full">
-                    Fußzeile Zeile 2
-                    <textarea name="text-fuss2" rows="2"></textarea>
-                  </label>
-                </div>
-              </fieldset>
-
-              <fieldset class="form-section">
-                <legend>Bilder</legend>
-                <div class="form-grid">
-                  <div class="full image-upload-block">
-                    <span class="image-upload-label">Logo (links oben)</span>
-                    <div class="image-upload-row">
-                      <input type="file" id="pdf-logo-file" accept="image/png,image/jpeg,image/webp" />
-                      <button type="button" class="btn btn-ghost btn-sm" data-clear-image="logo">Entfernen</button>
-                    </div>
-                    <p class="image-upload-hint">
-                      PNG (empfohlen mit transparentem Hintergrund), JPG oder WebP · max. 2&nbsp;MB
-                    </p>
-                    <div class="image-preview is-empty" data-preview="logo"></div>
-                    <div class="form-grid form-grid--compact">
-                      <label>
-                        Breite (mm)
-                        <input type="number" name="layout-logoBreiteMm" min="10" max="80" step="1" />
-                      </label>
-                      <label>
-                        Höhe (mm)
-                        <input type="number" name="layout-logoHoeheMm" min="8" max="40" step="1" />
+            <div class="pdf-vorlage-workspace">
+              <aside class="pdf-vorlage-preview-col">
+                <p class="pdf-vorlage-preview-label">Layout-Vorschau</p>
+                <div class="pdf-layout-preview" id="pdf-preview-angebot" aria-label="Angebots-PDF Vorschau"></div>
+              </aside>
+              <div class="pdf-vorlage-form-col">
+                <form id="pdf-angebot-form" class="pdf-template-form">
+                  <div data-pdf-shared-fields></div>
+                  <fieldset class="form-section" data-preview-region="meta">
+                    <legend>Dokumentkopf (rechts oben)</legend>
+                    <div class="form-grid">
+                      <label class="full">
+                        Angebotsnummer-Schema
+                        <input type="text" name="angebot-nummer-schema" spellcheck="false" autocomplete="off" placeholder="ANG-{YYYY}{MM}{DD}-{NR:3}" />
                       </label>
                     </div>
-                  </div>
-                  <div class="full image-upload-block">
-                    <label class="checkbox-label">
-                      <input type="checkbox" name="layout-headerAktiv" />
-                      Header-Banner oben (volle Breite)
-                    </label>
-                    <div class="image-upload-row">
-                      <input type="file" id="pdf-header-file" accept="image/png,image/jpeg,image/webp" />
-                      <button type="button" class="btn btn-ghost btn-sm" data-clear-image="header">Entfernen</button>
+                    <p class="schema-hint">Vorschau: <strong class="angebot-schema-preview">—</strong></p>
+                  </fieldset>
+                  <fieldset class="form-section" data-preview-region="text">
+                    <legend>Texte im PDF</legend>
+                    <div class="form-grid">
+                      <label>Dokumenttitel<input type="text" name="text-titel" placeholder="ANGEBOT" /></label>
+                      <label class="full">Einleitung<textarea name="text-einleitung" rows="2"></textarea></label>
+                      <label class="full">Fußzeile 1<textarea name="text-fuss1" rows="2"></textarea></label>
+                      <label class="full">Fußzeile 2<textarea name="text-fuss2" rows="2"></textarea></label>
                     </div>
-                    <p class="image-upload-hint">PNG, JPG oder WebP · max. 2&nbsp;MB · Banner max. 1600&nbsp;px breit.</p>
-                    <div class="image-preview is-empty" data-preview="header"></div>
-                    <label>
-                      Banner-Höhe (mm)
-                      <input type="number" name="layout-headerHoeheMm" min="10" max="50" step="1" />
-                    </label>
+                  </fieldset>
+                  <fieldset class="form-section" data-preview-region="table">
+                    <legend>Farben &amp; Tabelle</legend>
+                    <div class="form-grid form-grid--colors">
+                      <label class="color-field">Primärfarbe (Tabellenkopf)
+                        <span class="color-field-row"><input type="color" name="farbe-primaer" /><input type="text" class="color-hex" data-sync-color="farbe-primaer" /></span>
+                      </label>
+                      <label class="color-field">Gedämpfter Text
+                        <span class="color-field-row"><input type="color" name="farbe-textMuted" /><input type="text" class="color-hex" data-sync-color="farbe-textMuted" /></span>
+                      </label>
+                      <label class="color-field">Fußzeile
+                        <span class="color-field-row"><input type="color" name="farbe-fusszeile" /><input type="text" class="color-hex" data-sync-color="farbe-fusszeile" /></span>
+                      </label>
+                      <label class="color-field">Trennlinie
+                        <span class="color-field-row"><input type="color" name="farbe-trennlinie" /><input type="text" class="color-hex" data-sync-color="farbe-trennlinie" /></span>
+                      </label>
+                    </div>
+                  </fieldset>
+                  <div class="form-actions full settings-actions">
+                    <button type="submit" class="btn btn-primary">Angebots-Vorlage speichern</button>
+                    <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
+                    <p class="settings-status hidden pdf-template-status" role="status"></p>
                   </div>
-                </div>
-              </fieldset>
-
-              <div class="form-actions full settings-actions">
-                <button type="submit" class="btn btn-primary">Vorlage speichern</button>
-                <button type="button" id="pdf-template-reset" class="btn btn-ghost">Auf Standard zurücksetzen</button>
-                <p id="pdf-template-status" class="settings-status hidden" role="status"></p>
+                </form>
               </div>
-            </form>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <div id="view-pdf-vorlage-rechnung" class="hidden">
+        <main class="main">
+          <section class="card pdf-vorlage-card">
+            <h2>PDF-Vorlage · Rechnung</h2>
+            <p class="settings-lead">
+              Links die Rechnungs-Vorschau, rechts die Einstellungen. Briefkopf, Nummern und Texte
+              entsprechen dem späteren PDF-Layout.
+            </p>
+            <div class="pdf-vorlage-workspace">
+              <aside class="pdf-vorlage-preview-col">
+                <p class="pdf-vorlage-preview-label">Layout-Vorschau</p>
+                <div class="pdf-layout-preview" id="pdf-preview-rechnung" aria-label="Rechnungs-PDF Vorschau"></div>
+              </aside>
+              <div class="pdf-vorlage-form-col">
+                <form id="pdf-rechnung-form" class="pdf-template-form">
+                  <div data-pdf-shared-fields></div>
+                  <fieldset class="form-section" data-preview-region="meta">
+                    <legend>Dokumentkopf (rechts oben)</legend>
+                    <div class="form-grid">
+                      <label class="full">
+                        Rechnungsnummer-Schema
+                        <input type="text" name="rechnung-nummer-schema" spellcheck="false" autocomplete="off" placeholder="RE-{YYYY}{MM}{DD}-{NR:3}" />
+                      </label>
+                      <label>
+                        Zahlungsziel (Tage)
+                        <input type="number" name="rechnung-zahlungsziel-tage" min="0" max="365" step="1" />
+                      </label>
+                    </div>
+                    <p class="schema-hint">Vorschau: <strong class="rechnung-schema-preview">—</strong></p>
+                  </fieldset>
+                  <fieldset class="form-section" data-preview-region="text">
+                    <legend>Texte im PDF</legend>
+                    <div class="form-grid">
+                      <label class="full">Titel<input type="text" name="rechnung-text-titel" autocomplete="off" /></label>
+                      <label class="full">Einleitung<textarea name="rechnung-text-einleitung" rows="2"></textarea></label>
+                      <label class="full">Fußzeile 1<textarea name="rechnung-text-fuss1" rows="2"></textarea></label>
+                      <label class="full">Fußzeile 2<textarea name="rechnung-text-fuss2" rows="2"></textarea></label>
+                    </div>
+                  </fieldset>
+                  <fieldset class="form-section" data-preview-region="table">
+                    <legend>Farben &amp; Tabelle</legend>
+                    <div class="form-grid form-grid--colors">
+                      <label class="color-field">Primärfarbe (Tabellenkopf)
+                        <span class="color-field-row"><input type="color" name="farbe-primaer" /><input type="text" class="color-hex" data-sync-color="farbe-primaer" /></span>
+                      </label>
+                      <label class="color-field">Gedämpfter Text
+                        <span class="color-field-row"><input type="color" name="farbe-textMuted" /><input type="text" class="color-hex" data-sync-color="farbe-textMuted" /></span>
+                      </label>
+                      <label class="color-field">Fußzeile
+                        <span class="color-field-row"><input type="color" name="farbe-fusszeile" /><input type="text" class="color-hex" data-sync-color="farbe-fusszeile" /></span>
+                      </label>
+                      <label class="color-field">Trennlinie
+                        <span class="color-field-row"><input type="color" name="farbe-trennlinie" /><input type="text" class="color-hex" data-sync-color="farbe-trennlinie" /></span>
+                      </label>
+                    </div>
+                  </fieldset>
+                  <div class="form-actions full settings-actions">
+                    <button type="submit" class="btn btn-primary">Rechnungs-Vorlage speichern</button>
+                    <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
+                    <p class="settings-status hidden pdf-template-status" role="status"></p>
+                  </div>
+                </form>
+              </div>
+            </div>
           </section>
         </main>
       </div>
@@ -1185,17 +1148,6 @@
         <article id="legal-content" class="legal-content card"></article>
       </main>
     </div>
-
-    <button
-      type="button"
-      class="theme-dock btn btn-ghost btn-icon theme-toggle hidden"
-      data-theme-toggle
-      aria-label="Hellmodus aktivieren"
-      title="Hellmodus"
-      hidden
-    >
-      <span class="theme-icon" aria-hidden="true">☀️</span>
-    </button>
 
     <script type="module" src="/src/main.js"></script>
   </body>

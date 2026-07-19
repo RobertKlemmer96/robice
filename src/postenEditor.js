@@ -3,6 +3,7 @@ import { findKatalogPosten, getKatalogPosten } from './katalogPosten.js';
 import {
   formatEuro,
   formatMenge,
+  formatPreisInputDisplay,
   parseMengeInput,
   parsePreisInput,
   berechneSummenAusPosten,
@@ -532,6 +533,26 @@ export function createPostenEditor(editorState, els) {
     els.onUpdate?.();
   }
 
+  function applyPreisInputFormat(input) {
+    if (!input?.matches('.posten-preis-input')) return;
+    const formatted = formatPreisInputDisplay(input.value);
+    if (formatted === null) {
+      if (String(input.value).trim() === '') input.value = '';
+      return;
+    }
+    input.value = formatted;
+    const { action, id } = input.dataset;
+    if (action === 'entwurf-preis') {
+      editorState.entwurf.preis = formatted;
+      return;
+    }
+    if (action === 'frei-preis' && editorState.freiePosten.has(id)) {
+      const parsed = parsePreisInput(formatted);
+      updateFreiPosten(id, { preis: Number.isNaN(parsed) ? 0 : Math.max(0, parsed) });
+      render();
+    }
+  }
+
   function bindEvents() {
     if (!els.postenListe) return;
 
@@ -555,6 +576,10 @@ export function createPostenEditor(editorState, els) {
     });
 
     els.postenListe.addEventListener('focusout', (e) => {
+      if (e.target.matches('.posten-preis-input')) {
+        applyPreisInputFormat(e.target);
+      }
+
       const entwurfItem = e.target.closest('.posten-item--entwurf');
       if (!entwurfItem) return;
 
@@ -567,11 +592,13 @@ export function createPostenEditor(editorState, els) {
     });
 
     els.postenListe.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' || e.target.dataset.action !== 'entwurf-preis') return;
+      if (e.key !== 'Enter' || !e.target.matches('.posten-preis-input')) return;
       e.preventDefault();
+      applyPreisInputFormat(e.target);
       const entwurfItem = e.target.closest('.posten-item--entwurf');
+      if (!entwurfItem) return;
       syncEntwurfFromItem(entwurfItem);
-      const mengeInput = entwurfItem?.querySelector('[data-action="menge"]');
+      const mengeInput = entwurfItem.querySelector('[data-action="menge"]');
       tryCommitEntwurf(mengeInput?.value ?? '');
     });
 
@@ -582,10 +609,6 @@ export function createPostenEditor(editorState, els) {
       if (target.dataset.action === 'menge') setMenge(id, target.value);
       else if (target.dataset.action === 'einheit' || target.dataset.action === 'entwurf-einheit') {
         setEinheit(id, target.value);
-      } else if (target.dataset.action === 'frei-preis' && editorState.freiePosten.has(id)) {
-        const parsed = parsePreisInput(target.value);
-        updateFreiPosten(id, { preis: Number.isNaN(parsed) ? 0 : Math.max(0, parsed) });
-        render();
       }
     });
 

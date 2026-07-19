@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS angebote (
   angebot_nr TEXT NOT NULL,
   erstellt_am TEXT NOT NULL,
   aktualisiert_am TEXT NOT NULL,
+  angebotsdatum TEXT,
   gueltig_bis TEXT,
   kunde_json TEXT NOT NULL,
   posten_json TEXT NOT NULL

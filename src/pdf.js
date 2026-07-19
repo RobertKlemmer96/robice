@@ -66,15 +66,17 @@ export function formatMenge(menge) {
 
 
 export function parsePreisInput(input) {
-
-  const raw = String(input).trim();
-
+  const raw = String(input ?? '').trim();
   if (raw === '') return null;
-
-  const num = Number(raw.replace(',', '.'));
-
+  const cleaned = raw.replace(/[^\d,.-]/g, '').replace(',', '.');
+  const num = Number(cleaned);
   return Number.isFinite(num) ? num : NaN;
+}
 
+export function formatPreisInputDisplay(input) {
+  const parsed = parsePreisInput(input);
+  if (parsed === null || Number.isNaN(parsed)) return null;
+  return formatEuro(Math.max(0, parsed));
 }
 
 
@@ -167,11 +169,11 @@ export function buildPdfDoc(angebot, postenDetails) {
 
 
 
-  const erstelltAm = angebot.erstelltAm
-
-    ? formatDatum(new Date(angebot.erstelltAm))
-
-    : formatDatum(new Date());
+  const erstelltAm = angebot.angebotsdatum
+    ? formatDatum(new Date(angebot.angebotsdatum))
+    : angebot.erstelltAm
+      ? formatDatum(new Date(angebot.erstelltAm))
+      : formatDatum(new Date());
 
   const gueltigBis = angebot.gueltigBis
 
@@ -281,7 +283,7 @@ export function buildPdfDoc(angebot, postenDetails) {
 
   doc.text(`Angebotsnr.: ${angebot.angebotNr}`, 140, titelY + 10);
 
-  doc.text(`Datum: ${erstelltAm}`, 140, titelY + 16);
+  doc.text(`Angebotsdatum: ${erstelltAm}`, 140, titelY + 16);
 
   doc.text(`Gültig bis: ${gueltigBis}`, 140, titelY + 22);
 

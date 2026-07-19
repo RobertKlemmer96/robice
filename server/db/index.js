@@ -85,6 +85,17 @@ function runMigrations(database) {
   database.exec(`
     CREATE INDEX IF NOT EXISTS idx_katalog_posten_tenant ON katalog_posten(tenant_id)
   `);
+
+  const angebotCols = database.prepare('PRAGMA table_info(angebote)').all();
+  const angebotNames = new Set(angebotCols.map((c) => c.name));
+  if (!angebotNames.has('angebotsdatum')) {
+    database.exec(`ALTER TABLE angebote ADD COLUMN angebotsdatum TEXT`);
+    database.exec(`
+      UPDATE angebote
+      SET angebotsdatum = substr(erstellt_am, 1, 10)
+      WHERE angebotsdatum IS NULL AND erstellt_am IS NOT NULL AND erstellt_am != ''
+    `);
+  }
 }
 
 function migrateAdresseColumns(database, table) {

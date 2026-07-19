@@ -6,6 +6,7 @@ function rowToAngebot(row) {
     angebotNr: row.angebot_nr,
     erstelltAm: row.erstellt_am,
     aktualisiertAm: row.aktualisiert_am,
+    angebotsdatum: row.angebotsdatum,
     gueltigBis: row.gueltig_bis,
     kundeId: row.kunde_id || null,
     kunde: JSON.parse(row.kunde_json),
@@ -43,12 +44,13 @@ export function saveAngebot(tenantId, angebot) {
   if (existing) {
     db.prepare(
       `UPDATE angebote SET kunde_id = ?, angebot_nr = ?, erstellt_am = ?, aktualisiert_am = ?,
-       gueltig_bis = ?, kunde_json = ?, posten_json = ? WHERE tenant_id = ? AND id = ?`
+       angebotsdatum = ?, gueltig_bis = ?, kunde_json = ?, posten_json = ? WHERE tenant_id = ? AND id = ?`
     ).run(
       angebot.kundeId || null,
       angebot.angebotNr,
       angebot.erstelltAm,
       angebot.aktualisiertAm,
+      angebot.angebotsdatum || null,
       angebot.gueltigBis || null,
       kundeJson,
       postenJson,
@@ -58,7 +60,7 @@ export function saveAngebot(tenantId, angebot) {
   } else {
     db.prepare(
       `INSERT INTO angebote (id, tenant_id, kunde_id, angebot_nr, erstellt_am, aktualisiert_am,
-       gueltig_bis, kunde_json, posten_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       angebotsdatum, gueltig_bis, kunde_json, posten_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       angebot.id,
       tenantId,
@@ -66,6 +68,7 @@ export function saveAngebot(tenantId, angebot) {
       angebot.angebotNr,
       angebot.erstelltAm,
       angebot.aktualisiertAm,
+      angebot.angebotsdatum || null,
       angebot.gueltigBis || null,
       kundeJson,
       postenJson
