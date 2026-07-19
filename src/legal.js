@@ -189,7 +189,7 @@ function renderAgb() {
 
     <section class="legal-section">
       <h2>§ 1 Geltungsbereich</h2>
-      <p>Diese AGB gelten für die Nutzung der webbasierten Software zur Erstellung und Verwaltung von Angeboten und Rechnungen durch Unternehmer im Sinne des § 14 BGB.</p>
+      <p>Diese AGB gelten für die Nutzung der webbasierten Software zur Erstellung und Verwaltung von Angeboten und Rechnungen durch alle registrierten Nutzer.</p>
       <p>Anbieter: ${escapeHtml(company)}, ${escapeHtml(c.street)}, ${escapeHtml(c.zipCity)} („Anbieter“).</p>
     </section>
 
@@ -240,7 +240,7 @@ function renderAgb() {
 
     <section class="legal-section">
       <h2>§ 11 Schlussbestimmungen</h2>
-      <p>Es gilt deutsches Recht. Gerichtsstand für Kaufleute ist ${escapeHtml(c.jurisdictionCity)}. Sollten einzelne Bestimmungen unwirksam sein, bleibt der Vertrag im Übrigen wirksam.</p>
+      <p>Es gilt deutsches Recht. Gerichtsstand ist — soweit gesetzlich zulässig — ${escapeHtml(c.jurisdictionCity)}. Sollten einzelne Bestimmungen unwirksam sein, bleibt der Vertrag im Übrigen wirksam.</p>
     </section>
 
     <p class="legal-meta">Stand: ${escapeHtml(c.lastUpdated)}</p>

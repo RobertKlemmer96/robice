@@ -511,31 +511,12 @@ export function createPostenEditor(editorState, els) {
       els.pdfBtn.classList.toggle('is-disabled', !kannSpeichern);
     }
 
-    if (!els.zusammenfassung) return;
-
-    if (posten.length === 0) {
-      els.zusammenfassung.innerHTML = '<p class="empty">Noch keine Posten ausgewählt.</p>';
-      return;
-    }
-
-    els.zusammenfassung.innerHTML = posten
-      .map(
-        (p) => `
-      <div class="summary-row">
-        <div>
-          <strong>${p.bezeichnung}</strong>
-          <span>${formatMenge(p.menge)} ${p.einheit} × ${formatEuro(p.preis)}</span>
-        </div>
-        <span>${formatEuro(p.preis * p.menge)}</span>
-      </div>
-    `
-      )
-      .join('');
   }
 
   function render() {
     renderPostenListe();
     renderZusammenfassung();
+    els.onUpdate?.();
   }
 
   function bindEvents() {

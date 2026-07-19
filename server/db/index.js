@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { config } from '../config.js';
 import { SCHEMA_SQL } from './schema.js';
+import { normalizeAdresse } from '../../src/adresse.js';
 
 let db;
 
@@ -30,6 +31,14 @@ function runMigrations(database) {
   if (!names.has('notiz')) {
     database.exec(`ALTER TABLE kunden ADD COLUMN notiz TEXT NOT NULL DEFAULT ''`);
   }
+  if (!names.has('strasse')) {
+    database.exec(`ALTER TABLE kunden ADD COLUMN strasse TEXT NOT NULL DEFAULT ''`);
+  }
+  if (!names.has('plz_ort')) {
+    database.exec(`ALTER TABLE kunden ADD COLUMN plz_ort TEXT NOT NULL DEFAULT ''`);
+  }
+
+  migrateAdresseColumns(database, 'kunden');
 
   database.exec(`
     CREATE TABLE IF NOT EXISTS kunden_objekte (
@@ -49,6 +58,40 @@ function runMigrations(database) {
   database.exec(`
     CREATE INDEX IF NOT EXISTS idx_kunden_objekte_kunde ON kunden_objekte(kunde_id)
   `);
+
+  const objCols = database.prepare('PRAGMA table_info(kunden_objekte)').all();
+  const objNames = new Set(objCols.map((c) => c.name));
+  if (!objNames.has('strasse')) {
+    database.exec(`ALTER TABLE kunden_objekte ADD COLUMN strasse TEXT NOT NULL DEFAULT ''`);
+  }
+  if (!objNames.has('plz_ort')) {
+    database.exec(`ALTER TABLE kunden_objekte ADD COLUMN plz_ort TEXT NOT NULL DEFAULT ''`);
+  }
+
+  migrateAdresseColumns(database, 'kunden_objekte');
+}
+
+function migrateAdresseColumns(database, table) {
+  const rows = database.prepare(`SELECT id, adresse, strasse, plz_ort FROM ${table}`).all();
+  const update = database.prepare(
+    `UPDATE ${table} SET strasse = ?, plz_ort = ?, adresse = ? WHERE id = ?`
+  );
+
+  for (const row of rows) {
+    const normalized = normalizeAdresse({
+      strasse: row.strasse,
+      plz_ort: row.plz_ort,
+      adresse: row.adresse,
+    });
+    if (
+      normalized.strasse === (row.strasse || '') &&
+      normalized.plzOrt === (row.plz_ort || '') &&
+      normalized.adresse === (row.adresse || '')
+    ) {
+      continue;
+    }
+    update.run(normalized.strasse, normalized.plzOrt, normalized.adresse, row.id);
+  }
 }
 
 export function closeDb() {

@@ -3,7 +3,6 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import {
-
   getPdfTemplate,
 
   hexToRgb,
@@ -12,6 +11,8 @@ import {
 
 } from './pdfTemplate.js';
 
+import { adresseToLines } from './adresse.js';
+
 
 
 const MWST_SATZ = 0.19;
@@ -19,19 +20,16 @@ const MWST_SATZ = 0.19;
 function writeKundeAdressBlock(doc, kunde, startY) {
   let y = startY;
   const kundeName = kunde.name || 'Kunde';
-  const kundeAdresse = kunde.adresse || '';
 
   doc.text(kundeName, 20, y);
 
-  if (kundeAdresse) {
-    kundeAdresse.split('\n').forEach((zeile) => {
-      y += 5;
-      doc.text(zeile.trim(), 20, y);
-    });
-  }
+  adresseToLines(kunde).forEach((zeile) => {
+    y += 5;
+    doc.text(zeile, 20, y);
+  });
 
   const obj = kunde.objekt;
-  if (obj && (obj.name || obj.adresse)) {
+  if (obj && (obj.name || obj.adresse || obj.strasse || obj.plzOrt)) {
     y += 8;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
@@ -42,12 +40,10 @@ function writeKundeAdressBlock(doc, kunde, startY) {
       y += 5;
       doc.text(obj.name, 20, y);
     }
-    if (obj.adresse) {
-      obj.adresse.split('\n').forEach((zeile) => {
-        y += 5;
-        doc.text(zeile.trim(), 20, y);
-      });
-    }
+    adresseToLines(obj).forEach((zeile) => {
+      y += 5;
+      doc.text(zeile, 20, y);
+    });
   }
 
   return y;

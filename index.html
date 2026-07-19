@@ -219,17 +219,28 @@
                 </div>
                 <span id="rechnung-kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
               </label>
-              <label class="full">
-                Rechnungsadresse
-                <textarea id="rechnung-kunde-adresse" rows="2" placeholder="Straße, PLZ Ort"></textarea>
-              </label>
-              <label class="full">
-                Objekt / Einsatzort
-                <select id="rechnung-kunde-objekt" disabled>
-                  <option value="">— Kein Objekt —</option>
-                </select>
-                <span class="field-hint">Optional: Baustelle oder alternative Rechnungsadresse vom Kunden</span>
-              </label>
+              <div class="adresse-fields full">
+                <div id="rechnung-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
+                <p id="rechnung-einsatzort-hinweis" class="adresse-auswahl__active hidden"></p>
+                <label>
+                  Straße, Hausnummer
+                  <input
+                    type="text"
+                    id="rechnung-kunde-strasse"
+                    placeholder="Musterstraße 12"
+                    autocomplete="street-address"
+                  />
+                </label>
+                <label>
+                  PLZ, Ort
+                  <input
+                    type="text"
+                    id="rechnung-kunde-plz-ort"
+                    placeholder="12345 Musterstadt"
+                    autocomplete="postal-code"
+                  />
+                </label>
+              </div>
               <label>
                 Rechnungsnummer
                 <input type="text" id="rechnung-nr" />
@@ -307,10 +318,8 @@
             >
               <span class="angebot-kopf__summary">
                 <span class="angebot-kopf__title">Angebot</span>
-                <span class="angebot-kopf__meta">
-                  <span id="angebot-kopf-summary-nr" class="angebot-kopf__nr">—</span>
-                  <span class="angebot-kopf__sep" aria-hidden="true">·</span>
-                  <span id="angebot-kopf-summary-kunde" class="angebot-kopf__kunde">Kein Kunde</span>
+                <span class="angebot-kopf__meta" id="angebot-kopf-summary-meta">
+                  <span id="angebot-kopf-summary-kunde" class="angebot-kopf__kunde"></span>
                 </span>
               </span>
               <svg class="angebot-kopf__chevron" viewBox="0 0 16 16" aria-hidden="true">
@@ -326,52 +335,92 @@
             </button>
             <div class="angebot-kopf__collapse" id="angebot-kopf-body">
               <div class="angebot-kopf__body">
-                <div class="form-grid">
-                  <label class="full">
-                    Kunde
-                    <div class="input-row">
-                      <input type="text" id="kunde-name" placeholder="Freiname oder Kunde wählen" />
-                      <button type="button" id="kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
+                <div class="angebot-kopf__split">
+                  <div class="angebot-kopf__col angebot-kopf__col--meta">
+                    <label>
+                      Angebotsnummer
+                      <input type="text" id="angebot-nr" />
+                    </label>
+                    <label>
+                      Gültig bis
+                      <input type="date" id="gueltig-bis" />
+                    </label>
+                  </div>
+                  <div class="angebot-kopf__divider" aria-hidden="true"></div>
+                  <div class="angebot-kopf__col angebot-kopf__col--kunde">
+                    <label>
+                      Kunde
+                      <div class="input-row">
+                        <input type="text" id="kunde-name" placeholder="Freiname oder Kunde wählen" />
+                        <button type="button" id="kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
+                      </div>
+                      <span id="kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
+                    </label>
+                    <div class="adresse-fields">
+                      <div id="kunde-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
+                      <p id="kunde-einsatzort-hinweis" class="adresse-auswahl__active hidden"></p>
+                      <label>
+                        Straße, Hausnummer
+                        <input
+                          type="text"
+                          id="kunde-strasse"
+                          placeholder="Musterstraße 12"
+                          autocomplete="street-address"
+                        />
+                      </label>
+                      <label>
+                        PLZ, Ort
+                        <input
+                          type="text"
+                          id="kunde-plz-ort"
+                          placeholder="12345 Musterstadt"
+                          autocomplete="postal-code"
+                        />
+                      </label>
                     </div>
-                    <span id="kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
-                  </label>
-                  <label class="full">
-                    Rechnungsadresse
-                    <textarea id="kunde-adresse" rows="2" placeholder="Straße, PLZ Ort"></textarea>
-                  </label>
-                  <label class="full">
-                    Objekt / Einsatzort
-                    <select id="kunde-objekt" disabled>
-                      <option value="">— Kein Objekt —</option>
-                    </select>
-                    <span class="field-hint">Optional: Baustelle oder alternative Rechnungsadresse vom Kunden</span>
-                  </label>
-                  <label>
-                    Angebotsnummer
-                    <input type="text" id="angebot-nr" />
-                  </label>
-                  <label>
-                    Gültig bis
-                    <input type="date" id="gueltig-bis" />
-                  </label>
+                  </div>
                 </div>
               </div>
             </div>
           </section>
 
-          <section class="card">
-            <div class="card-header card-header--search">
-              <input type="search" id="suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
+          <section class="card posten-kopf" id="posten-kopf">
+            <button
+              type="button"
+              class="posten-kopf__bar"
+              id="posten-kopf-toggle"
+              aria-expanded="true"
+              aria-controls="posten-kopf-body"
+            >
+              <span class="posten-kopf__summary">
+                <span class="posten-kopf__title">Posten</span>
+                <span class="posten-kopf__meta" id="posten-kopf-summary-meta">
+                  <span id="posten-kopf-summary-count" class="posten-kopf__count">Keine Posten</span>
+                </span>
+              </span>
+              <svg class="posten-kopf__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  d="M4 6l4 4 4-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div class="posten-kopf__collapse" id="posten-kopf-body">
+              <div class="posten-kopf__body">
+                <div class="card-header card-header--search">
+                  <input type="search" id="suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
+                </div>
+                <div id="posten-liste" class="posten-liste"></div>
+              </div>
             </div>
-            <div id="posten-liste" class="posten-liste"></div>
           </section>
 
           <div id="angebot-sticky-footer" class="angebot-sticky-footer">
             <section class="card summary-card">
-              <h2>Zusammenfassung</h2>
-              <div id="zusammenfassung" class="zusammenfassung">
-                <p class="empty">Noch keine Posten ausgewählt.</p>
-              </div>
               <div class="totals">
                 <div class="total-row">
                   <span>Netto</span>
@@ -734,10 +783,26 @@
                 Firmenname / Name
                 <input type="text" id="kunden-form-name" required placeholder="Firma oder Name" />
               </label>
-              <label class="full">
-                Rechnungsadresse
-                <textarea id="kunden-form-adresse" rows="2" placeholder="Straße, PLZ Ort"></textarea>
-              </label>
+              <div class="adresse-fields full">
+                <label>
+                  Straße, Hausnummer
+                  <input
+                    type="text"
+                    id="kunden-form-strasse"
+                    placeholder="Musterstraße 12"
+                    autocomplete="street-address"
+                  />
+                </label>
+                <label>
+                  PLZ, Ort
+                  <input
+                    type="text"
+                    id="kunden-form-plz-ort"
+                    placeholder="12345 Musterstadt"
+                    autocomplete="postal-code"
+                  />
+                </label>
+              </div>
               <label>
                 Telefon
                 <input type="tel" id="kunden-form-telefon" placeholder="z. B. 0170 …" autocomplete="tel" />
@@ -774,7 +839,7 @@
             <div class="kunden-detail__body">
               <dl class="kunden-detail__meta">
                 <div class="kunden-detail__row">
-                  <dt>Rechnungsadresse</dt>
+                  <dt>Adresse</dt>
                   <dd id="kunden-detail-adresse"></dd>
                 </div>
                 <div class="kunden-detail__row">
@@ -800,15 +865,32 @@
                     Objektname
                     <input type="text" id="kunden-objekt-name" required placeholder="z. B. WEG Musterstraße 12" />
                   </label>
-                  <label class="full">
-                    Adresse
-                    <textarea id="kunden-objekt-adresse" rows="2" placeholder="Baustelle oder alternative Rechnungsadresse"></textarea>
-                  </label>
+                  <div class="adresse-fields full">
+                    <span class="adresse-fields__heading">Adresse</span>
+                    <label>
+                      Straße, Hausnummer
+                      <input
+                        type="text"
+                        id="kunden-objekt-strasse"
+                        placeholder="Musterstraße 12"
+                        autocomplete="street-address"
+                      />
+                    </label>
+                    <label>
+                      PLZ, Ort
+                      <input
+                        type="text"
+                        id="kunden-objekt-plz-ort"
+                        placeholder="12345 Musterstadt"
+                        autocomplete="postal-code"
+                      />
+                    </label>
+                  </div>
                   <label class="full">
                     Art
                     <select id="kunden-objekt-typ">
                       <option value="einsatz">Einsatzort / Baustelle</option>
-                      <option value="rechnung">Rechnungsadresse (alternativ)</option>
+                      <option value="rechnung">Adresse (alternativ)</option>
                     </select>
                   </label>
                   <div class="form-actions full">

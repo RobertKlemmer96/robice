@@ -1,15 +1,30 @@
 import { getDb } from '../db/index.js';
+import { normalizeAdresse } from '../../src/adresse.js';
 
 function rowToKunde(row) {
   return {
     id: row.id,
     name: row.name,
-    adresse: row.adresse || '',
+    ...normalizeAdresse({
+      strasse: row.strasse,
+      plz_ort: row.plz_ort,
+      adresse: row.adresse,
+    }),
     telefon: row.telefon || '',
     email: row.email || '',
     notiz: row.notiz || '',
     erstelltAm: row.erstellt_am,
     aktualisiertAm: row.aktualisiert_am,
+  };
+}
+
+function prepareKundeForSave(kunde) {
+  const addr = normalizeAdresse(kunde);
+  return {
+    ...kunde,
+    strasse: addr.strasse,
+    plzOrt: addr.plzOrt,
+    adresse: addr.adresse,
   };
 }
 
@@ -37,41 +52,46 @@ export function saveKunde(tenantId, kunde) {
     .prepare('SELECT id FROM kunden WHERE tenant_id = ? AND id = ?')
     .get(tenantId, kunde.id);
 
-  const telefon = kunde.telefon || '';
-  const email = kunde.email || '';
-  const notiz = kunde.notiz || '';
+  const prepared = prepareKundeForSave(kunde);
+  const telefon = prepared.telefon || '';
+  const email = prepared.email || '';
+  const notiz = prepared.notiz || '';
 
   if (existing) {
     db.prepare(
-      `UPDATE kunden SET name = ?, adresse = ?, telefon = ?, email = ?, notiz = ?, aktualisiert_am = ?
+      `UPDATE kunden SET name = ?, adresse = ?, strasse = ?, plz_ort = ?, telefon = ?, email = ?, notiz = ?, aktualisiert_am = ?
        WHERE tenant_id = ? AND id = ?`
     ).run(
-      kunde.name,
-      kunde.adresse || '',
+      prepared.name,
+      prepared.adresse,
+      prepared.strasse,
+      prepared.plzOrt,
       telefon,
       email,
       notiz,
-      kunde.aktualisiertAm,
+      prepared.aktualisiertAm,
       tenantId,
-      kunde.id
+      prepared.id
     );
   } else {
     db.prepare(
-      `INSERT INTO kunden (id, tenant_id, name, adresse, telefon, email, notiz, erstellt_am, aktualisiert_am)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO kunden (id, tenant_id, name, adresse, strasse, plz_ort, telefon, email, notiz, erstellt_am, aktualisiert_am)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
-      kunde.id,
+      prepared.id,
       tenantId,
-      kunde.name,
-      kunde.adresse || '',
+      prepared.name,
+      prepared.adresse,
+      prepared.strasse,
+      prepared.plzOrt,
       telefon,
       email,
       notiz,
-      kunde.erstelltAm,
-      kunde.aktualisiertAm
+      prepared.erstelltAm,
+      prepared.aktualisiertAm
     );
   }
-  return getKunde(tenantId, kunde.id);
+  return getKunde(tenantId, prepared.id);
 }
 
 export function deleteKunde(tenantId, id) {

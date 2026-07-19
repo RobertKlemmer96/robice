@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS kunden (
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   adresse TEXT NOT NULL DEFAULT '',
+  strasse TEXT NOT NULL DEFAULT '',
+  plz_ort TEXT NOT NULL DEFAULT '',
   telefon TEXT NOT NULL DEFAULT '',
   email TEXT NOT NULL DEFAULT '',
   notiz TEXT NOT NULL DEFAULT '',
@@ -37,6 +39,8 @@ CREATE TABLE IF NOT EXISTS kunden_objekte (
   kunde_id TEXT NOT NULL REFERENCES kunden(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   adresse TEXT NOT NULL DEFAULT '',
+  strasse TEXT NOT NULL DEFAULT '',
+  plz_ort TEXT NOT NULL DEFAULT '',
   typ TEXT NOT NULL DEFAULT 'einsatz',
   erstellt_am TEXT NOT NULL,
   aktualisiert_am TEXT NOT NULL

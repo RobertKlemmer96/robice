@@ -1,5 +1,13 @@
 import { initLegal } from './legal.js';
+import {
+  normalizeAdresse,
+  adresseToLines,
+  setAdresseFieldPair,
+  readAdresseFieldPair,
+  clearAdresseFieldPair,
+} from './adresse.js';
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName } from './auth.js';
+import { initDatePickers } from './datePicker.js';
 import { initTheme, toggleTheme } from './theme.js';
 import {
   getAllAngebote,
@@ -66,20 +74,17 @@ function createDocMeta() {
     editingId: null,
     selectedKundeId: null,
     selectedObjektId: null,
+    selectedAdresseKey: null,
     objekt: null,
     objekteCache: [],
     billingAdresse: '',
+    billingSnapshot: null,
   };
 }
 
 function createRechnungMeta() {
   return {
-    editingId: null,
-    selectedKundeId: null,
-    selectedObjektId: null,
-    objekt: null,
-    objekteCache: [],
-    billingAdresse: '',
+    ...createDocMeta(),
     angebotId: null,
     angebotNr: null,
   };
@@ -95,6 +100,7 @@ const state = {
   kundenPickerSuche: '',
   kundenSuche: '',
   kundenPickerFor: 'angebot',
+  expandedKundeDokumenteId: null,
   angebot: createDocMeta(),
   rechnung: createRechnungMeta(),
 };
@@ -160,8 +166,10 @@ const els = {
   kundeName: document.getElementById('kunde-name'),
   kundeAuswahlBtn: document.getElementById('kunde-auswahl-btn'),
   kundeHinweis: document.getElementById('kunde-hinweis'),
-  kundeAdresse: document.getElementById('kunde-adresse'),
-  kundeObjekt: document.getElementById('kunde-objekt'),
+  kundeStrasse: document.getElementById('kunde-strasse'),
+  kundePlzOrt: document.getElementById('kunde-plz-ort'),
+  kundeAdresseAuswahl: document.getElementById('kunde-adresse-auswahl'),
+  kundeEinsatzortHinweis: document.getElementById('kunde-einsatzort-hinweis'),
   kundenModal: document.getElementById('kunden-modal'),
   kundenPickerSuche: document.getElementById('kunden-picker-suche'),
   kundenPickerListe: document.getElementById('kunden-picker-liste'),
@@ -169,7 +177,8 @@ const els = {
   kundenFormTitle: document.getElementById('kunden-form-title'),
   kundenFormReset: document.getElementById('kunden-form-reset'),
   kundenFormName: document.getElementById('kunden-form-name'),
-  kundenFormAdresse: document.getElementById('kunden-form-adresse'),
+  kundenFormStrasse: document.getElementById('kunden-form-strasse'),
+  kundenFormPlzOrt: document.getElementById('kunden-form-plz-ort'),
   kundenFormTelefon: document.getElementById('kunden-form-telefon'),
   kundenFormEmail: document.getElementById('kunden-form-email'),
   kundenFormNotiz: document.getElementById('kunden-form-notiz'),
@@ -184,7 +193,8 @@ const els = {
   kundenDetailObjekteListe: document.getElementById('kunden-detail-objekte-liste'),
   kundenObjektForm: document.getElementById('kunden-objekt-form'),
   kundenObjektName: document.getElementById('kunden-objekt-name'),
-  kundenObjektAdresse: document.getElementById('kunden-objekt-adresse'),
+  kundenObjektStrasse: document.getElementById('kunden-objekt-strasse'),
+  kundenObjektPlzOrt: document.getElementById('kunden-objekt-plz-ort'),
   kundenObjektTyp: document.getElementById('kunden-objekt-typ'),
   kundenObjektCancel: document.getElementById('kunden-objekt-cancel'),
   kundenDetailDokumente: document.getElementById('kunden-detail-dokumente'),
@@ -199,8 +209,13 @@ const els = {
   gueltigBis: document.getElementById('gueltig-bis'),
   angebotKopf: document.getElementById('angebot-kopf'),
   angebotKopfToggle: document.getElementById('angebot-kopf-toggle'),
-  angebotKopfSummaryNr: document.getElementById('angebot-kopf-summary-nr'),
+  angebotKopfSummaryMeta: document.getElementById('angebot-kopf-summary-meta'),
   angebotKopfSummaryKunde: document.getElementById('angebot-kopf-summary-kunde'),
+  postenKopf: document.getElementById('posten-kopf'),
+  postenKopfToggle: document.getElementById('posten-kopf-toggle'),
+  postenKopfSummaryMeta: document.getElementById('posten-kopf-summary-meta'),
+  postenKopfSummaryCount: document.getElementById('posten-kopf-summary-count'),
+  postenKopfBody: document.getElementById('posten-kopf-body'),
   angebotSchemaPreview: document.getElementById('angebot-schema-preview'),
   rechnungSchemaPreview: document.getElementById('rechnung-schema-preview'),
   rechnungResetBtn: document.getElementById('rechnung-reset-btn'),
@@ -215,8 +230,10 @@ const els = {
   rechnungKundeName: document.getElementById('rechnung-kunde-name'),
   rechnungKundeAuswahlBtn: document.getElementById('rechnung-kunde-auswahl-btn'),
   rechnungKundeHinweis: document.getElementById('rechnung-kunde-hinweis'),
-  rechnungKundeAdresse: document.getElementById('rechnung-kunde-adresse'),
-  rechnungKundeObjekt: document.getElementById('rechnung-kunde-objekt'),
+  rechnungKundeStrasse: document.getElementById('rechnung-kunde-strasse'),
+  rechnungKundePlzOrt: document.getElementById('rechnung-kunde-plz-ort'),
+  rechnungAdresseAuswahl: document.getElementById('rechnung-adresse-auswahl'),
+  rechnungEinsatzortHinweis: document.getElementById('rechnung-einsatzort-hinweis'),
   rechnungNr: document.getElementById('rechnung-nr'),
   rechnungDatum: document.getElementById('rechnung-datum'),
   rechnungFaellig: document.getElementById('rechnung-faellig'),
@@ -233,6 +250,7 @@ const angebotPostenEditor = createPostenEditor(angebotPostenState, {
   summeMwst: els.summeMwst,
   summeBrutto: els.summeBrutto,
   pdfBtn: els.pdfBtn,
+  onUpdate: () => updatePostenKopfSummary(),
 });
 
 const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
@@ -265,11 +283,32 @@ function escapeHtml(text) {
     .replace(/"/g, '&quot;');
 }
 
+function formatAdresseHtml(adresseLike) {
+  return adresseToLines(adresseLike)
+    .map((line) => escapeHtml(line))
+    .join('<br>');
+}
+
+function formatAdresseInline(adresseLike) {
+  return adresseToLines(adresseLike).join(', ');
+}
+
+function angebotAdresseFields() {
+  return { strasseEl: els.kundeStrasse, plzOrtEl: els.kundePlzOrt };
+}
+
+function rechnungAdresseFields() {
+  return { strasseEl: els.rechnungKundeStrasse, plzOrtEl: els.rechnungKundePlzOrt };
+}
+
 function kundeMatchesSearch(k, q) {
   if (!q) return true;
+  const addr = normalizeAdresse(k);
   return (
     k.name.toLowerCase().includes(q) ||
     (k.adresse || '').toLowerCase().includes(q) ||
+    addr.strasse.toLowerCase().includes(q) ||
+    addr.plzOrt.toLowerCase().includes(q) ||
     (k.telefon || '').toLowerCase().includes(q) ||
     (k.email || '').toLowerCase().includes(q) ||
     (k.notiz || '').toLowerCase().includes(q)
@@ -292,102 +331,213 @@ function setKundenDetailContact(el, value, kind) {
 
 const OBJEKT_TYP_LABELS = {
   einsatz: 'Einsatzort',
-  rechnung: 'Rechnungsadresse',
+  rechnung: 'Adresse (alternativ)',
 };
 
 function clearObjektMeta(meta) {
   meta.selectedObjektId = null;
+  meta.selectedAdresseKey = null;
   meta.objekt = null;
   meta.objekteCache = [];
+  meta.billingAdresse = '';
+  meta.billingSnapshot = null;
 }
 
-function appendObjektOptions(selectEl, objekte, typ) {
-  const group = document.createElement('optgroup');
-  group.label = typ === 'rechnung' ? 'Rechnungsadressen' : 'Einsatzorte';
-  objekte
-    .filter((o) => o.typ === typ)
-    .forEach((o) => {
-      const opt = document.createElement('option');
-      opt.value = o.id;
-      opt.textContent = o.name;
-      opt.dataset.typ = typ;
-      group.appendChild(opt);
-    });
-  if (group.children.length) selectEl.appendChild(group);
+function setBillingSnapshot(meta, adresseLike) {
+  meta.billingSnapshot = normalizeAdresse(adresseLike);
+  meta.billingAdresse = meta.billingSnapshot.adresse;
 }
 
-async function refreshObjektSelect(kundeId, selectEl, meta) {
-  if (!selectEl) return;
-  selectEl.innerHTML = '<option value="">— Kein Objekt —</option>';
-  selectEl.disabled = !kundeId;
-  clearObjektMeta(meta);
-  if (!kundeId) return;
+function updateEinsatzortHinweis(hinweisEl, meta) {
+  if (!hinweisEl) return;
+  if (meta.objekt?.typ === 'einsatz' && meta.objekt.name) {
+    hinweisEl.textContent = `Leistungsort: ${meta.objekt.name}`;
+    hinweisEl.classList.remove('hidden');
+    return;
+  }
+  hinweisEl.textContent = '';
+  hinweisEl.classList.add('hidden');
+}
+
+function renderAdresseAuswahlHtml(meta) {
+  const selected = meta.selectedAdresseKey;
+  const parts = [];
+
+  if (meta.billingSnapshot?.adresse || meta.billingSnapshot?.strasse || meta.billingSnapshot?.plzOrt) {
+    parts.push(`
+      <button type="button" class="adresse-auswahl__item${selected === 'billing' ? ' is-active' : ''}" data-adresse-key="billing">
+        <span class="adresse-auswahl__label">Adresse</span>
+        <span class="adresse-auswahl__text">${escapeHtml(formatAdresseInline(meta.billingSnapshot)) || '—'}</span>
+      </button>
+    `);
+  }
+
+  meta.objekteCache.forEach((obj) => {
+    const badge = OBJEKT_TYP_LABELS[obj.typ] || obj.typ;
+    parts.push(`
+      <button type="button" class="adresse-auswahl__item${selected === obj.id ? ' is-active' : ''}" data-adresse-key="${escapeHtml(obj.id)}">
+        <span class="adresse-auswahl__label">${escapeHtml(obj.name)}<span class="adresse-auswahl__badge">${escapeHtml(badge)}</span></span>
+        <span class="adresse-auswahl__text">${escapeHtml(formatAdresseInline(obj)) || '—'}</span>
+      </button>
+    `);
+  });
+
+  return parts.join('');
+}
+
+function syncAdresseAuswahlActive(pickerEl, meta) {
+  if (!pickerEl) return;
+  pickerEl.querySelectorAll('.adresse-auswahl__item').forEach((btn) => {
+    btn.classList.toggle('is-active', btn.dataset.adresseKey === meta.selectedAdresseKey);
+  });
+}
+
+function selectAdresseOption(meta, key, adresseFields, hinweisEl) {
+  const { strasseEl, plzOrtEl } = adresseFields;
+
+  if (!key || key === 'billing') {
+    meta.selectedAdresseKey = 'billing';
+    meta.selectedObjektId = null;
+    meta.objekt = null;
+    if (meta.billingSnapshot) {
+      setAdresseFieldPair(strasseEl, plzOrtEl, meta.billingSnapshot);
+    }
+    updateEinsatzortHinweis(hinweisEl, meta);
+    return;
+  }
+
+  const obj = meta.objekteCache.find((o) => o.id === key);
+  if (!obj) return;
+
+  const objAddr = normalizeAdresse(obj);
+  meta.selectedAdresseKey = obj.id;
+  meta.selectedObjektId = obj.id;
+
+  if (obj.typ === 'rechnung') {
+    meta.objekt = null;
+    setAdresseFieldPair(strasseEl, plzOrtEl, objAddr);
+  } else {
+    meta.objekt = { typ: 'einsatz', name: obj.name, ...objAddr };
+    if (meta.billingSnapshot) {
+      setAdresseFieldPair(strasseEl, plzOrtEl, meta.billingSnapshot);
+    }
+  }
+
+  updateEinsatzortHinweis(hinweisEl, meta);
+}
+
+async function refreshAdresseAuswahl(kundeId, pickerEl, hinweisEl, meta, adresseFields) {
+  if (!pickerEl) return;
+
+  if (!kundeId) {
+    meta.objekteCache = [];
+    pickerEl.innerHTML = '';
+    pickerEl.classList.add('hidden');
+    updateEinsatzortHinweis(hinweisEl, meta);
+    return;
+  }
 
   const objekte = await listKundenObjekte(kundeId);
   meta.objekteCache = objekte;
-  appendObjektOptions(selectEl, objekte, 'einsatz');
-  appendObjektOptions(selectEl, objekte, 'rechnung');
+  const html = renderAdresseAuswahlHtml(meta);
+
+  if (!html) {
+    pickerEl.innerHTML = '';
+    pickerEl.classList.add('hidden');
+    updateEinsatzortHinweis(hinweisEl, meta);
+    return;
+  }
+
+  pickerEl.innerHTML = html;
+  pickerEl.classList.remove('hidden');
+  updateEinsatzortHinweis(hinweisEl, meta);
 }
 
-function applyObjektSelection(meta, objektId, adresseEl, fallbackAdresse) {
-  if (!objektId) {
-    meta.selectedObjektId = null;
-    meta.objekt = null;
-    if (fallbackAdresse !== undefined && adresseEl) {
-      adresseEl.value = fallbackAdresse;
+function addressesEqual(a, b) {
+  const left = normalizeAdresse(a);
+  const right = normalizeAdresse(b);
+  return left.strasse === right.strasse && left.plzOrt === right.plzOrt;
+}
+
+async function restoreAdresseFromDocument(kundeId, kundeJson, pickerEl, hinweisEl, meta, adresseFields) {
+  await refreshAdresseAuswahl(kundeId, pickerEl, hinweisEl, meta, adresseFields);
+
+  if (kundeJson?.objektId) {
+    const obj = meta.objekteCache.find((o) => o.id === kundeJson.objektId);
+    if (obj) {
+      selectAdresseOption(meta, obj.id, adresseFields, hinweisEl);
+      syncAdresseAuswahlActive(pickerEl, meta);
+      return;
     }
-    return;
   }
 
-  const obj = meta.objekteCache.find((o) => o.id === objektId);
-  if (!obj) return;
-
-  meta.selectedObjektId = obj.id;
-  if (obj.typ === 'rechnung') {
-    meta.objekt = { typ: 'rechnung', name: obj.name, adresse: obj.adresse || '' };
-    if (adresseEl) adresseEl.value = obj.adresse || '';
-    return;
-  }
-
-  meta.objekt = { typ: 'einsatz', name: obj.name, adresse: obj.adresse || '' };
-  if (fallbackAdresse !== undefined && adresseEl) {
-    adresseEl.value = fallbackAdresse;
-  }
-}
-
-async function restoreObjektFromDocument(kundeId, kundeJson, selectEl, meta, adresseEl) {
-  await refreshObjektSelect(kundeId, selectEl, meta);
-  if (!kundeJson?.objektId || !selectEl) return;
-
-  selectEl.value = kundeJson.objektId;
-  const obj = meta.objekteCache.find((o) => o.id === kundeJson.objektId);
-  if (obj) {
-    applyObjektSelection(meta, obj.id, adresseEl, kundeJson.adresse || '');
-    return;
-  }
-
-  if (kundeJson.objekt) {
-    meta.selectedObjektId = kundeJson.objektId;
+  if (kundeJson?.objekt?.name) {
+    meta.selectedObjektId = kundeJson.objektId || null;
+    meta.selectedAdresseKey = kundeJson.objektId || null;
     meta.objekt = {
       typ: 'einsatz',
       name: kundeJson.objekt.name || '',
-      adresse: kundeJson.objekt.adresse || '',
+      ...normalizeAdresse(kundeJson.objekt),
     };
+    setAdresseFieldPair(adresseFields.strasseEl, adresseFields.plzOrtEl, kundeJson);
+    updateEinsatzortHinweis(hinweisEl, meta);
+    syncAdresseAuswahlActive(pickerEl, meta);
+    return;
   }
+
+  const saved = normalizeAdresse(kundeJson);
+  if (meta.billingSnapshot && addressesEqual(saved, meta.billingSnapshot)) {
+    selectAdresseOption(meta, 'billing', adresseFields, hinweisEl);
+  } else {
+    const altRechnung = meta.objekteCache.find(
+      (o) => o.typ === 'rechnung' && addressesEqual(saved, o)
+    );
+    if (altRechnung) {
+      selectAdresseOption(meta, altRechnung.id, adresseFields, hinweisEl);
+    } else {
+      meta.selectedAdresseKey = null;
+      meta.selectedObjektId = null;
+      meta.objekt = null;
+      updateEinsatzortHinweis(hinweisEl, meta);
+    }
+  }
+
+  syncAdresseAuswahlActive(pickerEl, meta);
 }
 
-function buildKundePayload(name, adresse, meta) {
+function markAdresseManuallyEdited(meta, pickerEl, hinweisEl) {
+  meta.selectedAdresseKey = null;
+  meta.selectedObjektId = null;
+  meta.objekt = null;
+  syncAdresseAuswahlActive(pickerEl, meta);
+  updateEinsatzortHinweis(hinweisEl, meta);
+}
+
+function handleAdresseAuswahlClick(meta, adresseFields, pickerEl, hinweisEl, event) {
+  const btn = event.target.closest('[data-adresse-key]');
+  if (!btn || !pickerEl?.contains(btn)) return;
+  selectAdresseOption(meta, btn.dataset.adresseKey, adresseFields, hinweisEl);
+  syncAdresseAuswahlActive(pickerEl, meta);
+}
+
+function buildKundePayload(name, adresseData, meta) {
+  const addr = normalizeAdresse(adresseData);
   const kunde = {
     name,
-    adresse,
+    strasse: addr.strasse,
+    plzOrt: addr.plzOrt,
+    adresse: addr.adresse,
   };
   if (meta.selectedObjektId) {
     kunde.objektId = meta.selectedObjektId;
   }
   if (meta.objekt?.typ === 'einsatz') {
+    const objAddr = normalizeAdresse(meta.objekt);
     kunde.objekt = {
       name: meta.objekt.name,
-      adresse: meta.objekt.adresse || '',
+      strasse: objAddr.strasse,
+      plzOrt: objAddr.plzOrt,
+      adresse: objAddr.adresse,
     };
   }
   return kunde;
@@ -402,7 +552,7 @@ function resetKundenObjektForm() {
 
 function renderKundenObjekteHtml(objekte) {
   if (!objekte.length) {
-    return '<p class="empty">Noch keine Objekte. Baustellen oder alternative Rechnungsadressen unten anlegen.</p>';
+    return '<p class="empty">Noch keine Objekte. Baustellen oder alternative Adressen unten anlegen.</p>';
   }
 
   return objekte
@@ -412,7 +562,7 @@ function renderKundenObjekteHtml(objekte) {
         <div class="kunden-objekt-item__main">
           <span class="kunden-objekt-item__badge kunden-objekt-item__badge--${o.typ}">${OBJEKT_TYP_LABELS[o.typ] || o.typ}</span>
           <h4>${escapeHtml(o.name)}</h4>
-          ${o.adresse ? `<p>${escapeHtml(o.adresse).replace(/\n/g, '<br>')}</p>` : ''}
+          ${o.adresse || o.strasse || o.plzOrt ? `<p>${formatAdresseHtml(o)}</p>` : ''}
         </div>
         <div class="kunden-objekt-item__actions">
           <button type="button" class="btn btn-ghost btn-sm" data-action="edit-objekt" data-id="${o.id}">Bearbeiten</button>
@@ -434,23 +584,38 @@ async function renderKundenObjekteSection(kundeId) {
   }
 }
 
-/** Gespeicherten Kunden zuordnen oder neu anlegen; gibt kundeId zurück. */
-async function resolveKundeIdForSave(name, adresse, selectedKundeId) {
+async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
   const trimmedName = (name || '').trim();
-  const trimmedAdresse = (adresse || '').trim();
+  const addr = normalizeAdresse(adresseData);
 
   if (!trimmedName) {
-    return { kundeId: null, kunde: { name: '', adresse: trimmedAdresse } };
+    return {
+      kundeId: null,
+      kunde: { name: '', strasse: addr.strasse, plzOrt: addr.plzOrt, adresse: addr.adresse },
+    };
   }
 
   const jetzt = new Date().toISOString();
   const kunden = await getAllKunden();
-  const kundeSnapshot = { name: trimmedName, adresse: trimmedAdresse };
+  const kundeSnapshot = {
+    name: trimmedName,
+    strasse: addr.strasse,
+    plzOrt: addr.plzOrt,
+    adresse: addr.adresse,
+  };
 
   const syncKunde = async (kunde, updates) => {
-    const next = { ...kunde, ...updates, aktualisiertAm: jetzt };
+    const next = {
+      ...kunde,
+      ...updates,
+      ...normalizeAdresse({ ...kunde, ...updates }),
+      aktualisiertAm: jetzt,
+    };
+    const prev = normalizeAdresse(kunde);
     const changed =
-      next.name !== kunde.name || (next.adresse || '') !== (kunde.adresse || '');
+      next.name !== kunde.name ||
+      prev.strasse !== next.strasse ||
+      prev.plzOrt !== next.plzOrt;
     if (changed) await saveKunde(next);
     return next;
   };
@@ -460,30 +625,47 @@ async function resolveKundeIdForSave(name, adresse, selectedKundeId) {
     if (selectedKunde) {
       const updated = await syncKunde(selectedKunde, {
         name: trimmedName,
-        adresse: trimmedAdresse || selectedKunde.adresse || '',
+        strasse: addr.strasse || normalizeAdresse(selectedKunde).strasse,
+        plzOrt: addr.plzOrt || normalizeAdresse(selectedKunde).plzOrt,
       });
+      const normalized = normalizeAdresse(updated);
       return {
         kundeId: selectedKunde.id,
-        kunde: { name: updated.name, adresse: updated.adresse || '' },
+        kunde: {
+          name: updated.name,
+          strasse: normalized.strasse,
+          plzOrt: normalized.plzOrt,
+          adresse: normalized.adresse,
+        },
       };
     }
   }
 
   const byName = kunden.find((k) => normalizeKundeName(k.name) === normalizeKundeName(trimmedName));
   if (byName) {
+    const prev = normalizeAdresse(byName);
     const updated = await syncKunde(byName, {
-      adresse: trimmedAdresse || byName.adresse || '',
+      strasse: addr.strasse || prev.strasse,
+      plzOrt: addr.plzOrt || prev.plzOrt,
     });
+    const normalized = normalizeAdresse(updated);
     return {
       kundeId: byName.id,
-      kunde: { name: updated.name, adresse: updated.adresse || '' },
+      kunde: {
+        name: updated.name,
+        strasse: normalized.strasse,
+        plzOrt: normalized.plzOrt,
+        adresse: normalized.adresse,
+      },
     };
   }
 
   const neu = {
     id: createKundeId(),
     name: trimmedName,
-    adresse: trimmedAdresse,
+    strasse: addr.strasse,
+    plzOrt: addr.plzOrt,
+    adresse: addr.adresse,
     erstelltAm: jetzt,
     aktualisiertAm: jetzt,
   };
@@ -504,6 +686,84 @@ function dokumenteFuerKunde(kundeId, kundeName, angebote, rechnungen) {
     angebote: angebote.filter(matchKunde),
     rechnungen: rechnungen.filter(matchKunde),
   };
+}
+
+function renderKundenAngeboteListHtml(angebote) {
+  if (angebote.length === 0) {
+    return '<p class="empty empty--inline">Keine Angebote für diesen Kunden.</p>';
+  }
+
+  const sorted = [...angebote].sort(
+    (a, b) =>
+      new Date(b.aktualisiertAm || b.erstelltAm) - new Date(a.aktualisiertAm || a.erstelltAm)
+  );
+
+  const rows = sorted
+    .map((a) => {
+      const posten = resolvePostenDetails(a.posten);
+      const { brutto } = berechneSummenAusPosten(posten);
+      const datum = formatDatum(new Date(a.aktualisiertAm || a.erstelltAm));
+      return `
+      <li class="kunden-dokumente__row">
+        <div class="kunden-dokumente__info">
+          <span class="kunden-dokumente__nr">${escapeHtml(a.angebotNr)}</span>
+          <span class="kunden-dokumente__meta">${escapeHtml(datum)} · ${formatEuro(brutto)} · ${posten.length} Posten</span>
+        </div>
+        <span class="kunden-dokumente__actions">
+          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-rechnung" data-id="${a.id}">Rechnung erstellen</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-pdf" data-id="${a.id}">PDF</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-edit" data-id="${a.id}">Öffnen</button>
+        </span>
+      </li>`;
+    })
+    .join('');
+
+  return `<ul class="kunden-dokumente__list">${rows}</ul>`;
+}
+
+function formatRechnungenCount(count) {
+  if (count === 0) return 'Keine Rechnungen';
+  if (count === 1) return '1 Rechnung';
+  return `${count} Rechnungen`;
+}
+
+function renderKundenRechnungenListHtml(rechnungen) {
+  if (rechnungen.length === 0) {
+    return '<p class="empty empty--inline">Keine Rechnungen für diesen Kunden.</p>';
+  }
+
+  const sorted = [...rechnungen].sort(
+    (a, b) =>
+      new Date(b.aktualisiertAm || b.erstelltAm) - new Date(a.aktualisiertAm || a.erstelltAm)
+  );
+
+  const rows = sorted
+    .map((r) => {
+      const posten = resolvePostenDetails(r.posten);
+      const { brutto } = berechneSummenAusPosten(posten);
+      const datum = formatDatum(new Date(r.aktualisiertAm || r.erstelltAm));
+      const angebotHint = r.angebotNr ? ` · Bezug: ${escapeHtml(r.angebotNr)}` : '';
+      return `
+      <li class="kunden-dokumente__row">
+        <div class="kunden-dokumente__info">
+          <span class="kunden-dokumente__nr">${escapeHtml(r.rechnungNr)}</span>
+          <span class="kunden-dokumente__meta">${escapeHtml(datum)} · ${formatEuro(brutto)} · ${posten.length} Posten${angebotHint}</span>
+        </div>
+        <span class="kunden-dokumente__actions">
+          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-rechnung-pdf" data-id="${r.id}">PDF</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-rechnung-edit" data-id="${r.id}">Öffnen</button>
+        </span>
+      </li>`;
+    })
+    .join('');
+
+  return `<ul class="kunden-dokumente__list">${rows}</ul>`;
+}
+
+function formatAngeboteCount(count) {
+  if (count === 0) return 'Keine Angebote';
+  if (count === 1) return '1 Angebot';
+  return `${count} Angebote`;
 }
 
 function renderKundenDokumenteHtml(angebote, rechnungen) {
@@ -569,7 +829,7 @@ async function getFormAngebot() {
     kundeId: state.angebot.selectedKundeId,
     kunde: buildKundePayload(
       els.kundeName.value.trim(),
-      els.kundeAdresse.value.trim(),
+      readAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt),
       state.angebot
     ),
     posten: angebotPostenEditor.getPostenForSave(),
@@ -590,7 +850,7 @@ async function getFormRechnung() {
     kundeId: state.rechnung.selectedKundeId,
     kunde: buildKundePayload(
       els.rechnungKundeName.value.trim(),
-      els.rechnungKundeAdresse.value.trim(),
+      readAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt),
       state.rechnung
     ),
     posten: rechnungPostenEditor.getPostenForSave(),
@@ -618,38 +878,55 @@ function updateRechnungAngebotRef() {
   }
 }
 
+async function setupAngebotKundeAdressen(kunde) {
+  const addr = normalizeAdresse(kunde);
+  state.angebot.selectedKundeId = kunde.id;
+  setBillingSnapshot(state.angebot, addr);
+  els.kundeName.value = kunde.name;
+  setAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt, addr);
+  await refreshAdresseAuswahl(
+    kunde.id,
+    els.kundeAdresseAuswahl,
+    els.kundeEinsatzortHinweis,
+    state.angebot,
+    angebotAdresseFields()
+  );
+  selectAdresseOption(state.angebot, 'billing', angebotAdresseFields(), els.kundeEinsatzortHinweis);
+  syncAdresseAuswahlActive(els.kundeAdresseAuswahl, state.angebot);
+}
+
+async function setupRechnungKundeAdressen(kunde) {
+  const addr = normalizeAdresse(kunde);
+  state.rechnung.selectedKundeId = kunde.id;
+  setBillingSnapshot(state.rechnung, addr);
+  els.rechnungKundeName.value = kunde.name;
+  setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, addr);
+  await refreshAdresseAuswahl(
+    kunde.id,
+    els.rechnungAdresseAuswahl,
+    els.rechnungEinsatzortHinweis,
+    state.rechnung,
+    rechnungAdresseFields()
+  );
+  selectAdresseOption(state.rechnung, 'billing', rechnungAdresseFields(), els.rechnungEinsatzortHinweis);
+  syncAdresseAuswahlActive(els.rechnungAdresseAuswahl, state.rechnung);
+}
+
 function applyPickerKunde(kunde) {
   if (state.kundenPickerFor === 'rechnung') {
-    state.rechnung.selectedKundeId = kunde.id;
-    state.rechnung.billingAdresse = kunde.adresse || '';
-    els.rechnungKundeName.value = kunde.name;
-    els.rechnungKundeAdresse.value = kunde.adresse || '';
-    clearObjektMeta(state.rechnung);
-    state.rechnung.billingAdresse = kunde.adresse || '';
-    refreshObjektSelect(kunde.id, els.rechnungKundeObjekt, state.rechnung);
-    updateRechnungKundeHinweis();
+    void setupRechnungKundeAdressen(kunde).then(() => updateRechnungKundeHinweis());
   } else {
-    state.angebot.selectedKundeId = kunde.id;
-    state.angebot.billingAdresse = kunde.adresse || '';
-    els.kundeName.value = kunde.name;
-    els.kundeAdresse.value = kunde.adresse || '';
-    clearObjektMeta(state.angebot);
-    state.angebot.billingAdresse = kunde.adresse || '';
-    refreshObjektSelect(kunde.id, els.kundeObjekt, state.angebot);
-    updateKundeHinweis();
-    updateAngebotKopfSummary();
+    void setupAngebotKundeAdressen(kunde).then(() => {
+      updateKundeHinweis();
+      updateAngebotKopfSummary();
+    });
   }
   closeKundenModal();
 }
 
 async function startNeuesAngebotForKunde(kunde) {
   await resetForm();
-  state.angebot.selectedKundeId = kunde.id;
-  state.angebot.billingAdresse = kunde.adresse || '';
-  els.kundeName.value = kunde.name;
-  els.kundeAdresse.value = kunde.adresse || '';
-  await refreshObjektSelect(kunde.id, els.kundeObjekt, state.angebot);
-  state.angebot.billingAdresse = kunde.adresse || '';
+  await setupAngebotKundeAdressen(kunde);
   updateKundeHinweis();
   updateAngebotKopfSummary();
   setBereich('angebote', 'neu');
@@ -657,38 +934,44 @@ async function startNeuesAngebotForKunde(kunde) {
 
 async function startNeueRechnungForKunde(kunde) {
   await resetRechnungForm();
-  state.rechnung.selectedKundeId = kunde.id;
-  state.rechnung.billingAdresse = kunde.adresse || '';
-  els.rechnungKundeName.value = kunde.name;
-  els.rechnungKundeAdresse.value = kunde.adresse || '';
-  await refreshObjektSelect(kunde.id, els.rechnungKundeObjekt, state.rechnung);
-  state.rechnung.billingAdresse = kunde.adresse || '';
+  await setupRechnungKundeAdressen(kunde);
   updateRechnungKundeHinweis();
   setBereich('rechnungen', 'rechnung-neu');
 }
 
 function clearKundeAuswahl() {
   state.angebot.selectedKundeId = null;
-  state.angebot.billingAdresse = '';
   clearObjektMeta(state.angebot);
-  refreshObjektSelect(null, els.kundeObjekt, state.angebot);
+  void refreshAdresseAuswahl(
+    null,
+    els.kundeAdresseAuswahl,
+    els.kundeEinsatzortHinweis,
+    state.angebot,
+    angebotAdresseFields()
+  );
   updateKundeHinweis();
 }
 
 function clearRechnungKundeAuswahl() {
   state.rechnung.selectedKundeId = null;
-  state.rechnung.billingAdresse = '';
   clearObjektMeta(state.rechnung);
-  refreshObjektSelect(null, els.rechnungKundeObjekt, state.rechnung);
+  void refreshAdresseAuswahl(
+    null,
+    els.rechnungAdresseAuswahl,
+    els.rechnungEinsatzortHinweis,
+    state.rechnung,
+    rechnungAdresseFields()
+  );
   updateRechnungKundeHinweis();
 }
 
 async function resetForm() {
   state.angebot.editingId = null;
+  setAngebotKopfCollapsed(false);
   angebotPostenEditor.clearPostenState();
   clearKundeAuswahl();
   els.kundeName.value = '';
-  els.kundeAdresse.value = '';
+  clearAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt);
   els.angebotNr.value = await generiereAngebotsnummer();
 
   const gueltig = new Date();
@@ -703,8 +986,14 @@ async function resetRechnungForm() {
   state.rechnung = createRechnungMeta();
   rechnungPostenEditor.clearPostenState();
   els.rechnungKundeName.value = '';
-  els.rechnungKundeAdresse.value = '';
-  await refreshObjektSelect(null, els.rechnungKundeObjekt, state.rechnung);
+  clearAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt);
+  await refreshAdresseAuswahl(
+    null,
+    els.rechnungAdresseAuswahl,
+    els.rechnungEinsatzortHinweis,
+    state.rechnung,
+    rechnungAdresseFields()
+  );
   els.rechnungNr.value = await generiereRechnungsnummer();
 
   const heute = new Date();
@@ -719,24 +1008,34 @@ async function resetRechnungForm() {
 
 async function loadAngebotIntoForm(angebot) {
   state.angebot.editingId = angebot.id;
+  setAngebotKopfCollapsed(false);
   state.angebot.selectedKundeId = angebot.kundeId || null;
-  state.angebot.billingAdresse = angebot.kunde.adresse || '';
+  setBillingSnapshot(state.angebot, angebot.kunde);
   angebotPostenEditor.loadPostenFromDocument(angebot.posten);
 
   els.kundeName.value = angebot.kunde.name;
-  els.kundeAdresse.value = angebot.kunde.adresse;
+  setAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt, angebot.kunde);
   els.angebotNr.value = angebot.angebotNr;
   els.gueltigBis.value = angebot.gueltigBis;
   if (angebot.kundeId) {
-    await restoreObjektFromDocument(
+    const stamm = await getKunde(angebot.kundeId);
+    if (stamm) setBillingSnapshot(state.angebot, stamm);
+    await restoreAdresseFromDocument(
       angebot.kundeId,
       angebot.kunde,
-      els.kundeObjekt,
+      els.kundeAdresseAuswahl,
+      els.kundeEinsatzortHinweis,
       state.angebot,
-      els.kundeAdresse
+      angebotAdresseFields()
     );
   } else {
-    await refreshObjektSelect(null, els.kundeObjekt, state.angebot);
+    await refreshAdresseAuswahl(
+      null,
+      els.kundeAdresseAuswahl,
+      els.kundeEinsatzortHinweis,
+      state.angebot,
+      angebotAdresseFields()
+    );
   }
   updateKundeHinweis();
 
@@ -748,26 +1047,35 @@ async function loadAngebotIntoForm(angebot) {
 async function loadRechnungIntoForm(rechnung) {
   state.rechnung.editingId = rechnung.id;
   state.rechnung.selectedKundeId = rechnung.kundeId || null;
-  state.rechnung.billingAdresse = rechnung.kunde.adresse || '';
+  setBillingSnapshot(state.rechnung, rechnung.kunde);
   state.rechnung.angebotId = rechnung.angebotId || null;
   state.rechnung.angebotNr = rechnung.angebotNr || null;
   rechnungPostenEditor.loadPostenFromDocument(rechnung.posten);
 
   els.rechnungKundeName.value = rechnung.kunde.name;
-  els.rechnungKundeAdresse.value = rechnung.kunde.adresse;
+  setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, rechnung.kunde);
   els.rechnungNr.value = rechnung.rechnungNr;
   els.rechnungDatum.value = rechnung.rechnungsdatum || rechnung.erstelltAm?.split('T')[0] || '';
   els.rechnungFaellig.value = rechnung.faelligAm || '';
   if (rechnung.kundeId) {
-    await restoreObjektFromDocument(
+    const stamm = await getKunde(rechnung.kundeId);
+    if (stamm) setBillingSnapshot(state.rechnung, stamm);
+    await restoreAdresseFromDocument(
       rechnung.kundeId,
       rechnung.kunde,
-      els.rechnungKundeObjekt,
+      els.rechnungAdresseAuswahl,
+      els.rechnungEinsatzortHinweis,
       state.rechnung,
-      els.rechnungKundeAdresse
+      rechnungAdresseFields()
     );
   } else {
-    await refreshObjektSelect(null, els.rechnungKundeObjekt, state.rechnung);
+    await refreshAdresseAuswahl(
+      null,
+      els.rechnungAdresseAuswahl,
+      els.rechnungEinsatzortHinweis,
+      state.rechnung,
+      rechnungAdresseFields()
+    );
   }
   updateRechnungKundeHinweis();
   updateRechnungAngebotRef();
@@ -783,21 +1091,30 @@ async function loadAngebotAsRechnungEntwurf(angebot) {
   state.rechnung.angebotId = angebot.id;
   state.rechnung.angebotNr = angebot.angebotNr;
   state.rechnung.selectedKundeId = angebot.kundeId || null;
-  state.rechnung.billingAdresse = angebot.kunde.adresse || '';
+  setBillingSnapshot(state.rechnung, angebot.kunde);
   rechnungPostenEditor.loadPostenFromDocument(angebot.posten);
 
   els.rechnungKundeName.value = angebot.kunde.name;
-  els.rechnungKundeAdresse.value = angebot.kunde.adresse;
+  setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, angebot.kunde);
   if (angebot.kundeId) {
-    await restoreObjektFromDocument(
+    const stamm = await getKunde(angebot.kundeId);
+    if (stamm) setBillingSnapshot(state.rechnung, stamm);
+    await restoreAdresseFromDocument(
       angebot.kundeId,
       angebot.kunde,
-      els.rechnungKundeObjekt,
+      els.rechnungAdresseAuswahl,
+      els.rechnungEinsatzortHinweis,
       state.rechnung,
-      els.rechnungKundeAdresse
+      rechnungAdresseFields()
     );
   } else {
-    await refreshObjektSelect(null, els.rechnungKundeObjekt, state.rechnung);
+    await refreshAdresseAuswahl(
+      null,
+      els.rechnungAdresseAuswahl,
+      els.rechnungEinsatzortHinweis,
+      state.rechnung,
+      rechnungAdresseFields()
+    );
   }
   els.rechnungNr.value = await generiereRechnungsnummer();
 
@@ -822,30 +1139,54 @@ function updatePageHeader() {
   updateAngebotKopfSummary();
 }
 
-const ANGEBOT_KOPF_COLLAPSED_KEY = 'angebot_kopf_collapsed';
+function isAngebotKopfComplete() {
+  return !!(
+    els.angebotNr?.value.trim() &&
+    els.gueltigBis?.value &&
+    els.kundeName?.value.trim() &&
+    els.kundeStrasse?.value.trim() &&
+    els.kundePlzOrt?.value.trim()
+  );
+}
 
 function updateAngebotKopfSummary() {
-  const nr = els.angebotNr?.value.trim() || '—';
-  const kunde = els.kundeName?.value.trim() || 'Kein Kunde';
-  if (els.angebotKopfSummaryNr) els.angebotKopfSummaryNr.textContent = nr;
-  if (els.angebotKopfSummaryKunde) els.angebotKopfSummaryKunde.textContent = kunde;
+  const name = els.kundeName?.value.trim() || '';
+  const strasse = els.kundeStrasse?.value.trim() || '';
+  const plzOrt = els.kundePlzOrt?.value.trim() || '';
+  const parts = [name, strasse, plzOrt].filter(Boolean);
+  const summary = parts.join(' – ');
+  if (els.angebotKopfSummaryKunde) els.angebotKopfSummaryKunde.textContent = summary;
+  els.angebotKopfSummaryMeta?.classList.toggle('is-empty', parts.length === 0);
 }
 
 function setAngebotKopfCollapsed(collapsed) {
   els.angebotKopf?.classList.toggle('is-collapsed', collapsed);
   els.angebotKopfToggle?.setAttribute('aria-expanded', String(!collapsed));
-  try {
-    localStorage.setItem(ANGEBOT_KOPF_COLLAPSED_KEY, collapsed ? '1' : '0');
-  } catch {
-    /* ignore */
-  }
+}
+
+function updatePostenKopfSummary() {
+  const count = angebotPostenEditor.getAusgewaehltePosten().length;
+  if (!els.postenKopfSummaryCount) return;
+  if (count === 0) els.postenKopfSummaryCount.textContent = 'Keine Posten';
+  else if (count === 1) els.postenKopfSummaryCount.textContent = '1 Posten';
+  else els.postenKopfSummaryCount.textContent = `${count} Posten`;
+}
+
+function setPostenKopfCollapsed(collapsed) {
+  els.postenKopf?.classList.toggle('is-collapsed', collapsed);
+  els.postenKopfToggle?.setAttribute('aria-expanded', String(!collapsed));
+}
+
+function collapseAngebotWhenEnteringPosten() {
+  if (!isAngebotKopfComplete()) return;
+  setAngebotKopfCollapsed(true);
+  setPostenKopfCollapsed(false);
 }
 
 function bindAngebotKopfToggle() {
   if (!els.angebotKopfToggle) return;
 
-  const savedCollapsed = localStorage.getItem(ANGEBOT_KOPF_COLLAPSED_KEY) === '1';
-  setAngebotKopfCollapsed(savedCollapsed);
+  setAngebotKopfCollapsed(false);
 
   els.angebotKopfToggle.addEventListener('click', () => {
     const collapsed = !els.angebotKopf?.classList.contains('is-collapsed');
@@ -853,8 +1194,35 @@ function bindAngebotKopfToggle() {
   });
 
   els.kundeName?.addEventListener('input', updateAngebotKopfSummary);
-  els.angebotNr?.addEventListener('input', updateAngebotKopfSummary);
+  els.kundeStrasse?.addEventListener('input', updateAngebotKopfSummary);
+  els.kundePlzOrt?.addEventListener('input', updateAngebotKopfSummary);
   updateAngebotKopfSummary();
+}
+
+function bindPostenKopfToggle() {
+  if (!els.postenKopfToggle) return;
+
+  setPostenKopfCollapsed(false);
+
+  els.postenKopfToggle.addEventListener('click', () => {
+    const collapsed = !els.postenKopf?.classList.contains('is-collapsed');
+    setPostenKopfCollapsed(collapsed);
+    if (!collapsed) collapseAngebotWhenEnteringPosten();
+  });
+
+  els.postenKopf?.addEventListener('focusin', (e) => {
+    if (els.postenKopfToggle?.contains(e.target)) return;
+    if (!els.postenKopfBody?.contains(e.target)) return;
+    collapseAngebotWhenEnteringPosten();
+  });
+
+  els.postenKopf?.addEventListener('pointerdown', (e) => {
+    if (els.postenKopfToggle?.contains(e.target)) return;
+    if (!els.postenKopfBody?.contains(e.target)) return;
+    collapseAngebotWhenEnteringPosten();
+  });
+
+  updatePostenKopfSummary();
 }
 
 function updateRechnungPageHeader() {
@@ -1020,6 +1388,7 @@ function closeBereichModal() {
 
 function setBereich(bereich, viewAfter) {
   state.bereich = bereich;
+  state.expandedKundeDokumenteId = null;
   syncBereichSwitcher();
   syncBereichNav();
 
@@ -1473,7 +1842,8 @@ async function refreshKundenDetail() {
     );
 
     els.kundenDetailTitle.textContent = kunde.name;
-    els.kundenDetailAdresse.textContent = (kunde.adresse || '').trim() || '—';
+    const adresseHtml = formatAdresseHtml(kunde);
+    els.kundenDetailAdresse.innerHTML = adresseHtml || '—';
     setKundenDetailContact(els.kundenDetailTelefon, kunde.telefon, 'tel');
     setKundenDetailContact(els.kundenDetailEmail, kunde.email, 'email');
 
@@ -1500,7 +1870,7 @@ function loadKundeIntoForm(kunde) {
   closeKundenDetail();
   state.editingKundeId = kunde.id;
   els.kundenFormName.value = kunde.name;
-  els.kundenFormAdresse.value = kunde.adresse || '';
+  setAdresseFieldPair(els.kundenFormStrasse, els.kundenFormPlzOrt, kunde);
   els.kundenFormTelefon.value = kunde.telefon || '';
   els.kundenFormEmail.value = kunde.email || '';
   els.kundenFormNotiz.value = kunde.notiz || '';
@@ -1511,10 +1881,15 @@ function loadKundeIntoForm(kunde) {
 
 async function renderKundenView() {
   const q = state.kundenSuche.trim().toLowerCase();
+  const showRechnungen = state.bereich === 'rechnungen';
   els.kundenListe.innerHTML = '<p class="empty">Lade Kunden…</p>';
 
   try {
-    const kunden = await getAllKunden();
+    const [kunden, angebote, rechnungen] = await Promise.all([
+      getAllKunden(),
+      getAllAngebote(),
+      getAllRechnungen(),
+    ]);
 
     let filtered = kunden;
 
@@ -1523,21 +1898,38 @@ async function renderKundenView() {
     }
 
     if (filtered.length === 0) {
+      state.expandedKundeDokumenteId = null;
       els.kundenListe.innerHTML = `<p class="empty">${
         q ? 'Keine Kunden gefunden.' : 'Noch keine Kunden angelegt.'
       }</p>`;
       return;
     }
 
+    if (!filtered.some((k) => k.id === state.expandedKundeDokumenteId)) {
+      state.expandedKundeDokumenteId = null;
+    }
+
     els.kundenListe.innerHTML = filtered
       .map((k) => {
         const kontakt = [k.telefon, k.email].filter((v) => (v || '').trim()).join(' · ');
+        const docs = dokumenteFuerKunde(k.id, k.name, angebote, rechnungen);
+        const kundenDokumente = showRechnungen ? docs.rechnungen : docs.angebote;
+        const docCount = kundenDokumente.length;
+        const isExpanded = state.expandedKundeDokumenteId === k.id;
+        const countLabel = showRechnungen
+          ? formatRechnungenCount(docCount)
+          : formatAngeboteCount(docCount);
+        const toggleLabel = showRechnungen ? 'Rechnungen anzeigen' : 'Angebote anzeigen';
+        const listHtml = showRechnungen
+          ? renderKundenRechnungenListHtml(kundenDokumente)
+          : renderKundenAngeboteListHtml(kundenDokumente);
+
         return `
         <article class="kunden-item" data-id="${k.id}">
           <div class="kunden-item__header">
             <div class="kunden-info">
               <h3>${escapeHtml(k.name)}</h3>
-              ${k.adresse ? `<p>${escapeHtml(k.adresse).replace(/\n/g, '<br>')}</p>` : ''}
+              ${formatAdresseHtml(k) ? `<p>${formatAdresseHtml(k)}</p>` : ''}
               ${kontakt ? `<p class="kunden-info__kontakt">${escapeHtml(kontakt)}</p>` : ''}
             </div>
             <div class="kunden-actions">
@@ -1546,6 +1938,17 @@ async function renderKundenView() {
               <button type="button" class="btn btn-danger btn-sm" data-action="delete-kunde" data-id="${k.id}">Löschen</button>
             </div>
           </div>
+          <div class="kunden-item__dokumente">
+            <span class="kunden-item__dokumente-count">${countLabel}</span>
+            ${
+              docCount
+                ? `<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-kunde-dokumente" data-id="${k.id}" aria-expanded="${isExpanded}">
+                    ${isExpanded ? 'Ausblenden' : toggleLabel}
+                  </button>`
+                : ''
+            }
+          </div>
+          ${isExpanded ? `<div class="kunden-item__dokumente-panel">${listHtml}</div>` : ''}
         </article>
       `;
       })
@@ -1583,7 +1986,7 @@ async function renderKundenPicker() {
         <article class="kunden-picker-item" data-id="${k.id}" tabindex="0">
           <div class="kunden-info">
             <h3>${k.name}</h3>
-            ${k.adresse ? `<p>${k.adresse.replace(/\n/g, ', ')}</p>` : ''}
+            ${formatAdresseInline(k) ? `<p>${escapeHtml(formatAdresseInline(k))}</p>` : ''}
           </div>
         </article>
       `
@@ -1627,10 +2030,13 @@ async function saveKundenForm(e) {
   const jetzt = new Date().toISOString();
   const bestehend = state.editingKundeId ? await getKunde(state.editingKundeId) : null;
 
+  const formAdresse = readAdresseFieldPair(els.kundenFormStrasse, els.kundenFormPlzOrt);
   const kunde = {
     id: state.editingKundeId || createKundeId(),
     name,
-    adresse: els.kundenFormAdresse.value.trim(),
+    strasse: formAdresse.strasse,
+    plzOrt: formAdresse.plzOrt,
+    adresse: formAdresse.adresse,
     telefon: els.kundenFormTelefon.value.trim(),
     email: els.kundenFormEmail.value.trim(),
     notiz: els.kundenFormNotiz.value.trim(),
@@ -1674,10 +2080,13 @@ async function saveKundenObjektForm(e) {
     if (bestehend) erstelltAm = bestehend.erstelltAm;
   }
 
+  const objAdresse = readAdresseFieldPair(els.kundenObjektStrasse, els.kundenObjektPlzOrt);
   const objekt = {
     id: state.editingObjektId || createKundenObjektId(),
     name,
-    adresse: els.kundenObjektAdresse.value.trim(),
+    strasse: objAdresse.strasse,
+    plzOrt: objAdresse.plzOrt,
+    adresse: objAdresse.adresse,
     typ: els.kundenObjektTyp.value === 'rechnung' ? 'rechnung' : 'einsatz',
     erstelltAm,
     aktualisiertAm: jetzt,
@@ -1701,13 +2110,14 @@ async function speichernUndPdf() {
 
   try {
     const angebot = await getFormAngebot();
+    const formKunde = angebot.kunde;
     const resolved = await resolveKundeIdForSave(
-      angebot.kunde.name,
-      angebot.kunde.adresse,
+      formKunde.name,
+      formKunde,
       state.angebot.selectedKundeId
     );
     angebot.kundeId = resolved.kundeId;
-    angebot.kunde = resolved.kunde;
+    angebot.kunde = { ...formKunde, ...resolved.kunde };
     state.angebot.selectedKundeId = resolved.kundeId;
     updateKundeHinweis();
     await saveAngebot(angebot);
@@ -1730,13 +2140,14 @@ async function speichernUndRechnungPdf() {
 
   try {
     const rechnung = await getFormRechnung();
+    const formKunde = rechnung.kunde;
     const resolved = await resolveKundeIdForSave(
-      rechnung.kunde.name,
-      rechnung.kunde.adresse,
+      formKunde.name,
+      formKunde,
       state.rechnung.selectedKundeId
     );
     rechnung.kundeId = resolved.kundeId;
-    rechnung.kunde = resolved.kunde;
+    rechnung.kunde = { ...formKunde, ...resolved.kunde };
     state.rechnung.selectedKundeId = resolved.kundeId;
     updateRechnungKundeHinweis();
     await saveRechnung(rechnung);
@@ -1782,6 +2193,7 @@ async function showApp() {
 function bindAppEvents() {
   bindMainNav();
   bindAngebotKopfToggle();
+  bindPostenKopfToggle();
   els.profileBtn?.addEventListener('click', () => showView('profil'));
   els.profilAccountForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1832,23 +2244,37 @@ function bindAppEvents() {
   els.rechnungKundeAuswahlBtn?.addEventListener('click', () => openKundenModal('rechnung'));
   els.rechnungKundeName?.addEventListener('input', clearRechnungKundeAuswahl);
 
-  els.kundeObjekt?.addEventListener('change', () => {
-    applyObjektSelection(
+  els.kundeAdresseAuswahl?.addEventListener('click', (e) => {
+    handleAdresseAuswahlClick(
       state.angebot,
-      els.kundeObjekt.value,
-      els.kundeAdresse,
-      state.angebot.billingAdresse || els.kundeAdresse.value
+      angebotAdresseFields(),
+      els.kundeAdresseAuswahl,
+      els.kundeEinsatzortHinweis,
+      e
     );
   });
 
-  els.rechnungKundeObjekt?.addEventListener('change', () => {
-    applyObjektSelection(
+  els.rechnungAdresseAuswahl?.addEventListener('click', (e) => {
+    handleAdresseAuswahlClick(
       state.rechnung,
-      els.rechnungKundeObjekt.value,
-      els.rechnungKundeAdresse,
-      state.rechnung.billingAdresse || els.rechnungKundeAdresse.value
+      rechnungAdresseFields(),
+      els.rechnungAdresseAuswahl,
+      els.rechnungEinsatzortHinweis,
+      e
     );
   });
+
+  const onAngebotAdresseInput = () => {
+    markAdresseManuallyEdited(state.angebot, els.kundeAdresseAuswahl, els.kundeEinsatzortHinweis);
+  };
+  els.kundeStrasse?.addEventListener('input', onAngebotAdresseInput);
+  els.kundePlzOrt?.addEventListener('input', onAngebotAdresseInput);
+
+  const onRechnungAdresseInput = () => {
+    markAdresseManuallyEdited(state.rechnung, els.rechnungAdresseAuswahl, els.rechnungEinsatzortHinweis);
+  };
+  els.rechnungKundeStrasse?.addEventListener('input', onRechnungAdresseInput);
+  els.rechnungKundePlzOrt?.addEventListener('input', onRechnungAdresseInput);
 
   els.kundenForm?.addEventListener('submit', saveKundenForm);
   els.kundenFormReset?.addEventListener('click', resetKundenForm);
@@ -1936,7 +2362,7 @@ function bindAppEvents() {
       if (action === 'edit-objekt') {
         state.editingObjektId = objekt.id;
         els.kundenObjektName.value = objekt.name;
-        els.kundenObjektAdresse.value = objekt.adresse || '';
+        setAdresseFieldPair(els.kundenObjektStrasse, els.kundenObjektPlzOrt, objekt);
         els.kundenObjektTyp.value = objekt.typ === 'rechnung' ? 'rechnung' : 'einsatz';
         els.kundenObjektCancel?.classList.remove('hidden');
         els.kundenObjektName.focus();
@@ -2012,6 +2438,42 @@ function bindAppEvents() {
         return;
       }
 
+      if (action === 'toggle-kunde-dokumente') {
+        state.expandedKundeDokumenteId = state.expandedKundeDokumenteId === id ? null : id;
+        await renderKundenView();
+        return;
+      }
+
+      if (action === 'kunde-angebot-rechnung') {
+        const angebot = await getAngebot(id);
+        if (angebot) await loadAngebotAsRechnungEntwurf(angebot);
+        return;
+      }
+
+      if (action === 'kunde-angebot-pdf') {
+        const angebot = await getAngebot(id);
+        if (angebot) openPdfPreview(angebot, resolvePostenDetails(angebot.posten));
+        return;
+      }
+
+      if (action === 'kunde-angebot-edit') {
+        const angebot = await getAngebot(id);
+        if (angebot) await loadAngebotIntoForm(angebot);
+        return;
+      }
+
+      if (action === 'kunde-rechnung-pdf') {
+        const rechnung = await getRechnung(id);
+        if (rechnung) openRechnungPdfPreview(rechnung, resolvePostenDetails(rechnung.posten));
+        return;
+      }
+
+      if (action === 'kunde-rechnung-edit') {
+        const rechnung = await getRechnung(id);
+        if (rechnung) await loadRechnungIntoForm(rechnung);
+        return;
+      }
+
       const kunde = await getKunde(id);
       if (!kunde) return;
 
@@ -2022,6 +2484,7 @@ function bindAppEvents() {
           await deleteKunde(id);
           if (state.editingKundeId === id) resetKundenForm();
           if (state.detailKundeId === id) closeKundenDetail();
+          if (state.expandedKundeDokumenteId === id) state.expandedKundeDokumenteId = null;
           renderKundenView();
         }
       }
@@ -2154,6 +2617,7 @@ function bindAuthEvents() {
 async function bootstrap() {
   initTheme();
   initLegal();
+  initDatePickers();
   bindAuthEvents();
   const session = await refreshSession();
   if (session) await showApp();
