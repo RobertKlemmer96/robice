@@ -42,4 +42,18 @@ export const PDF_TEMPLATE_DEFAULT = {
     fuss1: 'Bitte überweisen Sie den Rechnungsbetrag bis zum angegebenen Fälligkeitsdatum.',
     fuss2: 'Es gelten unsere allgemeinen Geschäftsbedingungen.',
   },
+  fussSpalten: [
+    {
+      ueberschrift: 'Bankverbindung',
+      text: 'IBAN DE00 0000 0000 0000 0000 00\nSparkasse Musterstadt',
+    },
+    {
+      ueberschrift: 'Geschäftsführung',
+      text: 'Max Mustermann',
+    },
+    {
+      ueberschrift: 'Register',
+      text: 'Amtsgericht Musterstadt\nHRB 12345',
+    },
+  ],
 };

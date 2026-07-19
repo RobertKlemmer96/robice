@@ -5,6 +5,8 @@ import autoTable from 'jspdf-autotable';
 import {
   getPdfTemplate,
 
+  getFussSpalten,
+
   hexToRgb,
 
   detectImageFormat,
@@ -47,6 +49,57 @@ function writeKundeAdressBlock(doc, kunde, startY) {
   }
 
   return y;
+}
+
+function renderPdfFooter(doc, tpl, { fuss1 = '', fuss2 = '' } = {}) {
+  const lineRgb = hexToRgb(tpl.farben.trennlinie);
+  const fussRgb = hexToRgb(tpl.farben.fusszeile);
+  const mutedRgb = hexToRgb(tpl.farben.textMuted);
+  const spalten = getFussSpalten(tpl);
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const footerLineY = pageHeight - 28;
+  const left = 20;
+  const right = 190;
+  const colWidth = (right - left) / 3;
+
+  if (fuss1 || fuss2) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...fussRgb);
+    let closingY = footerLineY - 5;
+    if (fuss2) {
+      doc.text(fuss2, left, closingY);
+      closingY -= 4;
+    }
+    if (fuss1) {
+      doc.text(fuss1, left, closingY);
+    }
+  }
+
+  doc.setDrawColor(...lineRgb);
+  doc.setLineWidth(0.2);
+  doc.line(left, footerLineY, right, footerLineY);
+
+  spalten.forEach((col, index) => {
+    const x = left + index * colWidth;
+    const headerY = footerLineY + 4.5;
+    const textY = headerY + 3.5;
+
+    if (col.ueberschrift) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(...mutedRgb);
+      doc.text(col.ueberschrift, x, headerY);
+    }
+
+    if (col.text) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...fussRgb);
+      const lines = doc.splitTextToSize(col.text, colWidth - 3);
+      doc.text(lines, x, textY);
+    }
+  });
 }
 
 
@@ -186,8 +239,6 @@ export function buildPdfDoc(angebot, postenDetails) {
   const mutedRgb = hexToRgb(tpl.farben.textMuted);
 
   const lineRgb = hexToRgb(tpl.farben.trennlinie);
-
-  const fussRgb = hexToRgb(tpl.farben.fusszeile);
 
   const primaerRgb = hexToRgb(tpl.farben.primaer);
 
@@ -373,7 +424,7 @@ export function buildPdfDoc(angebot, postenDetails) {
 
     },
 
-    margin: { left: 20, right: 20 },
+    margin: { left: 20, right: 20, bottom: 38 },
 
   });
 
@@ -389,11 +440,11 @@ export function buildPdfDoc(angebot, postenDetails) {
 
   doc.setTextColor(0);
 
-  doc.text('Nettobetrag:', 130, endY);
+  doc.text('Gesamt netto:', 130, endY);
 
   doc.text(formatEuro(netto), 190, endY, { align: 'right' });
 
-  doc.text('MwSt. 19 %:', 130, endY + 6);
+  doc.text('Umsatzsteuer 19 %:', 130, endY + 6);
 
   doc.text(formatEuro(mwst), 190, endY + 6, { align: 'right' });
 
@@ -409,17 +460,7 @@ export function buildPdfDoc(angebot, postenDetails) {
 
 
 
-  doc.setFont('helvetica', 'normal');
-
-  doc.setFontSize(8);
-
-  doc.setTextColor(...fussRgb);
-
-  const fussY = Math.min(endY + 30, 270);
-
-  if (tpl.texte.fuss1) doc.text(tpl.texte.fuss1, 20, fussY);
-
-  if (tpl.texte.fuss2) doc.text(tpl.texte.fuss2, 20, fussY + 5);
+  renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
 
 
 
@@ -469,7 +510,6 @@ export function buildRechnungPdfDoc(rechnung, postenDetails) {
 
   const mutedRgb = hexToRgb(tpl.farben.textMuted);
   const lineRgb = hexToRgb(tpl.farben.trennlinie);
-  const fussRgb = hexToRgb(tpl.farben.fusszeile);
   const primaerRgb = hexToRgb(tpl.farben.primaer);
 
   let yStart = 20;
@@ -571,7 +611,7 @@ export function buildRechnungPdfDoc(rechnung, postenDetails) {
       5: { cellWidth: 28, halign: 'right' },
       6: { cellWidth: 28, halign: 'right' },
     },
-    margin: { left: 20, right: 20 },
+    margin: { left: 20, right: 20, bottom: 38 },
   });
 
   const endY = doc.lastAutoTable.finalY + 10;
@@ -589,12 +629,7 @@ export function buildRechnungPdfDoc(rechnung, postenDetails) {
   doc.text('Gesamtbetrag:', 130, endY + 14);
   doc.text(formatEuro(brutto), 190, endY + 14, { align: 'right' });
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...fussRgb);
-  const fussY = Math.min(endY + 30, 270);
-  if (texte.fuss1) doc.text(texte.fuss1, 20, fussY);
-  if (texte.fuss2) doc.text(texte.fuss2, 20, fussY + 5);
+  renderPdfFooter(doc, tpl, { fuss1: texte.fuss1, fuss2: texte.fuss2 });
 
   return doc;
 }

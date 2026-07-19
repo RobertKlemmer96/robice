@@ -61,3 +61,11 @@ export async function dehydrateTemplateImages(tenantId, template) {
   bilder.header = await persistDataUrl(tenantId, 'header', bilder.header);
   return { ...template, bilder };
 }
+
+export async function removeTenantAssets(tenantId) {
+  try {
+    await fs.rm(tenantDir(tenantId), { recursive: true, force: true });
+  } catch {
+    /* Ordner existiert ggf. nicht */
+  }
+}

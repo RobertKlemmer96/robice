@@ -6,7 +6,10 @@ import {
   readAdresseFieldPair,
   clearAdresseFieldPair,
 } from './adresse.js';
-import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName } from './auth.js';
+import { formatPlanLabel, normalizeRegistrationPlan } from './plans.js';
+import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
+import { loadAdminUsers } from './adminUsers.js';
+import { initOnboarding, openOnboarding, closeOnboarding } from './onboarding.js';
 import { initKatalogModal } from './katalogModal.js';
 import { initDatePickers } from './datePicker.js';
 import { initTheme } from './theme.js';
@@ -60,6 +63,7 @@ import {
   savePdfTemplate,
   getDefaultPdfTemplate,
   getPdfTemplate,
+  templatePatchFromForm,
   templatePatchFromAngebotPage,
   templatePatchFromRechnungPage,
   fillPdfTemplateAngebotForm,
@@ -70,15 +74,15 @@ import {
 import {
   bindPdfTemplatePreview,
   createPdfLayoutPreviewMarkup,
-  mountSharedPdfTemplateFields,
+  mountPdfTemplateFormSections,
   updatePdfTemplatePreview,
 } from './pdfTemplatePreview.js';
 import {
   generiereAngebotsnummer as erzeugeAngebotsnummer,
   previewAngebotsnummer,
-  schemaHasSequenceToken,
   generiereRechnungsnummer as erzeugeRechnungsnummer,
   previewRechnungsnummer,
+  schemaHasSequenceToken,
   getZahlungszielTage,
   addDaysIso,
 } from './dokumentnummer.js';
@@ -142,6 +146,8 @@ function createRechnungMeta() {
   };
 }
 
+let pendingRegistrationPlan = 'free';
+
 const state = {
   appStarted: false,
   view: 'neu',
@@ -158,6 +164,7 @@ const state = {
   katalogSuche: '',
   angebot: createDocMeta(),
   rechnung: createRechnungMeta(),
+  pdfLayout: { angebot: 1, rechnung: 1 },
 };
 
 const angebotPostenState = createEditorState();
@@ -177,15 +184,17 @@ const els = {
   registerEmail: document.getElementById('register-email'),
   registerPass: document.getElementById('register-pass'),
   registerError: document.getElementById('register-error'),
+  registerPlanNote: document.getElementById('register-plan-note'),
   authTitle: document.getElementById('auth-title'),
   logoutBtn: document.getElementById('logout-btn'),
   profileBtn: document.getElementById('profile-btn'),
   mainNav: document.getElementById('main-nav'),
   navMobileToggle: document.getElementById('nav-mobile-toggle'),
   bereichSwitcher: document.getElementById('bereich-switcher'),
+  bereichSwitcherWrap: document.getElementById('bereich-switcher-wrap'),
+  bereichSwitcherMenu: document.getElementById('bereich-switcher-menu'),
   bereichSwitcherMark: document.getElementById('bereich-switcher-mark'),
   bereichSwitcherLabel: document.getElementById('bereich-switcher-label'),
-  bereichModal: document.getElementById('bereich-modal'),
   viewRechnungNeu: document.getElementById('view-rechnung-neu'),
   viewRechnungArchiv: document.getElementById('view-rechnung-archiv'),
   viewNeu: document.getElementById('view-neu'),
@@ -197,6 +206,8 @@ const els = {
   pdfPreviewAngebot: document.getElementById('pdf-preview-angebot'),
   pdfPreviewRechnung: document.getElementById('pdf-preview-rechnung'),
   viewProfil: document.getElementById('view-profil'),
+  viewAdmin: document.getElementById('view-admin'),
+  adminUserList: document.getElementById('admin-user-list'),
   profilAccountForm: document.getElementById('profil-account-form'),
   profilTenantName: document.getElementById('profil-tenant-name'),
   profilEmail: document.getElementById('profil-email'),
@@ -207,6 +218,18 @@ const els = {
   profilNewPassword: document.getElementById('profil-new-password'),
   profilConfirmPassword: document.getElementById('profil-confirm-password'),
   profilPasswordStatus: document.getElementById('profil-password-status'),
+  profilNummernForm: document.getElementById('profil-nummern-form'),
+  profilAngebotNummerSchema: document.getElementById('profil-angebot-nummer-schema'),
+  profilRechnungNummerSchema: document.getElementById('profil-rechnung-nummer-schema'),
+  profilAngebotSchemaPreview: document.getElementById('profil-angebot-schema-preview'),
+  profilRechnungSchemaPreview: document.getElementById('profil-rechnung-schema-preview'),
+  profilNummernStatus: document.getElementById('profil-nummern-status'),
+  profilNummernActions: document.getElementById('profil-nummern-actions'),
+  profilDeleteAccountBtn: document.getElementById('profil-delete-account-btn'),
+  profilDeleteModal: document.getElementById('profil-delete-modal'),
+  profilDeletePlz: document.getElementById('profil-delete-plz'),
+  profilDeleteStatus: document.getElementById('profil-delete-status'),
+  profilDeleteConfirmBtn: document.getElementById('profil-delete-confirm'),
   archivSuche: document.getElementById('archiv-suche'),
   archivListe: document.getElementById('archiv-liste'),
   resetBtn: document.getElementById('reset-btn'),
@@ -1063,7 +1086,6 @@ async function resetForm() {
 async function resetRechnungForm() {
   state.rechnung = createRechnungMeta();
   setRechnungKopfCollapsed(isMobileLayout());
-  setRechnungPostenKopfCollapsed(false);
   rechnungPostenEditor.clearPostenState();
   els.rechnungKundeName.value = '';
   clearAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt);
@@ -1176,7 +1198,6 @@ async function loadAngebotAsRechnungEntwurf(angebot) {
   setBereich('rechnungen', 'rechnung-neu');
   state.rechnung = createRechnungMeta();
   setRechnungKopfCollapsed(isMobileLayout());
-  setRechnungPostenKopfCollapsed(false);
   state.rechnung.angebotId = angebot.id;
   state.rechnung.angebotNr = angebot.angebotNr;
   state.rechnung.selectedKundeId = angebot.kundeId || null;
@@ -1450,12 +1471,13 @@ function updateRechnungPageHeader() {
   updateRechnungKopfSummary();
 }
 
-const PLAN_LABELS = {
-  free: 'Kostenlos',
-};
-
 function formatPlan(plan) {
-  return PLAN_LABELS[plan] || plan || '—';
+  return formatPlanLabel(plan);
+}
+
+function updateRegisterPlanNote() {
+  if (!els.registerPlanNote) return;
+  els.registerPlanNote.textContent = `Gewählte Stufe: ${formatPlanLabel(pendingRegistrationPlan)}`;
 }
 
 function setProfilAccountStatus(message, isError = false) {
@@ -1484,7 +1506,44 @@ function setProfilPasswordStatus(message, isError = false) {
   els.profilPasswordStatus.classList.remove('hidden');
 }
 
-function renderProfilView() {
+function setProfilNummernStatus(message, isError = false) {
+  if (!els.profilNummernStatus) return;
+  if (!message) {
+    els.profilNummernStatus.classList.add('hidden');
+    els.profilNummernStatus.textContent = '';
+    els.profilNummernStatus.classList.remove('settings-status--error');
+    return;
+  }
+  els.profilNummernStatus.textContent = message;
+  els.profilNummernStatus.classList.toggle('settings-status--error', isError);
+  els.profilNummernStatus.classList.remove('hidden');
+}
+
+function updateProfilSchemaPreviews() {
+  const updateOne = (input, preview, previewFn) => {
+    if (!input || !preview) return;
+    const schema = String(input.value || '').trim();
+    if (!schema) {
+      preview.textContent = '—';
+      return;
+    }
+    try {
+      preview.textContent = previewFn(schema, new Date(), 1);
+    } catch {
+      preview.textContent = 'Ungültiges Schema';
+    }
+  };
+
+  updateOne(els.profilAngebotNummerSchema, els.profilAngebotSchemaPreview, previewAngebotsnummer);
+  updateOne(
+    els.profilRechnungNummerSchema,
+    els.profilRechnungSchemaPreview,
+    previewRechnungsnummer
+  );
+}
+
+async function renderProfilView() {
+  await refreshSession();
   const session = getSession();
   const tenant = session?.tenant;
   const user = session?.user;
@@ -1495,7 +1554,144 @@ function renderProfilView() {
 
   setProfilAccountStatus('');
   setProfilPasswordStatus('');
+  setProfilNummernStatus('');
   els.profilPasswordForm?.reset();
+
+  await loadPdfTemplate();
+  const tpl = getPdfTemplate();
+  if (els.profilAngebotNummerSchema) {
+    els.profilAngebotNummerSchema.value =
+      tpl.angebot?.nummerSchema || 'ANG-{YYYY}{MM}{DD}-{NR:3}';
+  }
+  if (els.profilRechnungNummerSchema) {
+    els.profilRechnungNummerSchema.value =
+      tpl.rechnung?.nummerSchema || 'RE-{YYYY}{MM}{DD}-{NR:3}';
+  }
+  updateProfilSchemaPreviews();
+  syncProfilNummernAccess();
+}
+
+function syncProfilNummernAccess() {
+  const admin = isAdmin();
+  const canEditSchemas = admin;
+
+  [els.profilAngebotNummerSchema, els.profilRechnungNummerSchema].forEach((input) => {
+    if (!input) return;
+    input.readOnly = !canEditSchemas;
+    input.tabIndex = canEditSchemas ? 0 : -1;
+    input.setAttribute('aria-readonly', canEditSchemas ? 'false' : 'true');
+    input.classList.toggle('pdf-schema-input', !canEditSchemas);
+  });
+
+  els.profilNummernActions?.classList.toggle('hidden', !canEditSchemas);
+  els.profilDeleteAccountBtn?.classList.toggle(
+    'hidden',
+    getSession()?.tenant?.plan === 'admin'
+  );
+}
+
+function setProfilDeleteStatus(message, isError = false) {
+  if (!els.profilDeleteStatus) return;
+  if (!message) {
+    els.profilDeleteStatus.classList.add('hidden');
+    els.profilDeleteStatus.textContent = '';
+    els.profilDeleteStatus.classList.remove('settings-status--error');
+    return;
+  }
+  els.profilDeleteStatus.textContent = message;
+  els.profilDeleteStatus.classList.toggle('settings-status--error', isError);
+  els.profilDeleteStatus.classList.remove('hidden');
+}
+
+function openProfilDeleteModal() {
+  if (!els.profilDeleteModal) return;
+  els.profilDeleteModal.classList.remove('hidden');
+  els.profilDeleteModal.setAttribute('aria-hidden', 'false');
+  setProfilDeleteStatus('');
+  if (els.profilDeletePlz) {
+    els.profilDeletePlz.value = '';
+    els.profilDeletePlz.focus();
+  }
+}
+
+function closeProfilDeleteModal() {
+  if (!els.profilDeleteModal) return;
+  els.profilDeleteModal.classList.add('hidden');
+  els.profilDeleteModal.setAttribute('aria-hidden', 'true');
+  setProfilDeleteStatus('');
+  if (els.profilDeletePlz) els.profilDeletePlz.value = '';
+}
+
+function formatAdminDate(iso) {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatUserRole(role) {
+  if (role === 'admin') return 'Admin';
+  if (role === 'owner') return 'Inhaber';
+  return role || '—';
+}
+
+async function renderAdminView() {
+  if (!els.adminUserList) return;
+  if (!isAdmin()) {
+    els.adminUserList.innerHTML = '<p class="empty">Keine Berechtigung.</p>';
+    return;
+  }
+
+  els.adminUserList.innerHTML = '<p class="empty">Lade Nutzer…</p>';
+
+  try {
+    const data = await loadAdminUsers();
+    const users = data?.users || [];
+
+    if (users.length === 0) {
+      els.adminUserList.innerHTML = '<p class="empty">Noch keine registrierten Nutzer.</p>';
+      return;
+    }
+
+    els.adminUserList.innerHTML = `
+      <p class="admin-user-list__summary">${users.length} Nutzer registriert</p>
+      <div class="admin-user-table-wrap">
+        <table class="admin-user-table">
+          <thead>
+            <tr>
+              <th scope="col">E-Mail</th>
+              <th scope="col">Firma</th>
+              <th scope="col">Rolle</th>
+              <th scope="col">Tarif</th>
+              <th scope="col">Registriert</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users
+              .map(
+                (user) => `
+              <tr>
+                <td>${escapeHtml(user.email)}</td>
+                <td>${escapeHtml(user.tenant?.name || '—')}</td>
+                <td><span class="admin-user-role admin-user-role--${escapeHtml(user.role || 'owner')}">${escapeHtml(formatUserRole(user.role))}</span></td>
+                <td>${escapeHtml(user.tenant?.plan || '—')}</td>
+                <td>${escapeHtml(formatAdminDate(user.createdAt))}</td>
+              </tr>`
+              )
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (err) {
+    els.adminUserList.innerHTML = `<p class="empty">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
+  }
 }
 
 function syncProfileButton(view = state.view) {
@@ -1509,6 +1705,12 @@ function syncProfileButton(view = state.view) {
   els.profileBtn.classList.toggle('is-current', view === 'profil');
 }
 
+function syncAdminNav() {
+  document.querySelectorAll('.is-admin-only').forEach((el) => {
+    el.classList.toggle('hidden', !isAdmin());
+  });
+}
+
 const NAV_VIEW_GROUPS = {
   neu: 'angebote',
   archiv: 'angebote',
@@ -1519,6 +1721,7 @@ const NAV_VIEW_GROUPS = {
   'pdf-vorlage': 'pdf-vorlage',
   'pdf-vorlage-angebot': 'pdf-vorlage',
   'pdf-vorlage-rechnung': 'pdf-vorlage',
+  admin: 'admin',
 };
 
 function closeNavMenus() {
@@ -1547,6 +1750,7 @@ function resolveNavBarView(view) {
     resolved === 'archiv' ||
     resolved === 'katalog' ||
     resolved === 'kunden' ||
+    resolved === 'admin' ||
     resolved === 'rechnung-neu' ||
     resolved === 'rechnung-archiv' ||
     isPdfVorlageView(resolved)
@@ -1675,8 +1879,9 @@ function syncBereichSwitcher() {
     bereichSwitcherLabel.textContent = 'Angebote';
   }
 
-  els.bereichModal?.querySelectorAll('[data-bereich]').forEach((btn) => {
-    btn.classList.toggle('is-current', btn.dataset.bereich === state.bereich);
+  els.bereichSwitcherMenu?.querySelectorAll('[data-bereich]').forEach((btn) => {
+    const alternate = state.bereich === 'rechnungen' ? 'angebote' : 'rechnungen';
+    btn.hidden = btn.dataset.bereich !== alternate;
   });
 
   document.querySelectorAll('.app-bereich-segment__btn').forEach((btn) => {
@@ -1686,22 +1891,32 @@ function syncBereichSwitcher() {
   });
 }
 
-function openBereichModal() {
-  if (!els.bereichModal) return;
+function openBereichDropdown() {
+  if (!els.bereichSwitcherMenu || !els.bereichSwitcherWrap) return;
   syncBereichSwitcher();
-  els.bereichModal.classList.remove('hidden');
-  els.bereichModal.setAttribute('aria-hidden', 'false');
+  closeNavMenus();
+  els.bereichSwitcherMenu.classList.remove('hidden');
+  els.bereichSwitcherWrap.classList.add('is-open');
   els.bereichSwitcher?.setAttribute('aria-expanded', 'true');
 }
 
-function closeBereichModal() {
-  if (!els.bereichModal) return;
-  els.bereichModal.classList.add('hidden');
-  els.bereichModal.setAttribute('aria-hidden', 'true');
+function closeBereichDropdown() {
+  if (!els.bereichSwitcherMenu || !els.bereichSwitcherWrap) return;
+  els.bereichSwitcherMenu.classList.add('hidden');
+  els.bereichSwitcherWrap.classList.remove('is-open');
   els.bereichSwitcher?.setAttribute('aria-expanded', 'false');
 }
 
+function toggleBereichDropdown() {
+  if (els.bereichSwitcherWrap?.classList.contains('is-open')) {
+    closeBereichDropdown();
+    return;
+  }
+  openBereichDropdown();
+}
+
 function setBereich(bereich, viewAfter) {
+  closeBereichDropdown();
   state.bereich = bereich;
   state.expandedKundeDokumenteId = null;
   syncBereichSwitcher();
@@ -1723,14 +1938,14 @@ function setBereich(bereich, viewAfter) {
 }
 
 function bindBereichSwitch() {
-  els.bereichSwitcher?.addEventListener('click', () => openBereichModal());
-
-  els.bereichModal?.querySelectorAll('[data-close-bereich-modal]').forEach((el) => {
-    el.addEventListener('click', closeBereichModal);
+  els.bereichSwitcher?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleBereichDropdown();
   });
 
   const activateBereich = (next) => {
     if (!next || next === state.bereich) return;
+    closeBereichDropdown();
     closeMobileNav();
     if (next === 'angebote') {
       const viewAfter = isPdfVorlageView(state.view) ? 'pdf-vorlage-angebot' : 'neu';
@@ -1741,9 +1956,9 @@ function bindBereichSwitch() {
     }
   };
 
-  els.bereichModal?.querySelectorAll('[data-bereich]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      closeBereichModal();
+  els.bereichSwitcherMenu?.querySelectorAll('[data-bereich]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       activateBereich(btn.dataset.bereich);
     });
   });
@@ -1792,6 +2007,9 @@ function bindMainNav() {
   });
 
   document.addEventListener('click', (e) => {
+    if (!e.target.closest('.bereich-switcher')) {
+      closeBereichDropdown();
+    }
     if (!e.target.closest('.app-header')) {
       closeNavMenus();
       closeMobileNav();
@@ -1800,6 +2018,7 @@ function bindMainNav() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      closeBereichDropdown();
       closeNavMenus();
       closeMobileNav();
     }
@@ -1808,6 +2027,7 @@ function bindMainNav() {
 
 function showView(view) {
   view = resolvePdfVorlageView(view);
+  if (view === 'admin' && !isAdmin()) return;
   if (state.bereich === 'rechnungen') {
     state.view = view;
     els.viewNeu.classList.add('hidden');
@@ -1818,6 +2038,7 @@ function showView(view) {
     els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
     syncPdfVorlageViews(view);
     els.viewProfil?.classList.toggle('hidden', view !== 'profil');
+    els.viewAdmin?.classList.toggle('hidden', view !== 'admin');
     els.angebotStickyFooter?.classList.add('hidden');
     els.rechnungStickyFooter?.classList.toggle('hidden', view !== 'rechnung-neu');
     syncNavState(view);
@@ -1829,6 +2050,8 @@ function showView(view) {
       renderKundenView();
     } else if (view === 'katalog') {
       renderKatalogView();
+    } else if (view === 'admin') {
+      renderAdminView();
     } else if (isPdfVorlageView(view)) {
       renderPdfTemplateView(view);
     } else if (view === 'profil') {
@@ -1849,6 +2072,7 @@ function showView(view) {
   els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
   syncPdfVorlageViews(view);
   els.viewProfil?.classList.toggle('hidden', view !== 'profil');
+  els.viewAdmin?.classList.toggle('hidden', view !== 'admin');
   syncNavState(view);
   syncProfileButton(view);
 
@@ -1861,6 +2085,9 @@ function showView(view) {
   } else if (view === 'katalog') {
     els.angebotStickyFooter.classList.add('hidden');
     renderKatalogView();
+  } else if (view === 'admin') {
+    els.angebotStickyFooter.classList.add('hidden');
+    renderAdminView();
   } else if (isPdfVorlageView(view)) {
     els.angebotStickyFooter.classList.add('hidden');
     renderPdfTemplateView(view);
@@ -1912,19 +2139,138 @@ function bindColorFieldSync(form) {
   });
 }
 
+const PDF_PREVIEW_SECTION_MAP = {
+  briefkopf: ['briefkopf'],
+  banner: ['briefkopf'],
+  firma: ['briefkopf'],
+  line: ['briefkopf'],
+  meta: ['meta'],
+  text: ['text'],
+  table: ['table'],
+  fuss: ['fuss'],
+  kunde: [],
+};
+
+function resolvePdfPreviewSections(region) {
+  return PDF_PREVIEW_SECTION_MAP[region] || [];
+}
+
+function resolvePdfPreviewHighlightRegions(region) {
+  if (region === 'briefkopf' || region === 'banner' || region === 'firma' || region === 'line') {
+    return ['briefkopf'];
+  }
+  return [region];
+}
+
+function setPdfTemplateSectionCollapsed(form, region, collapsed) {
+  const fieldset = form.querySelector(`fieldset[data-preview-region="${region}"]`);
+  if (!fieldset) return;
+  fieldset.classList.toggle('is-collapsed', collapsed);
+  fieldset.querySelector('.pdf-form-section__toggle')?.setAttribute('aria-expanded', String(!collapsed));
+}
+
+function collapseAllPdfTemplateSections(form) {
+  form.querySelectorAll('fieldset[data-preview-region]').forEach((fieldset) => {
+    setPdfTemplateSectionCollapsed(form, fieldset.dataset.previewRegion, true);
+  });
+}
+
+function setPdfTemplatePreviewHighlight(previewRoot, regions) {
+  if (!previewRoot) return;
+  previewRoot.querySelectorAll('[data-region]').forEach((el) => {
+    el.classList.toggle('is-active', regions.includes(el.dataset.region));
+  });
+}
+
+function openPdfTemplateSectionsFromPreview(form, previewRoot, region) {
+  const sections = resolvePdfPreviewSections(region);
+  if (!sections.length) return;
+
+  collapseAllPdfTemplateSections(form);
+  sections.forEach((section) => setPdfTemplateSectionCollapsed(form, section, false));
+  setPdfTemplatePreviewHighlight(previewRoot, resolvePdfPreviewHighlightRegions(region));
+
+  form.querySelector(`fieldset[data-preview-region="${sections[0]}"]`)?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'nearest',
+  });
+}
+
+function enhancePdfTemplateCollapsibleSections(form) {
+  if (!form || form.dataset.sectionsEnhanced === 'true') return;
+  form.dataset.sectionsEnhanced = 'true';
+
+  form.querySelectorAll('fieldset[data-preview-region]').forEach((fieldset) => {
+    if (fieldset.querySelector('.pdf-form-section__toggle')) return;
+
+    const legend = fieldset.querySelector('legend');
+    const title = legend?.textContent?.trim() || 'Bereich';
+    legend?.remove();
+
+    const body = document.createElement('div');
+    body.className = 'pdf-form-section__body';
+    while (fieldset.firstChild) {
+      body.appendChild(fieldset.firstChild);
+    }
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'pdf-form-section__toggle';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML = `
+      <span class="pdf-form-section__title">${escapeHtml(title)}</span>
+      <svg class="pdf-form-section__chevron" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    `;
+
+    fieldset.classList.add('pdf-form-section', 'is-collapsed');
+    fieldset.append(toggle, body);
+
+    toggle.addEventListener('click', () => {
+      const region = fieldset.dataset.previewRegion;
+      const collapsed = !fieldset.classList.contains('is-collapsed');
+      setPdfTemplateSectionCollapsed(form, region, collapsed);
+    });
+  });
+}
+
+function bindPdfTemplatePreviewSectionClicks(form, previewRoot) {
+  if (!form || !previewRoot || previewRoot.dataset.sectionClicksBound === 'true') return;
+  previewRoot.dataset.sectionClicksBound = 'true';
+
+  previewRoot.querySelectorAll('[data-region]').forEach((el) => {
+    if (!resolvePdfPreviewSections(el.dataset.region).length) return;
+
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute(
+      'aria-label',
+      `${el.querySelector('.pdf-layout-preview__tag')?.textContent?.trim() || 'Bereich'} bearbeiten`
+    );
+
+    const activate = () => openPdfTemplateSectionsFromPreview(form, previewRoot, el.dataset.region);
+    el.addEventListener('click', activate);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activate();
+      }
+    });
+  });
+}
+
 function bindPdfTemplateFormHighlight(form, previewRoot) {
   if (!form || !previewRoot || form.dataset.highlightBound === 'true') return;
   form.dataset.highlightBound = 'true';
   const setActiveRegions = (regions) => {
-    previewRoot.querySelectorAll('.pdf-layout-preview__region').forEach((el) => {
-      el.classList.toggle('is-active', regions.includes(el.dataset.region));
-    });
+    setPdfTemplatePreviewHighlight(previewRoot, regions);
   };
   form.querySelectorAll('[data-preview-region]').forEach((fieldset) => {
     fieldset.addEventListener('focusin', () => {
       const region = fieldset.dataset.previewRegion;
-      const regions = region === 'text' ? ['text', 'fuss'] : [region];
-      setActiveRegions(regions);
+      setPdfTemplateSectionCollapsed(form, region, false);
+      setActiveRegions(resolvePdfPreviewHighlightRegions(region));
     });
   });
   form.addEventListener('focusout', () => {
@@ -1934,46 +2280,36 @@ function bindPdfTemplateFormHighlight(form, previewRoot) {
   });
 }
 
-function updateSchemaPreviewInForm(form, isAngebot) {
-  const inputName = isAngebot ? 'angebot-nummer-schema' : 'rechnung-nummer-schema';
-  const previewSelector = isAngebot ? '.angebot-schema-preview' : '.rechnung-schema-preview';
-  const input = form.elements[inputName];
-  const preview = form.querySelector(previewSelector);
-  if (!input || !preview) return;
-  const schema = String(input.value || '').trim();
-  if (!schema) {
-    preview.textContent = '—';
-    return;
-  }
-  try {
-    preview.textContent = isAngebot
-      ? previewAngebotsnummer(schema, new Date(), 1)
-      : previewRechnungsnummer(schema, new Date(), 1);
-  } catch {
-    preview.textContent = 'Ungültiges Schema';
-  }
-}
-
 function ensurePdfTemplatePreview(form, previewRoot, type) {
-  form.querySelectorAll('[data-pdf-shared-fields]').forEach(mountSharedPdfTemplateFields);
-  if (!previewRoot.querySelector('.pdf-layout-preview__sheet')) {
+  form.querySelectorAll('[data-pdf-shared-fields]').forEach((container) => {
+    mountPdfTemplateFormSections(container, type);
+  });
+  if (!previewRoot.querySelector('.pdf-layout-preview__sheet') || previewRoot.dataset.previewType !== type) {
     previewRoot.innerHTML = createPdfLayoutPreviewMarkup(type);
+    previewRoot.dataset.previewType = type;
+    delete previewRoot.dataset.sectionClicksBound;
   }
 }
 
 async function renderPdfTemplateView(view) {
   const isAngebot = view === 'pdf-vorlage-angebot';
+  const scope = isAngebot ? 'angebot' : 'rechnung';
+  syncPdfLayoutTabs(scope);
   const form = isAngebot ? els.pdfAngebotForm : els.pdfRechnungForm;
   const previewRoot = isAngebot ? els.pdfPreviewAngebot : els.pdfPreviewRechnung;
   const type = isAngebot ? 'angebot' : 'rechnung';
   if (!form || !previewRoot) return;
+  if ((state.pdfLayout?.[scope] ?? 1) !== 1) return;
 
   ensurePdfTemplatePreview(form, previewRoot, type);
+  enhancePdfTemplateCollapsibleSections(form);
+  collapseAllPdfTemplateSections(form);
+  setPdfTemplatePreviewHighlight(previewRoot, []);
+  bindPdfTemplatePreviewSectionClicks(form, previewRoot);
   const tpl = await loadPdfTemplate();
   if (isAngebot) fillPdfTemplateAngebotForm(form, tpl);
   else fillPdfTemplateRechnungForm(form, tpl);
   syncColorHexFields(form);
-  updateSchemaPreviewInForm(form, isAngebot);
   updatePdfTemplatePreview(form, previewRoot, type);
   setPdfTemplateStatus(form, '');
 }
@@ -1981,21 +2317,11 @@ async function renderPdfTemplateView(view) {
 async function handlePdfTemplateSubmit(e, type) {
   e.preventDefault();
   const form = e.target;
-  const isAngebot = type === 'angebot';
-  const schemaName = isAngebot ? 'angebot-nummer-schema' : 'rechnung-nummer-schema';
-  const schema = String(form.elements[schemaName]?.value || '').trim();
-  if (schema && !schemaHasSequenceToken(schema)) {
-    setPdfTemplateStatus(
-      form,
-      'Das Schema braucht eine Laufnummer, z. B. {NR:3} oder {NNN}.',
-      true
-    );
-    return;
-  }
   try {
-    const patch = isAngebot
-      ? templatePatchFromAngebotPage(form)
-      : templatePatchFromRechnungPage(form);
+    const patch =
+      type === 'angebot'
+        ? templatePatchFromAngebotPage(form)
+        : templatePatchFromRechnungPage(form);
     await savePdfTemplate({ ...getPdfTemplate(), ...patch });
     setPdfTemplateStatus(form, 'Vorlage gespeichert.');
   } catch (err) {
@@ -2007,7 +2333,16 @@ async function handlePdfTemplateReset(form, type) {
   if (!confirm('PDF-Vorlage auf Standardwerte zurücksetzen? Gespeicherte Bilder gehen verloren.')) {
     return;
   }
+  const current = getPdfTemplate();
   const defaults = getDefaultPdfTemplate();
+  defaults.angebot = {
+    ...defaults.angebot,
+    nummerSchema: current.angebot?.nummerSchema ?? defaults.angebot?.nummerSchema,
+  };
+  defaults.rechnung = {
+    ...defaults.rechnung,
+    nummerSchema: current.rechnung?.nummerSchema ?? defaults.rechnung?.nummerSchema,
+  };
   const isAngebot = type === 'angebot';
   const previewRoot = isAngebot ? els.pdfPreviewAngebot : els.pdfPreviewRechnung;
   try {
@@ -2015,7 +2350,6 @@ async function handlePdfTemplateReset(form, type) {
     if (isAngebot) fillPdfTemplateAngebotForm(form, defaults);
     else fillPdfTemplateRechnungForm(form, defaults);
     syncColorHexFields(form);
-    updateSchemaPreviewInForm(form, isAngebot);
     updatePdfTemplatePreview(form, previewRoot, type);
     setPdfTemplateStatus(form, 'Standardvorlage wiederhergestellt.');
   } catch (err) {
@@ -2060,17 +2394,16 @@ function bindPdfTemplateForm(form, previewRoot, type) {
   form.dataset.bound = 'true';
   const isAngebot = type === 'angebot';
 
+  enhancePdfTemplateCollapsibleSections(form);
   bindColorFieldSync(form);
   bindPdfTemplatePreview(form, previewRoot, type);
   bindPdfTemplateFormHighlight(form, previewRoot);
+  bindPdfTemplatePreviewSectionClicks(form, previewRoot);
 
   form.addEventListener('submit', (e) => handlePdfTemplateSubmit(e, type));
   form.querySelector('.pdf-template-reset')?.addEventListener('click', () => {
     handlePdfTemplateReset(form, type);
   });
-
-  const schemaInput = form.elements[isAngebot ? 'angebot-nummer-schema' : 'rechnung-nummer-schema'];
-  schemaInput?.addEventListener('input', () => updateSchemaPreviewInForm(form, isAngebot));
 
   const logoFile = form.querySelector('.pdf-logo-file-input');
   const headerFile = form.querySelector('.pdf-header-file-input');
@@ -2095,10 +2428,58 @@ function bindPdfTemplateForm(form, previewRoot, type) {
 }
 
 function bindPdfTemplateForms() {
+  bindPdfLayoutTabs();
   ensurePdfTemplatePreview(els.pdfAngebotForm, els.pdfPreviewAngebot, 'angebot');
   ensurePdfTemplatePreview(els.pdfRechnungForm, els.pdfPreviewRechnung, 'rechnung');
   bindPdfTemplateForm(els.pdfAngebotForm, els.pdfPreviewAngebot, 'angebot');
   bindPdfTemplateForm(els.pdfRechnungForm, els.pdfPreviewRechnung, 'rechnung');
+  syncPdfLayoutTabs('angebot');
+  syncPdfLayoutTabs('rechnung');
+}
+
+function syncPdfLayoutTabs(scope) {
+  const viewId = scope === 'rechnung' ? 'view-pdf-vorlage-rechnung' : 'view-pdf-vorlage-angebot';
+  const root = document.getElementById(viewId);
+  if (!root) return;
+
+  const activeLayout = state.pdfLayout?.[scope] ?? 1;
+  root.querySelectorAll('[data-pdf-layout-tab]').forEach((btn) => {
+    const layout = Number(btn.dataset.pdfLayoutTab);
+    const isActive = layout === activeLayout;
+    btn.classList.toggle('is-active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+  });
+
+  root.querySelectorAll('[data-pdf-layout-panel]').forEach((panel) => {
+    const isActive = Number(panel.dataset.pdfLayoutPanel) === activeLayout;
+    panel.classList.toggle('hidden', !isActive);
+    panel.hidden = !isActive;
+  });
+
+  const lead = root.querySelector('.pdf-vorlage-card__lead');
+  if (lead) lead.classList.toggle('hidden', activeLayout !== 1);
+}
+
+function setPdfLayoutTab(scope, layout) {
+  if (!state.pdfLayout) state.pdfLayout = { angebot: 1, rechnung: 1 };
+  state.pdfLayout[scope] = layout;
+  syncPdfLayoutTabs(scope);
+  if (layout === 1) {
+    renderPdfTemplateView(scope === 'rechnung' ? 'pdf-vorlage-rechnung' : 'pdf-vorlage-angebot');
+  }
+}
+
+function bindPdfLayoutTabs() {
+  document.querySelectorAll('[data-pdf-layout-tabs]').forEach((tablist) => {
+    if (tablist.dataset.bound === 'true') return;
+    tablist.dataset.bound = 'true';
+    const scope = tablist.dataset.pdfLayoutTabs;
+    tablist.querySelectorAll('[data-pdf-layout-tab]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setPdfLayoutTab(scope, Number(btn.dataset.pdfLayoutTab));
+      });
+    });
+  });
 }
 
 async function renderArchiv() {
@@ -2701,7 +3082,20 @@ async function speichernUndRechnungPdf() {
   }
 }
 
+let appFlowGeneration = 0;
+
+function invalidateAppFlow() {
+  appFlowGeneration += 1;
+  closeOnboarding();
+}
+
+function isActiveAppFlow(flowId) {
+  return flowId === appFlowGeneration && isLoggedIn();
+}
+
 function showLanding() {
+  invalidateAppFlow();
+  pendingRegistrationPlan = 'free';
   els.landing?.classList.remove('hidden');
   els.loginScreen.classList.add('hidden');
   els.app.classList.add('hidden');
@@ -2717,9 +3111,11 @@ function setAuthTab(mode) {
   els.authTitle.textContent = isLogin ? 'Anmelden' : 'Registrieren';
   els.loginError.classList.add('hidden');
   els.registerError.classList.add('hidden');
+  if (!isLogin) updateRegisterPlanNote();
 }
 
 function showLogin(mode = 'login') {
+  invalidateAppFlow();
   els.landing?.classList.add('hidden');
   els.loginScreen.classList.remove('hidden');
   els.app.classList.add('hidden');
@@ -2728,10 +3124,13 @@ function showLogin(mode = 'login') {
 }
 
 async function showApp() {
+  const flowId = ++appFlowGeneration;
+
   els.landing?.classList.add('hidden');
   els.loginScreen.classList.add('hidden');
   els.app.classList.remove('hidden');
   syncProfileButton();
+  syncAdminNav();
 
   if (!state.appStarted) {
     bindAppEvents();
@@ -2739,16 +3138,25 @@ async function showApp() {
     rechnungPostenEditor.bindEvents();
     try {
       await loadPdfTemplate();
+      if (!isActiveAppFlow(flowId)) return;
       await loadKatalogPosten();
+      if (!isActiveAppFlow(flowId)) return;
       await resetForm();
+      if (!isActiveAppFlow(flowId)) return;
       await resetRechnungForm();
     } catch (err) {
       console.error('App-Initialisierung fehlgeschlagen:', err);
     }
+    if (!isActiveAppFlow(flowId)) return;
     syncBereichSwitcher();
     syncBereichNav();
     syncNavState(state.view);
     state.appStarted = true;
+  }
+
+  if (!isActiveAppFlow(flowId)) return;
+  if (needsOnboarding()) {
+    await openOnboarding();
   }
 }
 
@@ -2806,6 +3214,71 @@ function bindAppEvents() {
       setProfilPasswordStatus('Passwort wurde erfolgreich geändert.');
     } catch (err) {
       setProfilPasswordStatus(err.message || 'Passwort konnte nicht geändert werden.', true);
+    }
+  });
+
+  els.profilNummernForm?.addEventListener('input', () => {
+    if (isAdmin()) updateProfilSchemaPreviews();
+  });
+  els.profilNummernForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!isAdmin()) return;
+
+    setProfilNummernStatus('');
+
+    const angebotSchema = String(els.profilAngebotNummerSchema?.value || '').trim();
+    const rechnungSchema = String(els.profilRechnungNummerSchema?.value || '').trim();
+
+    if (!angebotSchema || !schemaHasSequenceToken(angebotSchema)) {
+      setProfilNummernStatus('Angebots-Schema braucht eine Laufnummer, z. B. {NR:3}.', true);
+      els.profilAngebotNummerSchema?.focus();
+      return;
+    }
+    if (!rechnungSchema || !schemaHasSequenceToken(rechnungSchema)) {
+      setProfilNummernStatus('Rechnungs-Schema braucht eine Laufnummer, z. B. {NR:3}.', true);
+      els.profilRechnungNummerSchema?.focus();
+      return;
+    }
+
+    try {
+      const angebotPatch = templatePatchFromForm(els.profilNummernForm, 'angebot-nummer');
+      const rechnungPatch = templatePatchFromForm(els.profilNummernForm, 'rechnung-nummer');
+      await savePdfTemplate({
+        ...getPdfTemplate(),
+        ...angebotPatch,
+        ...rechnungPatch,
+      });
+      updateProfilSchemaPreviews();
+      if (isPdfVorlageView(state.view)) {
+        renderPdfTemplateView(state.view);
+      }
+      setProfilNummernStatus('Nummernschemas wurden gespeichert.');
+    } catch (err) {
+      setProfilNummernStatus(err.message || 'Nummernschemas konnten nicht gespeichert werden.', true);
+    }
+  });
+
+  els.profilDeleteAccountBtn?.addEventListener('click', openProfilDeleteModal);
+  els.profilDeleteModal?.querySelectorAll('[data-close-profil-delete-modal]').forEach((el) => {
+    el.addEventListener('click', closeProfilDeleteModal);
+  });
+  els.profilDeleteConfirmBtn?.addEventListener('click', async () => {
+    setProfilDeleteStatus('');
+    const plz = els.profilDeletePlz?.value || '';
+    if (!String(plz).trim()) {
+      setProfilDeleteStatus('Bitte geben Sie Ihre Postleitzahl ein.', true);
+      els.profilDeletePlz?.focus();
+      return;
+    }
+
+    try {
+      invalidateAppFlow();
+      await deleteAccount(plz);
+      closeProfilDeleteModal();
+      state.appStarted = false;
+      showLanding();
+    } catch (err) {
+      setProfilDeleteStatus(err.message || 'Konto konnte nicht gelöscht werden.', true);
     }
   });
 
@@ -3094,8 +3567,8 @@ function bindAppEvents() {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !els.bereichModal?.classList.contains('hidden')) {
-      closeBereichModal();
+    if (e.key === 'Escape' && els.bereichSwitcherWrap?.classList.contains('is-open')) {
+      closeBereichDropdown();
       return;
     }
     if (e.key === 'Escape' && !els.kundenModal.classList.contains('hidden')) {
@@ -3164,7 +3637,12 @@ function bindAppEvents() {
 function bindAuthEvents() {
   document.querySelectorAll('[data-landing-action]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      showLogin(btn.dataset.landingAction === 'register' ? 'register' : 'login');
+      if (btn.dataset.landingAction === 'register') {
+        pendingRegistrationPlan = normalizeRegistrationPlan(btn.dataset.landingPlan);
+        showLogin('register');
+        return;
+      }
+      showLogin('login');
     });
   });
 
@@ -3194,7 +3672,8 @@ function bindAuthEvents() {
       await register(
         els.registerTenant.value,
         els.registerEmail.value,
-        els.registerPass.value
+        els.registerPass.value,
+        pendingRegistrationPlan
       );
       await showApp();
     } catch (err) {
@@ -3204,6 +3683,7 @@ function bindAuthEvents() {
   });
 
   els.logoutBtn.addEventListener('click', async () => {
+    invalidateAppFlow();
     await logout();
     showLanding();
   });
@@ -3213,6 +3693,12 @@ async function bootstrap() {
   initTheme();
   initLegal();
   initDatePickers();
+  initOnboarding({
+    onComplete: async () => {
+      await resetForm();
+      await resetRechnungForm();
+    },
+  });
   bindAuthEvents();
   const session = await refreshSession();
   if (session) await showApp();

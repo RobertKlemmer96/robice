@@ -4,7 +4,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './server/config.js';
 import { attachSessionUser, requireAuth } from './server/middleware/auth.js';
+import { findUserById, getTenantById } from './server/services/authStore.js';
 import { createAuthRouter } from './server/routes/auth.js';
+import { createAdminRouter } from './server/routes/admin.js';
 import { createEntityRouter } from './server/routes/entities.js';
 import { createKundenObjekteRouter } from './server/routes/kundenObjekte.js';
 import { runStartupMigrations } from './server/db/migrate-json.js';
@@ -44,6 +46,7 @@ app.use(
 app.use(attachSessionUser);
 
 app.use('/api/auth', createAuthRouter({ sessionCookieName: SESSION_COOKIE }));
+app.use('/api/admin', createAdminRouter());
 
 const kundenRouter = express.Router();
 kundenRouter.use(createKundenObjekteRouter());
@@ -103,11 +106,32 @@ app.get('/api/pdf-template', requireAuth, async (req, res) => {
 
 app.put('/api/pdf-template', requireAuth, async (req, res) => {
   try {
-    const body = req.body;
+    let body = req.body;
     if (!body || typeof body !== 'object') {
       res.status(400).json({ error: 'Ungültige PDF-Vorlage.' });
       return;
     }
+
+    const user = findUserById(req.userId);
+    const tenant = getTenantById(req.tenantId);
+    const existing = await getPdfTemplate(req.tenantId, PDF_TEMPLATE_DEFAULT);
+    const schemasLocked =
+      tenant?.onboarding_completed && user?.role !== 'admin';
+
+    if (schemasLocked) {
+      body = {
+        ...body,
+        angebot: {
+          ...(body.angebot || {}),
+          nummerSchema: existing.angebot?.nummerSchema,
+        },
+        rechnung: {
+          ...(body.rechnung || {}),
+          nummerSchema: existing.rechnung?.nummerSchema,
+        },
+      };
+    }
+
     const saved = await savePdfTemplate(req.tenantId, body);
     res.json(saved);
   } catch (err) {

@@ -54,7 +54,31 @@ export function getDefaultPdfTemplate() {
       fuss1: 'Bitte überweisen Sie den Rechnungsbetrag bis zum angegebenen Fälligkeitsdatum.',
       fuss2: 'Es gelten unsere allgemeinen Geschäftsbedingungen.',
     },
+    fussSpalten: [
+      {
+        ueberschrift: 'Bankverbindung',
+        text: 'IBAN DE00 0000 0000 0000 0000 00\nSparkasse Musterstadt',
+      },
+      {
+        ueberschrift: 'Geschäftsführung',
+        text: 'Max Mustermann',
+      },
+      {
+        ueberschrift: 'Register',
+        text: 'Amtsgericht Musterstadt\nHRB 12345',
+      },
+    ],
   };
+}
+
+export function getFussSpalten(template) {
+  const tpl = mergePdfTemplate(template);
+  const defaults = getDefaultPdfTemplate().fussSpalten;
+  const stored = Array.isArray(tpl.fussSpalten) ? tpl.fussSpalten : [];
+  return [0, 1, 2].map((index) => ({
+    ueberschrift: String(stored[index]?.ueberschrift ?? defaults[index]?.ueberschrift ?? '').trim(),
+    text: String(stored[index]?.text ?? defaults[index]?.text ?? '').trim(),
+  }));
 }
 
 function deepMerge(base, patch) {
@@ -121,7 +145,7 @@ export async function savePdfTemplate(template) {
 
 export function templatePatchFromAngebotPage(form) {
   let patch = {};
-  for (const section of ['bilder', 'firma', 'farben', 'angebot-nummer', 'angebot-texte']) {
+  for (const section of ['bilder', 'firma', 'farben', 'fuss-spalten', 'angebot-texte']) {
     patch = { ...patch, ...templatePatchFromForm(form, section) };
   }
   return patch;
@@ -129,7 +153,7 @@ export function templatePatchFromAngebotPage(form) {
 
 export function templatePatchFromRechnungPage(form) {
   let patch = {};
-  for (const section of ['bilder', 'firma', 'farben', 'rechnung-nummer', 'rechnung-texte']) {
+  for (const section of ['bilder', 'firma', 'farben', 'fuss-spalten', 'rechnung-zahlungsziel', 'rechnung-texte']) {
     patch = { ...patch, ...templatePatchFromForm(form, section) };
   }
   return patch;
@@ -137,14 +161,14 @@ export function templatePatchFromRechnungPage(form) {
 
 export function fillPdfTemplateAngebotForm(form, template) {
   const tpl = mergePdfTemplate(template);
-  for (const section of ['bilder', 'firma', 'farben', 'angebot-nummer', 'angebot-texte']) {
+  for (const section of ['bilder', 'firma', 'farben', 'fuss-spalten', 'angebot-texte']) {
     fillPdfTemplateSectionForm(form, tpl, section);
   }
 }
 
 export function fillPdfTemplateRechnungForm(form, template) {
   const tpl = mergePdfTemplate(template);
-  for (const section of ['bilder', 'firma', 'farben', 'rechnung-nummer', 'rechnung-texte']) {
+  for (const section of ['bilder', 'firma', 'farben', 'fuss-spalten', 'rechnung-zahlungsziel', 'rechnung-texte']) {
     fillPdfTemplateSectionForm(form, tpl, section);
   }
 }
@@ -194,6 +218,11 @@ export function templatePatchFromForm(form, section) {
         rechnung: {
           nummerSchema:
             String(fd.get('rechnung-nummer-schema') || '').trim() || 'RE-{YYYY}{MM}{DD}-{NR:3}',
+        },
+      };
+    case 'rechnung-zahlungsziel':
+      return {
+        rechnung: {
           zahlungszielTage: Number(fd.get('rechnung-zahlungsziel-tage')) || 14,
         },
       };
@@ -218,6 +247,13 @@ export function templatePatchFromForm(form, section) {
           headerHoeheMm: Number(fd.get('layout-headerHoeheMm')) || 22,
           headerAktiv: fd.get('layout-headerAktiv') === 'on',
         },
+      };
+    case 'fuss-spalten':
+      return {
+        fussSpalten: [1, 2, 3].map((index) => ({
+          ueberschrift: String(fd.get(`fuss-spalte${index}-ueberschrift`) || '').trim(),
+          text: String(fd.get(`fuss-spalte${index}-text`) || '').trim(),
+        })),
       };
     default:
       return {};
@@ -253,9 +289,15 @@ export function fillPdfTemplateSectionForm(form, template, section) {
         tpl.angebot?.nummerSchema || 'ANG-{YYYY}{MM}{DD}-{NR:3}';
       break;
     case 'rechnung-nummer':
-      form.elements['rechnung-nummer-schema'].value =
-        tpl.rechnung?.nummerSchema || 'RE-{YYYY}{MM}{DD}-{NR:3}';
-      form.elements['rechnung-zahlungsziel-tage'].value = tpl.rechnung?.zahlungszielTage ?? 14;
+      if (form.elements['rechnung-nummer-schema']) {
+        form.elements['rechnung-nummer-schema'].value =
+          tpl.rechnung?.nummerSchema || 'RE-{YYYY}{MM}{DD}-{NR:3}';
+      }
+      break;
+    case 'rechnung-zahlungsziel':
+      if (form.elements['rechnung-zahlungsziel-tage']) {
+        form.elements['rechnung-zahlungsziel-tage'].value = tpl.rechnung?.zahlungszielTage ?? 14;
+      }
       break;
     case 'rechnung-texte':
       form.elements['rechnung-text-titel'].value = tpl.texteRechnung?.titel || 'RECHNUNG';
@@ -273,6 +315,19 @@ export function fillPdfTemplateSectionForm(form, template, section) {
       updateImagePreview(form.querySelector('[data-preview="logo"]'), tpl.bilder.logo);
       updateImagePreview(form.querySelector('[data-preview="header"]'), tpl.bilder.header);
       break;
+    case 'fuss-spalten': {
+      const spalten = getFussSpalten(tpl);
+      spalten.forEach((spalte, index) => {
+        const nr = index + 1;
+        if (form.elements[`fuss-spalte${nr}-ueberschrift`]) {
+          form.elements[`fuss-spalte${nr}-ueberschrift`].value = spalte.ueberschrift;
+        }
+        if (form.elements[`fuss-spalte${nr}-text`]) {
+          form.elements[`fuss-spalte${nr}-text`].value = spalte.text;
+        }
+      });
+      break;
+    }
     default:
       break;
   }
@@ -327,6 +382,10 @@ export function templateFromForm(form) {
       fuss1: String(fd.get('rechnung-text-fuss1') || '').trim(),
       fuss2: String(fd.get('rechnung-text-fuss2') || '').trim(),
     },
+    fussSpalten: [1, 2, 3].map((index) => ({
+      ueberschrift: String(fd.get(`fuss-spalte${index}-ueberschrift`) || '').trim(),
+      text: String(fd.get(`fuss-spalte${index}-text`) || '').trim(),
+    })),
   };
 }
 

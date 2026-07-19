@@ -1,9 +1,11 @@
 import { LEGAL_CONFIG, getCompanyLine } from './legalConfig.js';
+import { ROADMAP, ROADMAP_STATUS_LABELS } from './roadmapConfig.js';
 
 const PAGE_TITLES = {
   impressum: 'Impressum',
   datenschutz: 'Datenschutzerklärung',
   agb: 'Allgemeine Geschäftsbedingungen',
+  roadmap: 'Roadmap',
 };
 
 let returnContext = 'login';
@@ -247,10 +249,58 @@ function renderAgb() {
   `;
 }
 
+function renderRoadmapPhase(phase) {
+  const statusLabel = ROADMAP_STATUS_LABELS[phase.status] || phase.status;
+  const periodLabel = phase.quarter ? `${phase.period} · ${phase.quarter}` : phase.period;
+
+  return `
+    <li class="roadmap-timeline__item roadmap-timeline__item--${escapeHtml(phase.status)}">
+      <div class="roadmap-timeline__marker" aria-hidden="true"></div>
+      <div class="roadmap-timeline__stripe">
+        <span class="roadmap-timeline__period">${escapeHtml(periodLabel)}</span>
+        <span class="roadmap-timeline__status">${escapeHtml(statusLabel)}</span>
+      </div>
+      <div class="roadmap-timeline__body">
+        <h2>${escapeHtml(phase.title)}</h2>
+        <ul>
+          ${phase.points.map((point) => `<li>${escapeHtml(point)}</li>`).join('')}
+        </ul>
+      </div>
+    </li>
+  `;
+}
+
+function renderRoadmap() {
+  const c = LEGAL_CONFIG;
+
+  return `
+    <h1>Roadmap</h1>
+    <p class="legal-lead">Geplante Entwicklung von ${escapeHtml(c.productName)} — fokussiert auf Handwerk und Dienstleistung, ohne Voll-CRM.</p>
+
+    <section class="legal-section roadmap-section">
+      <ol class="roadmap-timeline" aria-label="Produkt-Roadmap">
+        ${ROADMAP.phases.map(renderRoadmapPhase).join('')}
+      </ol>
+    </section>
+
+    <section class="legal-section">
+      <h2>Bewusst nicht im Scope</h2>
+      <ul>
+        <li>Volle Disposition oder Kalender</li>
+        <li>Zeiterfassung und Lagerhaltung</li>
+        <li>E-Mail-Marketing oder Newsletter</li>
+      </ul>
+    </section>
+
+    <p class="legal-meta">Stand: ${escapeHtml(ROADMAP.lastUpdated)} · Angaben ohne Gewähr, Prioritäten können sich ändern.</p>
+  `;
+}
+
 const RENDERERS = {
   impressum: renderImpressum,
   datenschutz: renderDatenschutz,
   agb: renderAgb,
+  roadmap: renderRoadmap,
 };
 
 export function renderLegalPage(pageId) {

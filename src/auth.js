@@ -30,6 +30,26 @@ export function getSession() {
   return cachedSession;
 }
 
+export function isAdmin() {
+  return cachedSession?.user?.role === 'admin';
+}
+
+export function needsOnboarding() {
+  if (!cachedSession) return false;
+  return !cachedSession.tenant?.onboardingCompleted;
+}
+
+export async function markOnboardingComplete() {
+  const data = await apiFetch(`${API_BASE}/tenant`, {
+    method: 'PATCH',
+    body: JSON.stringify({ completeOnboarding: true }),
+  });
+  if (cachedSession?.tenant && data?.tenant) {
+    cachedSession = { ...cachedSession, tenant: data.tenant };
+  }
+  return data?.tenant;
+}
+
 export async function changePassword(currentPassword, newPassword) {
   await apiFetch(`${API_BASE}/change-password`, {
     method: 'POST',
@@ -56,10 +76,10 @@ export async function login(email, password) {
   return true;
 }
 
-export async function register(tenantName, email, password) {
+export async function register(tenantName, email, password, plan = 'free') {
   cachedSession = await apiFetch(`${API_BASE}/register`, {
     method: 'POST',
-    body: JSON.stringify({ tenantName, email, password }),
+    body: JSON.stringify({ tenantName, email, password, plan }),
   });
   return true;
 }
@@ -70,4 +90,12 @@ export async function logout() {
   } finally {
     cachedSession = null;
   }
+}
+
+export async function deleteAccount(plz) {
+  await apiFetch(`${API_BASE}/account/delete`, {
+    method: 'POST',
+    body: JSON.stringify({ plz }),
+  });
+  cachedSession = null;
 }

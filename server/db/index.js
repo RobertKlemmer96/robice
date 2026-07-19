@@ -96,6 +96,31 @@ function runMigrations(database) {
       WHERE angebotsdatum IS NULL AND erstellt_am IS NOT NULL AND erstellt_am != ''
     `);
   }
+
+  const tenantCols = database.prepare('PRAGMA table_info(tenants)').all();
+  const tenantNames = new Set(tenantCols.map((c) => c.name));
+  if (!tenantNames.has('onboarding_completed')) {
+    database.exec(
+      `ALTER TABLE tenants ADD COLUMN onboarding_completed INTEGER NOT NULL DEFAULT 1`
+    );
+  }
+
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id TEXT PRIMARY KEY,
+      applied_at TEXT NOT NULL
+    )
+  `);
+
+  const adminOnboardingMigration = database
+    .prepare('SELECT 1 FROM schema_migrations WHERE id = ?')
+    .get('admin_tenant_onboarding_pending_v1');
+  if (!adminOnboardingMigration) {
+    database.prepare(`UPDATE tenants SET onboarding_completed = 0 WHERE plan = 'admin'`).run();
+    database
+      .prepare('INSERT INTO schema_migrations (id, applied_at) VALUES (?, ?)')
+      .run('admin_tenant_onboarding_pending_v1', new Date().toISOString());
+  }
 }
 
 function migrateAdresseColumns(database, table) {

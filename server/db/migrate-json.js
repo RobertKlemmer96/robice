@@ -4,6 +4,7 @@ import { config } from '../config.js';
 import { getDb } from '../db/index.js';
 import {
   ensureDefaultTenantAdmin,
+  ensureSystemAdmin,
   hashPassword,
 } from '../services/authStore.js';
 import * as kundenRepo from '../repositories/kunden.js';
@@ -36,6 +37,7 @@ export async function runStartupMigrations(defaultPdfTemplate) {
 
   const passwordHash = await hashPassword(config.adminPassword);
   let tenantInfo = ensureDefaultTenantAdmin(passwordHash);
+  ensureSystemAdmin(passwordHash);
 
   const db = getDb();
   if (!tenantInfo) {

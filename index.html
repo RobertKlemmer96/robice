@@ -14,21 +14,103 @@
   </head>
   <body>
     <div id="landing" class="landing">
-      <header class="landing-header">
-        <div class="landing-brand">
-          <span class="landing-brand__mark" aria-hidden="true">Kd</span>
-          <span class="landing-brand__text">
-            <strong class="landing-brand__name">Klemdesk</strong>
-            <span class="landing-brand__tag">Angebote &amp; Rechnungen</span>
+      <div class="landing-alpha-banner" role="status" aria-live="polite">
+        <div class="landing-alpha-banner__inner">
+          <strong>Alpha-Vorschau</strong>
+          <span>
+            Klemdesk befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können
+            sich noch ändern.
           </span>
         </div>
-        <div class="landing-header__actions">
-          <button type="button" class="btn btn-ghost btn-sm" data-landing-action="login">Anmelden</button>
-          <button type="button" class="btn btn-primary btn-sm" data-landing-action="register">Kostenlos starten</button>
+      </div>
+      <header class="landing-header">
+        <div class="landing-header__inner">
+          <div class="landing-brand">
+            <span class="landing-brand__mark" aria-hidden="true">Kd</span>
+            <span class="landing-brand__text">
+              <strong class="landing-brand__name">Klemdesk</strong>
+              <span class="landing-brand__tag">Angebote &amp; Rechnungen</span>
+            </span>
+          </div>
+          <div class="landing-header__actions">
+            <button type="button" class="btn btn-ghost btn-sm" data-landing-action="login">Anmelden</button>
+            <button type="button" class="btn btn-primary btn-sm" data-landing-action="register" data-landing-plan="free">Kostenlos starten</button>
+          </div>
         </div>
       </header>
 
       <main class="landing-main">
+        <section class="landing-section landing-pricing" aria-labelledby="landing-pricing-title">
+          <div class="landing-section__head landing-pricing__head">
+            <h2 id="landing-pricing-title">Preisstufen für jeden Bedarf</h2>
+            <p>Starten Sie kostenlos — upgraden Sie, wenn Ihr Geschäft wächst.</p>
+          </div>
+          <div class="landing-pricing__grid">
+            <article class="landing-plan landing-plan--free">
+              <header class="landing-plan__header">
+                <span class="landing-plan__badge">Stufe 1</span>
+                <h3 class="landing-plan__name">Free</h3>
+                <p class="landing-plan__price">
+                  <span class="landing-plan__amount">0 €</span>
+                  <span class="landing-plan__period">/ Monat</span>
+                </p>
+                <p class="landing-plan__tagline">Zum Ausprobieren</p>
+              </header>
+              <ul class="landing-plan__features">
+                <li>10 Angebote &amp; 10 Rechnungen / Monat</li>
+                <li>Kunden, Katalog &amp; Archiv</li>
+                <li>PDF nur Download</li>
+                <li>Basis-PDF-Vorlage</li>
+              </ul>
+              <button type="button" class="btn btn-ghost landing-plan__cta" data-landing-action="register" data-landing-plan="free">
+                Kostenlos registrieren
+              </button>
+            </article>
+
+            <article class="landing-plan landing-plan--plus">
+              <header class="landing-plan__header">
+                <span class="landing-plan__badge">Stufe 2</span>
+                <h3 class="landing-plan__name">Plus</h3>
+                <p class="landing-plan__price">
+                  <span class="landing-plan__amount">3,99 €</span>
+                  <span class="landing-plan__period">/ Monat</span>
+                </p>
+                <p class="landing-plan__tagline">Für regelmäßigen Versand</p>
+              </header>
+              <ul class="landing-plan__features">
+                <li>30 Angebote &amp; 30 Rechnungen / Monat</li>
+                <li>PDF-Versand an Kunden</li>
+                <li>Eigene PDF-Vorlage</li>
+                <li>Monats-Export (CSV)</li>
+              </ul>
+              <button type="button" class="btn btn-primary landing-plan__cta" data-landing-action="register" data-landing-plan="plus">
+                Mit Plus starten
+              </button>
+            </article>
+
+            <article class="landing-plan landing-plan--pro">
+              <header class="landing-plan__header">
+                <span class="landing-plan__badge landing-plan__badge--popular">Stufe 3</span>
+                <h3 class="landing-plan__name">Pro</h3>
+                <p class="landing-plan__price">
+                  <span class="landing-plan__amount">7,99 €</span>
+                  <span class="landing-plan__period">/ Monat</span>
+                </p>
+                <p class="landing-plan__tagline">Unbegrenzt &amp; weniger Tipparbeit</p>
+              </header>
+              <ul class="landing-plan__features">
+                <li>Unbegrenzte Angebote &amp; Rechnungen</li>
+                <li>Versand &amp; Archivierung</li>
+                <li>KI-Import aus alten PDFs</li>
+                <li>Offene Posten, Jahres-Export &amp; CSV-Import</li>
+              </ul>
+              <button type="button" class="btn btn-primary landing-plan__cta" data-landing-action="register" data-landing-plan="pro">
+                Mit Pro starten
+              </button>
+            </article>
+          </div>
+        </section>
+
         <section class="landing-hero">
           <div class="landing-hero__content">
             <p class="landing-eyebrow">Kostenlos · Sofort startklar · Für Handwerk &amp; Dienstleistung</p>
@@ -41,7 +123,7 @@
               Registrieren, einloggen und in wenigen Minuten das erste Angebot versenden.
             </p>
             <div class="landing-hero__actions">
-              <button type="button" class="btn btn-primary" data-landing-action="register">
+              <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free">
                 Jetzt kostenlos registrieren
               </button>
               <button type="button" class="btn btn-ghost" data-landing-action="login">Bereits Konto? Anmelden</button>
@@ -161,7 +243,7 @@
             <h2>Bereit für das erste Angebot?</h2>
             <p>Registrierung dauert unter einer Minute. Klemdesk ist aktuell kostenlos nutzbar.</p>
             <div class="landing-cta__actions">
-              <button type="button" class="btn btn-primary" data-landing-action="register">Kostenlos registrieren</button>
+              <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free">Kostenlos registrieren</button>
               <button type="button" class="btn btn-ghost" data-landing-action="login">Anmelden</button>
             </div>
           </div>
@@ -175,6 +257,8 @@
           <button type="button" class="legal-nav__link" data-legal-page="datenschutz">Datenschutz</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
           <button type="button" class="legal-nav__link" data-legal-page="agb">AGB</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="roadmap">Roadmap</button>
         </nav>
       </footer>
     </div>
@@ -192,7 +276,7 @@
           </div>
           <form id="login-form" class="login-form">
             <label>
-              E-Mail
+              E-Mail oder Benutzername
               <input type="text" id="login-user" autocomplete="username" required />
             </label>
             <label>
@@ -215,6 +299,7 @@
               Passwort (min. 8 Zeichen)
               <input type="password" id="register-pass" autocomplete="new-password" required minlength="8" />
             </label>
+            <p id="register-plan-note" class="register-plan-note"></p>
             <p id="register-error" class="login-error hidden">Registrierung fehlgeschlagen.</p>
             <button type="submit" class="btn btn-primary btn-full">Konto anlegen</button>
           </form>
@@ -225,6 +310,8 @@
           <button type="button" class="legal-nav__link" data-legal-page="datenschutz">Datenschutz</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
           <button type="button" class="legal-nav__link" data-legal-page="agb">AGB</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="roadmap">Roadmap</button>
         </nav>
       </div>
     </div>
@@ -233,29 +320,64 @@
       <header class="app-header">
         <div class="app-header__inner">
           <div class="app-header__brand-mobile" aria-hidden="true">KlemDesk</div>
-          <button
-            type="button"
-            class="app-brand"
-            id="bereich-switcher"
-            aria-haspopup="dialog"
-            aria-expanded="false"
-            aria-controls="bereich-modal"
-          >
-            <span class="app-brand__mark app-brand__mark--angebote" id="bereich-switcher-mark" aria-hidden="true"
-              >A</span
+          <div class="bereich-switcher" id="bereich-switcher-wrap">
+            <button
+              type="button"
+              class="app-brand"
+              id="bereich-switcher"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="bereich-switcher-menu"
             >
-            <span class="app-brand__title" id="bereich-switcher-label">Angebote</span>
-            <svg class="app-brand__chevron" viewBox="0 0 16 16" aria-hidden="true">
-              <path
-                d="M4 6l4 4 4-4"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.75"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
+              <span class="app-brand__mark app-brand__mark--angebote" id="bereich-switcher-mark" aria-hidden="true"
+                >A</span
+              >
+              <span class="app-brand__title" id="bereich-switcher-label">Angebote</span>
+              <svg class="app-brand__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  d="M4 6l4 4 4-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div
+              class="bereich-switcher__menu hidden"
+              id="bereich-switcher-menu"
+              role="menu"
+              aria-label="Bereich wechseln"
+            >
+              <button
+                type="button"
+                class="bereich-switcher__option"
+                role="menuitem"
+                data-bereich="angebote"
+                hidden
+              >
+                <span class="app-brand__mark app-brand__mark--angebote" aria-hidden="true">A</span>
+                <span class="bereich-switcher__option-text">
+                  <span class="bereich-switcher__option-title">Angebote</span>
+                  <span class="bereich-switcher__option-desc">Angebote erstellen &amp; verwalten</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                class="bereich-switcher__option"
+                role="menuitem"
+                data-bereich="rechnungen"
+                hidden
+              >
+                <span class="app-brand__mark app-brand__mark--rechnungen" aria-hidden="true">R</span>
+                <span class="bereich-switcher__option-text">
+                  <span class="bereich-switcher__option-title">Rechnungen</span>
+                  <span class="bereich-switcher__option-desc">Rechnungen erstellen &amp; verwalten</span>
+                </span>
+              </button>
+            </div>
+          </div>
 
           <button
             type="button"
@@ -342,6 +464,12 @@
                   <span class="app-nav__trigger-label app-nav__trigger-label--mobile">PDF</span>
                 </button>
               </li>
+              <li class="app-nav__group app-nav__group--direct is-admin-only hidden" data-nav-group="admin">
+                <button type="button" class="app-nav__trigger" data-nav-view="admin">
+                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">Admin</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">Admin</span>
+                </button>
+              </li>
             </ul>
           </nav>
 
@@ -353,7 +481,7 @@
               aria-label="Profil"
               title="Profil"
             >
-              <svg class="profile-btn__icon app-header__action-icon--desktop" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="profile-btn__icon app-header__action-icon app-header__action-icon--desktop" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                 <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.75" />
                 <path
                   d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"
@@ -372,7 +500,16 @@
               aria-label="Abmelden"
               title="Abmelden"
             >
-              <span class="app-header__action-label app-header__action-label--desktop" aria-hidden="true">🚪</span>
+              <svg class="app-header__action-icon app-header__action-icon--desktop" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
               <span class="app-header__action-label app-header__action-label--mobile">Abmelden</span>
             </button>
           </div>
@@ -521,19 +658,19 @@
             </div>
           </section>
 
-          <div id="rechnung-sticky-footer" class="angebot-sticky-footer rechnung-sticky-footer">
+          <div id="rechnung-sticky-footer" class="angebot-sticky-footer">
             <section class="card summary-card">
               <div class="totals">
                 <div class="total-row">
-                  <span>Netto</span>
+                  <span>Gesamt netto</span>
                   <span id="rechnung-summe-netto">0,00 €</span>
                 </div>
                 <div class="total-row">
-                  <span>MwSt. 19 %</span>
+                  <span>19 % Umsatzsteuer</span>
                   <span id="rechnung-summe-mwst">0,00 €</span>
                 </div>
                 <div class="total-row total-row--bold">
-                  <span>Gesamt</span>
+                  <span>Gesamtbetrag</span>
                   <span id="rechnung-summe-brutto">0,00 €</span>
                 </div>
               </div>
@@ -541,7 +678,7 @@
 
             <div id="rechnung-pdf-footer" class="pdf-footer">
               <button type="button" id="rechnung-reset-btn" class="btn btn-ghost hidden">Neu starten</button>
-              <button type="button" id="rechnung-pdf-btn" class="btn btn-primary btn-primary--rechnungen is-disabled" aria-disabled="true">PDF erstellen</button>
+              <button type="button" id="rechnung-pdf-btn" class="btn btn-primary is-disabled" aria-disabled="true">PDF erstellen</button>
             </div>
           </div>
         </main>
@@ -683,15 +820,15 @@
             <section class="card summary-card">
               <div class="totals">
                 <div class="total-row">
-                  <span>Netto</span>
+                  <span>Gesamt netto</span>
                   <span id="summe-netto">0,00 €</span>
                 </div>
                 <div class="total-row">
-                  <span>MwSt. 19 %</span>
+                  <span>19 % Umsatzsteuer</span>
                   <span id="summe-mwst">0,00 €</span>
                 </div>
                 <div class="total-row total-row--bold">
-                  <span>Gesamt</span>
+                  <span>Gesamtbetrag</span>
                   <span id="summe-brutto">0,00 €</span>
                 </div>
               </div>
@@ -719,61 +856,73 @@
       <div id="view-pdf-vorlage-angebot" class="hidden">
         <main class="main">
           <section class="card pdf-vorlage-card">
-            <h2>PDF-Vorlage · Angebot</h2>
-            <p class="settings-lead">
-              Links sehen Sie eine Vorschau des Angebots-PDFs. Rechts pflegen Sie die Bereiche —
-              Briefkopf, Dokumentkopf, Texte und Farben.
+            <div class="pdf-vorlage-card__head">
+              <h2>PDF-Vorlage · Angebot</h2>
+              <div
+                class="pdf-layout-tabs"
+                role="tablist"
+                aria-label="Layout wählen"
+                data-pdf-layout-tabs="angebot"
+              >
+                <button
+                  type="button"
+                  class="pdf-layout-tabs__btn is-active"
+                  role="tab"
+                  aria-selected="true"
+                  data-pdf-layout-tab="1"
+                >
+                  Layout 1
+                </button>
+                <button
+                  type="button"
+                  class="pdf-layout-tabs__btn"
+                  role="tab"
+                  aria-selected="false"
+                  data-pdf-layout-tab="2"
+                >
+                  Layout 2
+                </button>
+                <button
+                  type="button"
+                  class="pdf-layout-tabs__btn"
+                  role="tab"
+                  aria-selected="false"
+                  data-pdf-layout-tab="3"
+                >
+                  Layout 3
+                </button>
+              </div>
+            </div>
+            <p class="settings-lead pdf-vorlage-card__lead">
+              Oben sehen Sie eine Vorschau des Angebots-PDFs. Klicken Sie auf einen Bereich
+              in der Vorschau oder klappen Sie die Einstellungen unten auf.
             </p>
-            <div class="pdf-vorlage-workspace">
-              <aside class="pdf-vorlage-preview-col">
-                <p class="pdf-vorlage-preview-label">Layout-Vorschau</p>
-                <div class="pdf-layout-preview" id="pdf-preview-angebot" aria-label="Angebots-PDF Vorschau"></div>
-              </aside>
-              <div class="pdf-vorlage-form-col">
-                <form id="pdf-angebot-form" class="pdf-template-form">
-                  <div data-pdf-shared-fields></div>
-                  <fieldset class="form-section" data-preview-region="meta">
-                    <legend>Dokumentkopf (rechts oben)</legend>
-                    <div class="form-grid">
-                      <label class="full">
-                        Angebotsnummer-Schema
-                        <input type="text" name="angebot-nummer-schema" spellcheck="false" autocomplete="off" placeholder="ANG-{YYYY}{MM}{DD}-{NR:3}" />
-                      </label>
+            <div class="pdf-layout-panel" data-pdf-layout-panel="1">
+              <div class="pdf-vorlage-workspace">
+                <aside class="pdf-vorlage-preview-col">
+                  <p class="pdf-vorlage-preview-label">Layout-Vorschau</p>
+                  <div class="pdf-layout-preview" id="pdf-preview-angebot" aria-label="Angebots-PDF Vorschau"></div>
+                </aside>
+                <div class="pdf-vorlage-form-col">
+                  <form id="pdf-angebot-form" class="pdf-template-form">
+                    <div data-pdf-shared-fields></div>
+                    <div class="form-actions full settings-actions">
+                      <button type="submit" class="btn btn-primary">Angebots-Vorlage speichern</button>
+                      <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
+                      <p class="settings-status hidden pdf-template-status" role="status"></p>
                     </div>
-                    <p class="schema-hint">Vorschau: <strong class="angebot-schema-preview">—</strong></p>
-                  </fieldset>
-                  <fieldset class="form-section" data-preview-region="text">
-                    <legend>Texte im PDF</legend>
-                    <div class="form-grid">
-                      <label>Dokumenttitel<input type="text" name="text-titel" placeholder="ANGEBOT" /></label>
-                      <label class="full">Einleitung<textarea name="text-einleitung" rows="2"></textarea></label>
-                      <label class="full">Fußzeile 1<textarea name="text-fuss1" rows="2"></textarea></label>
-                      <label class="full">Fußzeile 2<textarea name="text-fuss2" rows="2"></textarea></label>
-                    </div>
-                  </fieldset>
-                  <fieldset class="form-section" data-preview-region="table">
-                    <legend>Farben &amp; Tabelle</legend>
-                    <div class="form-grid form-grid--colors">
-                      <label class="color-field">Primärfarbe (Tabellenkopf)
-                        <span class="color-field-row"><input type="color" name="farbe-primaer" /><input type="text" class="color-hex" data-sync-color="farbe-primaer" /></span>
-                      </label>
-                      <label class="color-field">Gedämpfter Text
-                        <span class="color-field-row"><input type="color" name="farbe-textMuted" /><input type="text" class="color-hex" data-sync-color="farbe-textMuted" /></span>
-                      </label>
-                      <label class="color-field">Fußzeile
-                        <span class="color-field-row"><input type="color" name="farbe-fusszeile" /><input type="text" class="color-hex" data-sync-color="farbe-fusszeile" /></span>
-                      </label>
-                      <label class="color-field">Trennlinie
-                        <span class="color-field-row"><input type="color" name="farbe-trennlinie" /><input type="text" class="color-hex" data-sync-color="farbe-trennlinie" /></span>
-                      </label>
-                    </div>
-                  </fieldset>
-                  <div class="form-actions full settings-actions">
-                    <button type="submit" class="btn btn-primary">Angebots-Vorlage speichern</button>
-                    <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
-                    <p class="settings-status hidden pdf-template-status" role="status"></p>
-                  </div>
-                </form>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="pdf-layout-panel hidden" data-pdf-layout-panel="2" hidden>
+              <div class="pdf-layout-empty">
+                <p>Layout 2 ist noch nicht verfügbar.</p>
+              </div>
+            </div>
+            <div class="pdf-layout-panel hidden" data-pdf-layout-panel="3" hidden>
+              <div class="pdf-layout-empty">
+                <p>Layout 3 ist noch nicht verfügbar.</p>
               </div>
             </div>
           </section>
@@ -783,65 +932,73 @@
       <div id="view-pdf-vorlage-rechnung" class="hidden">
         <main class="main">
           <section class="card pdf-vorlage-card">
-            <h2>PDF-Vorlage · Rechnung</h2>
-            <p class="settings-lead">
-              Links die Rechnungs-Vorschau, rechts die Einstellungen. Briefkopf, Nummern und Texte
-              entsprechen dem späteren PDF-Layout.
+            <div class="pdf-vorlage-card__head">
+              <h2>PDF-Vorlage · Rechnung</h2>
+              <div
+                class="pdf-layout-tabs"
+                role="tablist"
+                aria-label="Layout wählen"
+                data-pdf-layout-tabs="rechnung"
+              >
+                <button
+                  type="button"
+                  class="pdf-layout-tabs__btn is-active"
+                  role="tab"
+                  aria-selected="true"
+                  data-pdf-layout-tab="1"
+                >
+                  Layout 1
+                </button>
+                <button
+                  type="button"
+                  class="pdf-layout-tabs__btn"
+                  role="tab"
+                  aria-selected="false"
+                  data-pdf-layout-tab="2"
+                >
+                  Layout 2
+                </button>
+                <button
+                  type="button"
+                  class="pdf-layout-tabs__btn"
+                  role="tab"
+                  aria-selected="false"
+                  data-pdf-layout-tab="3"
+                >
+                  Layout 3
+                </button>
+              </div>
+            </div>
+            <p class="settings-lead pdf-vorlage-card__lead">
+              Oben die Rechnungs-Vorschau, darunter die Bereiche Briefkopf, Dokumentenkopf,
+              Einleitung, Tabelle und Fußbereich.
             </p>
-            <div class="pdf-vorlage-workspace">
-              <aside class="pdf-vorlage-preview-col">
-                <p class="pdf-vorlage-preview-label">Layout-Vorschau</p>
-                <div class="pdf-layout-preview" id="pdf-preview-rechnung" aria-label="Rechnungs-PDF Vorschau"></div>
-              </aside>
-              <div class="pdf-vorlage-form-col">
-                <form id="pdf-rechnung-form" class="pdf-template-form">
-                  <div data-pdf-shared-fields></div>
-                  <fieldset class="form-section" data-preview-region="meta">
-                    <legend>Dokumentkopf (rechts oben)</legend>
-                    <div class="form-grid">
-                      <label class="full">
-                        Rechnungsnummer-Schema
-                        <input type="text" name="rechnung-nummer-schema" spellcheck="false" autocomplete="off" placeholder="RE-{YYYY}{MM}{DD}-{NR:3}" />
-                      </label>
-                      <label>
-                        Zahlungsziel (Tage)
-                        <input type="number" name="rechnung-zahlungsziel-tage" min="0" max="365" step="1" />
-                      </label>
+            <div class="pdf-layout-panel" data-pdf-layout-panel="1">
+              <div class="pdf-vorlage-workspace">
+                <aside class="pdf-vorlage-preview-col">
+                  <p class="pdf-vorlage-preview-label">Layout-Vorschau</p>
+                  <div class="pdf-layout-preview" id="pdf-preview-rechnung" aria-label="Rechnungs-PDF Vorschau"></div>
+                </aside>
+                <div class="pdf-vorlage-form-col">
+                  <form id="pdf-rechnung-form" class="pdf-template-form">
+                    <div data-pdf-shared-fields></div>
+                    <div class="form-actions full settings-actions">
+                      <button type="submit" class="btn btn-primary">Rechnungs-Vorlage speichern</button>
+                      <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
+                      <p class="settings-status hidden pdf-template-status" role="status"></p>
                     </div>
-                    <p class="schema-hint">Vorschau: <strong class="rechnung-schema-preview">—</strong></p>
-                  </fieldset>
-                  <fieldset class="form-section" data-preview-region="text">
-                    <legend>Texte im PDF</legend>
-                    <div class="form-grid">
-                      <label class="full">Titel<input type="text" name="rechnung-text-titel" autocomplete="off" /></label>
-                      <label class="full">Einleitung<textarea name="rechnung-text-einleitung" rows="2"></textarea></label>
-                      <label class="full">Fußzeile 1<textarea name="rechnung-text-fuss1" rows="2"></textarea></label>
-                      <label class="full">Fußzeile 2<textarea name="rechnung-text-fuss2" rows="2"></textarea></label>
-                    </div>
-                  </fieldset>
-                  <fieldset class="form-section" data-preview-region="table">
-                    <legend>Farben &amp; Tabelle</legend>
-                    <div class="form-grid form-grid--colors">
-                      <label class="color-field">Primärfarbe (Tabellenkopf)
-                        <span class="color-field-row"><input type="color" name="farbe-primaer" /><input type="text" class="color-hex" data-sync-color="farbe-primaer" /></span>
-                      </label>
-                      <label class="color-field">Gedämpfter Text
-                        <span class="color-field-row"><input type="color" name="farbe-textMuted" /><input type="text" class="color-hex" data-sync-color="farbe-textMuted" /></span>
-                      </label>
-                      <label class="color-field">Fußzeile
-                        <span class="color-field-row"><input type="color" name="farbe-fusszeile" /><input type="text" class="color-hex" data-sync-color="farbe-fusszeile" /></span>
-                      </label>
-                      <label class="color-field">Trennlinie
-                        <span class="color-field-row"><input type="color" name="farbe-trennlinie" /><input type="text" class="color-hex" data-sync-color="farbe-trennlinie" /></span>
-                      </label>
-                    </div>
-                  </fieldset>
-                  <div class="form-actions full settings-actions">
-                    <button type="submit" class="btn btn-primary">Rechnungs-Vorlage speichern</button>
-                    <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
-                    <p class="settings-status hidden pdf-template-status" role="status"></p>
-                  </div>
-                </form>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="pdf-layout-panel hidden" data-pdf-layout-panel="2" hidden>
+              <div class="pdf-layout-empty">
+                <p>Layout 2 ist noch nicht verfügbar.</p>
+              </div>
+            </div>
+            <div class="pdf-layout-panel hidden" data-pdf-layout-panel="3" hidden>
+              <div class="pdf-layout-empty">
+                <p>Layout 3 ist noch nicht verfügbar.</p>
               </div>
             </div>
           </section>
@@ -871,6 +1028,70 @@
               </div>
             </form>
             <p id="profil-account-status" class="settings-status hidden" role="status"></p>
+          </section>
+
+          <section class="card">
+            <div class="profil-section-head">
+              <h2>Dokumentnummern</h2>
+              <span class="info-tip info-tip--desktop">
+                <button
+                  type="button"
+                  class="info-tip__btn"
+                  aria-describedby="profil-schema-tip"
+                >
+                  i
+                </button>
+                <span id="profil-schema-tip" class="info-tip__flyout" role="tooltip">
+                  Die Nummernschemas werden bei der Einrichtung festgelegt. Für Änderungen wenden
+                  Sie sich bitte an Ihren Administrator.
+                </span>
+              </span>
+            </div>
+            <p class="settings-lead profil-nummern-note">
+              Schemata für die automatische Vergabe von Angebots- und Rechnungsnummern.
+            </p>
+            <form id="profil-nummern-form" class="form-grid">
+              <label class="full pdf-schema-field">
+                Angebotsnummer-Schema
+                <input
+                  type="text"
+                  id="profil-angebot-nummer-schema"
+                  name="angebot-nummer-schema"
+                  class="pdf-schema-input"
+                  spellcheck="false"
+                  autocomplete="off"
+                  readonly
+                  tabindex="-1"
+                  aria-readonly="true"
+                />
+              </label>
+              <p class="schema-hint">
+                Vorschau: <strong id="profil-angebot-schema-preview">—</strong>
+              </p>
+
+              <label class="full pdf-schema-field">
+                Rechnungsnummer-Schema
+                <input
+                  type="text"
+                  id="profil-rechnung-nummer-schema"
+                  name="rechnung-nummer-schema"
+                  class="pdf-schema-input"
+                  spellcheck="false"
+                  autocomplete="off"
+                  readonly
+                  tabindex="-1"
+                  aria-readonly="true"
+                />
+              </label>
+              <p class="schema-hint">
+                Vorschau: <strong id="profil-rechnung-schema-preview">—</strong>
+              </p>
+
+              <div id="profil-nummern-actions" class="form-actions full hidden">
+                <button type="submit" class="btn btn-primary">Schemas speichern</button>
+              </div>
+            </form>
+            <p id="profil-nummern-status" class="settings-status hidden" role="status"></p>
           </section>
 
           <section class="card">
@@ -910,6 +1131,26 @@
               </div>
             </form>
             <p id="profil-password-status" class="settings-status hidden" role="status"></p>
+          </section>
+
+          <section class="card profil-danger-zone">
+            <h2>Konto löschen</h2>
+            <p class="settings-lead">
+              Ihr Konto und alle zugehörigen Daten werden unwiderruflich entfernt.
+            </p>
+            <button type="button" id="profil-delete-account-btn" class="btn btn-ghost profil-delete-btn">
+              Konto löschen
+            </button>
+          </section>
+        </main>
+      </div>
+
+      <div id="view-admin" class="hidden">
+        <main class="main">
+          <section class="card">
+            <h2>Administration</h2>
+            <p class="settings-lead">Alle registrierten Nutzer und Mandanten auf Klemdesk.</p>
+            <div id="admin-user-list" class="admin-user-list" aria-live="polite"></div>
           </section>
         </main>
       </div>
@@ -1107,32 +1348,104 @@
           <button type="button" class="legal-nav__link" data-legal-page="datenschutz">Datenschutz</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
           <button type="button" class="legal-nav__link" data-legal-page="agb">AGB</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="roadmap">Roadmap</button>
         </nav>
       </footer>
-    </div>
 
-    <div id="bereich-modal" class="modal hidden" aria-hidden="true">
-      <div class="modal-backdrop" data-close-bereich-modal></div>
-      <div class="modal-panel card bereich-modal-panel" role="dialog" aria-labelledby="bereich-modal-title">
-        <div class="card-header">
-          <h2 id="bereich-modal-title">Bereich wählen</h2>
-          <button type="button" class="btn btn-ghost btn-sm" data-close-bereich-modal>Schließen</button>
-        </div>
-        <div class="bereich-picker" role="list">
-          <button type="button" class="bereich-picker__item" data-bereich="angebote" role="listitem">
-            <span class="app-brand__mark app-brand__mark--angebote" aria-hidden="true">A</span>
-            <span class="bereich-picker__text">
-              <span class="bereich-picker__title">Angebote</span>
-              <span class="bereich-picker__desc">Angebote erstellen &amp; verwalten</span>
-            </span>
-          </button>
-          <button type="button" class="bereich-picker__item" data-bereich="rechnungen" role="listitem">
-            <span class="app-brand__mark app-brand__mark--rechnungen" aria-hidden="true">R</span>
-            <span class="bereich-picker__text">
-              <span class="bereich-picker__title">Rechnungen</span>
-              <span class="bereich-picker__desc">Rechnungen erstellen &amp; verwalten</span>
-            </span>
-          </button>
+      <div id="onboarding-screen" class="onboarding-screen hidden" aria-hidden="true">
+        <div class="onboarding-shell card">
+          <header class="onboarding-header">
+            <p class="onboarding-eyebrow">Willkommen bei Klemdesk</p>
+            <h1 class="onboarding-title">Kurz einrichten</h1>
+            <p class="onboarding-lead">Damit Ihre PDFs und Dokumentnummern von Anfang an passen.</p>
+          </header>
+
+          <div class="onboarding-progress" aria-label="Fortschritt">
+            <div class="onboarding-progress__track">
+              <div id="onboarding-progress-fill" class="onboarding-progress__fill"></div>
+            </div>
+            <ol id="onboarding-progress-steps" class="onboarding-progress__steps"></ol>
+          </div>
+
+          <div class="onboarding-body">
+            <section class="onboarding-step" data-onboarding-step="firma">
+              <h2>Firmendaten</h2>
+              <p class="settings-lead">Diese Angaben erscheinen im Briefkopf Ihrer PDFs.</p>
+              <form id="onboarding-firma-form" class="form-grid">
+                <label class="full">
+                  Firmenname
+                  <input type="text" name="firma-name" autocomplete="organization" required />
+                </label>
+                <label class="full">
+                  Straße und Hausnummer
+                  <input type="text" name="firma-strasse" autocomplete="street-address" required />
+                </label>
+                <label class="full">
+                  PLZ, Ort
+                  <input type="text" name="firma-plzOrt" autocomplete="postal-code" required />
+                </label>
+                <label>
+                  Telefon
+                  <input type="tel" name="firma-telefon" autocomplete="tel" />
+                </label>
+                <label>
+                  Webseite
+                  <input type="text" name="firma-web" autocomplete="url" placeholder="www.beispiel.de" />
+                </label>
+              </form>
+            </section>
+
+            <section class="onboarding-step hidden" data-onboarding-step="nummern">
+              <h2>Dokumentnummern</h2>
+              <p class="settings-lead">
+                Legen Sie fest, wie Angebots- und Rechnungsnummern automatisch vergeben werden.
+              </p>
+              <form id="onboarding-nummern-form" class="form-grid">
+                <label class="full">
+                  Angebotsnummer-Schema
+                  <input
+                    type="text"
+                    name="angebot-nummer-schema"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder="ANG-{YYYY}{MM}{DD}-{NR:3}"
+                  />
+                </label>
+                <p class="schema-hint">
+                  Vorschau: <strong class="onboarding-angebot-preview">—</strong>
+                </p>
+                <p class="schema-hint schema-hint--examples">
+                  Platzhalter: <code>{YYYY}</code> Jahr, <code>{MM}</code> Monat, <code>{DD}</code> Tag,
+                  <code>{NR:3}</code> fortlaufende Nummer mit 3 Stellen.
+                </p>
+
+                <label class="full">
+                  Rechnungsnummer-Schema
+                  <input
+                    type="text"
+                    name="rechnung-nummer-schema"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder="RE-{YYYY}{MM}{DD}-{NR:3}"
+                  />
+                </label>
+                <p class="schema-hint">
+                  Vorschau: <strong class="onboarding-rechnung-preview">—</strong>
+                </p>
+                <p class="schema-hint schema-hint--examples">
+                  Beispiel: <code>RE-{YYYY}{MM}-{NR:4}</code> ergibt z. B.
+                  <code>RE-202607-0001</code>.
+                </p>
+              </form>
+            </section>
+          </div>
+
+          <footer class="onboarding-footer">
+            <button type="button" id="onboarding-back" class="btn btn-ghost hidden">Zurück</button>
+            <button type="button" id="onboarding-next" class="btn btn-primary">Weiter</button>
+          </footer>
+          <p id="onboarding-status" class="settings-status hidden onboarding-status" role="status"></p>
         </div>
       </div>
     </div>
@@ -1173,6 +1486,42 @@
         <div id="kunden-picker-liste" class="kunden-picker-liste"></div>
         <div class="kunden-modal__footer">
           <button type="button" class="btn btn-ghost btn-sm" data-close-modal>Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="profil-delete-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-profil-delete-modal></div>
+      <div
+        class="modal-panel card profil-delete-modal"
+        role="dialog"
+        aria-labelledby="profil-delete-modal-title"
+        aria-modal="true"
+      >
+        <h2 id="profil-delete-modal-title">Konto endgültig löschen?</h2>
+        <p class="settings-lead">
+          Alle mit Ihrem Konto verknüpften Daten — Angebote, Rechnungen, Kunden, Katalog und
+          Vorlagen — werden dauerhaft gelöscht.
+        </p>
+        <p class="profil-delete-modal__hint">
+          Geben Sie zur Bestätigung die Postleitzahl Ihrer hinterlegten Rechnungsadresse ein.
+        </p>
+        <label class="full">
+          Postleitzahl
+          <input
+            type="text"
+            id="profil-delete-plz"
+            inputmode="numeric"
+            autocomplete="postal-code"
+            maxlength="10"
+          />
+        </label>
+        <p id="profil-delete-status" class="settings-status hidden" role="status"></p>
+        <div class="profil-delete-modal__actions">
+          <button type="button" class="btn btn-ghost" data-close-profil-delete-modal>Abbrechen</button>
+          <button type="button" id="profil-delete-confirm" class="btn btn-danger">
+            Endgültig löschen
+          </button>
         </div>
       </div>
     </div>

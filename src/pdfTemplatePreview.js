@@ -1,4 +1,6 @@
 import { previewAngebotsnummer, previewRechnungsnummer } from './dokumentnummer.js';
+import { berechneSummenAusPosten, formatEuro } from './pdf.js';
+import { getPdfTemplate } from './pdfTemplate.js';
 
 const SAMPLE_KUNDE = {
   name: 'Musterkunde GmbH',
@@ -6,9 +8,13 @@ const SAMPLE_KUNDE = {
 };
 
 const SAMPLE_POSTEN = [
-  { bez: 'Beratung vor Ort', menge: '2', einheit: 'Std.', preis: '95,00 €', sum: '190,00 €' },
-  { bez: 'Materialpauschale', menge: '1', einheit: 'Stk.', preis: '45,00 €', sum: '45,00 €' },
+  { bez: 'Beratung vor Ort', menge: 2, einheit: 'Std.', preis: 95, sum: '190,00 €' },
+  { bez: 'Materialpauschale', menge: 1, einheit: 'Stk.', preis: 45, sum: '45,00 €' },
 ];
+
+function samplePreviewTotals() {
+  return berechneSummenAusPosten(SAMPLE_POSTEN);
+}
 
 function readFormValue(form, name, fallback = '') {
   const el = form.elements[name];
@@ -111,8 +117,21 @@ export function updatePdfTemplatePreview(form, previewRoot, type) {
   setText(previewRoot, '[data-preview-part="fuss1"]', fuss1 || 'Fußzeile 1');
   setText(previewRoot, '[data-preview-part="fuss2"]', fuss2 || 'Fußzeile 2');
 
+  for (let index = 1; index <= 3; index += 1) {
+    setText(
+      previewRoot,
+      `[data-preview-part="fuss-col${index}-header"]`,
+      readFormValue(form, `fuss-spalte${index}-ueberschrift`, `Spalte ${index}`)
+    );
+    setText(
+      previewRoot,
+      `[data-preview-part="fuss-col${index}-text"]`,
+      readFormValue(form, `fuss-spalte${index}-text`, 'Text')
+    );
+  }
+
   if (isAngebot) {
-    const schema = readFormValue(form, 'angebot-nummer-schema');
+    const schema = getPdfTemplate().angebot?.nummerSchema;
     const nr = schema
       ? previewAngebotsnummer(schema, new Date(), 1)
       : 'ANG-20260719-001';
@@ -121,7 +140,7 @@ export function updatePdfTemplatePreview(form, previewRoot, type) {
     setText(previewRoot, '[data-preview-part="meta-3"]', 'Gültig bis: 31.08.2026');
     setVisible(previewRoot, '[data-preview-part="meta-4"]', false);
   } else {
-    const schema = readFormValue(form, 'rechnung-nummer-schema');
+    const schema = getPdfTemplate().rechnung?.nummerSchema;
     const nr = schema
       ? previewRechnungsnummer(schema, new Date(), 1)
       : 'RE-20260719-001';
@@ -143,8 +162,10 @@ export function updatePdfTemplatePreview(form, previewRoot, type) {
   if (tableHead) tableHead.style.backgroundColor = primaer;
 
   setStyle(previewRoot, '[data-preview-part="trennlinie"]', 'borderColor', lineColor);
+  setStyle(previewRoot, '[data-preview-part="fuss-trennlinie"]', 'borderColor', lineColor);
   setStyle(previewRoot, '[data-preview-part="firma-block"]', 'color', textMuted);
   setStyle(previewRoot, '[data-preview-part="fuss-block"]', 'color', fussfarbe);
+  setStyle(previewRoot, '[data-preview-part="fuss-closing"]', 'color', fussfarbe);
 
   const tbody = previewRoot.querySelector('[data-preview-part="table-body"]');
   if (tbody) {
@@ -155,11 +176,16 @@ export function updatePdfTemplatePreview(form, previewRoot, type) {
         <td>${row.bez}</td>
         <td>${row.menge}</td>
         <td>${row.einheit}</td>
-        <td>${row.preis}</td>
+        <td>${formatEuro(row.preis)}</td>
         <td>${row.sum}</td>
       </tr>`
     ).join('');
   }
+
+  const { netto, mwst, brutto } = samplePreviewTotals();
+  setText(previewRoot, '[data-preview-part="total-netto"]', formatEuro(netto));
+  setText(previewRoot, '[data-preview-part="total-mwst"]', formatEuro(mwst));
+  setText(previewRoot, '[data-preview-part="total-brutto"]', formatEuro(brutto));
 }
 
 export function bindPdfTemplatePreview(form, previewRoot, type) {
@@ -175,16 +201,40 @@ export function bindPdfTemplatePreview(form, previewRoot, type) {
   update();
 }
 
-export function mountSharedPdfTemplateFields(container) {
-  if (!container || container.dataset.mounted === 'true') return;
-  container.innerHTML = getSharedPdfTemplateFieldsHtml();
-  container.dataset.mounted = 'true';
+export function mountPdfTemplateFormSections(container, type) {
+  if (!container || container.dataset.mounted === type) return;
+  container.innerHTML = getPdfTemplateFormSectionsHtml(type);
+  container.dataset.mounted = type;
+  const form = container.closest('form');
+  if (form) delete form.dataset.sectionsEnhanced;
 }
 
-export function getSharedPdfTemplateFieldsHtml() {
+/** @deprecated Use mountPdfTemplateFormSections */
+export function mountSharedPdfTemplateFields(container) {
+  mountPdfTemplateFormSections(container, 'angebot');
+}
+
+export function getPdfTemplateFormSectionsHtml(type) {
+  const isAngebot = type === 'angebot';
+  const dokumentkopfFields = isAngebot
+    ? `<label class="full">Dokumenttitel<input type="text" name="text-titel" placeholder="ANGEBOT" /></label>`
+    : `<label class="full">Dokumenttitel<input type="text" name="rechnung-text-titel" autocomplete="off" /></label>
+      <label>
+        Zahlungsziel (Tage)
+        <input type="number" name="rechnung-zahlungsziel-tage" min="0" max="365" step="1" />
+      </label>`;
+  const einleitungField = isAngebot
+    ? `<label class="full">Einleitung<textarea name="text-einleitung" rows="2"></textarea></label>`
+    : `<label class="full">Einleitung<textarea name="rechnung-text-einleitung" rows="2"></textarea></label>`;
+  const fussTextFields = isAngebot
+    ? `<label class="full">Abschlusstext 1<textarea name="text-fuss1" rows="2"></textarea></label>
+      <label class="full">Abschlusstext 2<textarea name="text-fuss2" rows="2"></textarea></label>`
+    : `<label class="full">Abschlusstext 1<textarea name="rechnung-text-fuss1" rows="2"></textarea></label>
+      <label class="full">Abschlusstext 2<textarea name="rechnung-text-fuss2" rows="2"></textarea></label>`;
+
   return `
-    <fieldset class="form-section" data-preview-region="banner">
-      <legend>Bilder &amp; Kopfbereich</legend>
+    <fieldset class="form-section" data-preview-region="briefkopf">
+      <legend>Briefkopf</legend>
       <div class="form-grid">
         <div class="full image-upload-block">
           <span class="image-upload-label">Logo (links oben im Briefkopf)</span>
@@ -212,11 +262,6 @@ export function getSharedPdfTemplateFieldsHtml() {
           <div class="image-preview is-empty" data-preview="header"></div>
           <label>Banner-Höhe (mm)<input type="number" name="layout-headerHoeheMm" min="10" max="50" step="1" /></label>
         </div>
-      </div>
-    </fieldset>
-    <fieldset class="form-section" data-preview-region="firma">
-      <legend>Firmendaten (Briefkopf links)</legend>
-      <div class="form-grid">
         <label class="full">Firmenname<input type="text" name="firma-name" autocomplete="organization" /></label>
         <label class="full">Straße<input type="text" name="firma-strasse" /></label>
         <label>PLZ &amp; Ort<input type="text" name="firma-plzOrt" /></label>
@@ -224,21 +269,75 @@ export function getSharedPdfTemplateFieldsHtml() {
         <label>E-Mail<input type="email" name="firma-email" autocomplete="email" /></label>
         <label>Webseite<input type="text" name="firma-web" /></label>
         <label class="full">USt-IdNr.<input type="text" name="firma-ustId" /></label>
+        <label class="color-field full">Gedämpfter Text (Briefkopf)
+          <span class="color-field-row"><input type="color" name="farbe-textMuted" /><input type="text" class="color-hex" data-sync-color="farbe-textMuted" /></span>
+        </label>
+        <label class="color-field full">Trennlinie
+          <span class="color-field-row"><input type="color" name="farbe-trennlinie" /><input type="text" class="color-hex" data-sync-color="farbe-trennlinie" /></span>
+        </label>
+      </div>
+    </fieldset>
+    <fieldset class="form-section" data-preview-region="meta">
+      <legend>Dokumentenkopf</legend>
+      <div class="form-grid">
+        ${dokumentkopfFields}
+      </div>
+    </fieldset>
+    <fieldset class="form-section" data-preview-region="text">
+      <legend>Einleitung</legend>
+      <div class="form-grid">
+        ${einleitungField}
+      </div>
+    </fieldset>
+    <fieldset class="form-section" data-preview-region="table">
+      <legend>Tabelle</legend>
+      <div class="form-grid form-grid--colors">
+        <label class="color-field full">Primärfarbe (Tabellenkopf)
+          <span class="color-field-row"><input type="color" name="farbe-primaer" /><input type="text" class="color-hex" data-sync-color="farbe-primaer" /></span>
+        </label>
+      </div>
+    </fieldset>
+    <fieldset class="form-section" data-preview-region="fuss">
+      <legend>Fußbereich</legend>
+      <div class="form-grid">
+        ${fussTextFields}
+        <label class="color-field full">Fußzeilen-Farbe
+          <span class="color-field-row"><input type="color" name="farbe-fusszeile" /><input type="text" class="color-hex" data-sync-color="farbe-fusszeile" /></span>
+        </label>
+      </div>
+      <div class="form-grid form-grid--fuss-spalten">
+        <div class="fuss-spalte-form">
+          <label>Überschrift Spalte 1<input type="text" name="fuss-spalte1-ueberschrift" /></label>
+          <label class="full">Text Spalte 1<textarea name="fuss-spalte1-text" rows="3"></textarea></label>
+        </div>
+        <div class="fuss-spalte-form">
+          <label>Überschrift Spalte 2<input type="text" name="fuss-spalte2-ueberschrift" /></label>
+          <label class="full">Text Spalte 2<textarea name="fuss-spalte2-text" rows="3"></textarea></label>
+        </div>
+        <div class="fuss-spalte-form">
+          <label>Überschrift Spalte 3<input type="text" name="fuss-spalte3-ueberschrift" /></label>
+          <label class="full">Text Spalte 3<textarea name="fuss-spalte3-text" rows="3"></textarea></label>
+        </div>
       </div>
     </fieldset>
   `;
+}
+
+/** @deprecated Use getPdfTemplateFormSectionsHtml */
+export function getSharedPdfTemplateFieldsHtml() {
+  return getPdfTemplateFormSectionsHtml('angebot');
 }
 
 export function createPdfLayoutPreviewMarkup(type) {
   const isAngebot = type === 'angebot';
   return `
     <div class="pdf-layout-preview__sheet" aria-hidden="true">
-      <div class="pdf-layout-preview__region pdf-layout-preview__region--banner hidden" data-preview-part="banner" data-region="banner">
+      <div class="pdf-layout-preview__region pdf-layout-preview__region--banner hidden" data-preview-part="banner" data-region="briefkopf">
         <span class="pdf-layout-preview__tag">Header-Banner</span>
         <img alt="" class="pdf-layout-preview__banner-img hidden" />
       </div>
       <div class="pdf-layout-preview__header">
-        <div class="pdf-layout-preview__region pdf-layout-preview__region--firma" data-region="firma">
+        <div class="pdf-layout-preview__region pdf-layout-preview__region--firma" data-region="briefkopf">
           <span class="pdf-layout-preview__tag">Briefkopf</span>
           <div class="pdf-layout-preview__firma" data-preview-part="firma-block">
             <div class="pdf-layout-preview__logo hidden" data-preview-part="logo"><img alt="" /></div>
@@ -249,7 +348,7 @@ export function createPdfLayoutPreviewMarkup(type) {
           </div>
         </div>
         <div class="pdf-layout-preview__region pdf-layout-preview__region--meta" data-region="meta">
-          <span class="pdf-layout-preview__tag">Dokumentkopf</span>
+          <span class="pdf-layout-preview__tag">Dokumentenkopf</span>
           <h3 class="pdf-layout-preview__doc-title" data-preview-part="doc-titel">${isAngebot ? 'ANGEBOT' : 'RECHNUNG'}</h3>
           <p data-preview-part="meta-1">Nr.</p>
           <p data-preview-part="meta-2">Datum</p>
@@ -257,7 +356,7 @@ export function createPdfLayoutPreviewMarkup(type) {
           <p class="pdf-layout-preview__small hidden" data-preview-part="meta-4">Bezug</p>
         </div>
       </div>
-      <hr class="pdf-layout-preview__line" data-preview-part="trennlinie" data-region="line" />
+      <hr class="pdf-layout-preview__line" data-preview-part="trennlinie" data-region="briefkopf" />
       <div class="pdf-layout-preview__region pdf-layout-preview__region--kunde" data-region="kunde">
         <span class="pdf-layout-preview__tag">Empfänger</span>
         <strong data-preview-part="kunde-label">${isAngebot ? 'Angebot für:' : 'Rechnung an:'}</strong>
@@ -269,7 +368,7 @@ export function createPdfLayoutPreviewMarkup(type) {
         <p data-preview-part="einleitung">Einleitungstext</p>
       </div>
       <div class="pdf-layout-preview__region pdf-layout-preview__region--table" data-region="table">
-        <span class="pdf-layout-preview__tag">Positionen</span>
+        <span class="pdf-layout-preview__tag">Tabelle</span>
         <table class="pdf-layout-preview__table">
           <thead data-preview-part="table-head">
             <tr><th>Pos</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th><th>Preis</th><th>Gesamt</th></tr>
@@ -277,15 +376,40 @@ export function createPdfLayoutPreviewMarkup(type) {
           <tbody data-preview-part="table-body"></tbody>
         </table>
         <div class="pdf-layout-preview__totals">
-          <span>Netto · MwSt. · Gesamt</span>
-          <strong>279,65 €</strong>
+          <div class="pdf-layout-preview__total-row">
+            <span>Gesamt netto</span>
+            <span data-preview-part="total-netto">235,00 €</span>
+          </div>
+          <div class="pdf-layout-preview__total-row">
+            <span>19&nbsp;% Umsatzsteuer</span>
+            <span data-preview-part="total-mwst">44,65 €</span>
+          </div>
+          <div class="pdf-layout-preview__total-row pdf-layout-preview__total-row--bold">
+            <span>Gesamtbetrag</span>
+            <strong data-preview-part="total-brutto">279,65 €</strong>
+          </div>
         </div>
       </div>
       <div class="pdf-layout-preview__region pdf-layout-preview__region--fuss" data-region="fuss">
-        <span class="pdf-layout-preview__tag">Fußzeile</span>
-        <div class="pdf-layout-preview__fuss" data-preview-part="fuss-block">
+        <span class="pdf-layout-preview__tag">Fußbereich</span>
+        <div class="pdf-layout-preview__fuss-closing" data-preview-part="fuss-closing">
           <p data-preview-part="fuss1">Fußzeile 1</p>
           <p data-preview-part="fuss2">Fußzeile 2</p>
+        </div>
+        <hr class="pdf-layout-preview__line pdf-layout-preview__line--fuss" data-preview-part="fuss-trennlinie" />
+        <div class="pdf-layout-preview__fuss-cols" data-preview-part="fuss-block">
+          <div class="pdf-layout-preview__fuss-col">
+            <strong data-preview-part="fuss-col1-header">Spalte 1</strong>
+            <p data-preview-part="fuss-col1-text">Text</p>
+          </div>
+          <div class="pdf-layout-preview__fuss-col">
+            <strong data-preview-part="fuss-col2-header">Spalte 2</strong>
+            <p data-preview-part="fuss-col2-text">Text</p>
+          </div>
+          <div class="pdf-layout-preview__fuss-col">
+            <strong data-preview-part="fuss-col3-header">Spalte 3</strong>
+            <p data-preview-part="fuss-col3-text">Text</p>
+          </div>
         </div>
       </div>
     </div>
