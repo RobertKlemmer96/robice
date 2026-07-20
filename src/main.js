@@ -1,3 +1,4 @@
+import { initLanding } from './landing.js';
 import { initLegal } from './legal.js';
 import {
   normalizeAdresse,
@@ -6,7 +7,14 @@ import {
   readAdresseFieldPair,
   clearAdresseFieldPair,
 } from './adresse.js';
-import { formatPlanLabel, normalizeRegistrationPlan } from './plans.js';
+import {
+  formatPlanLabel,
+  normalizeRegistrationPlan,
+  PLAN_LABELS,
+  PLAN_PRICES,
+  PLAN_TAGLINES,
+  REGISTRATION_PLANS,
+} from './plans.js';
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
 import { loadAdminUsers } from './adminUsers.js';
 import { initOnboarding, openOnboarding, closeOnboarding } from './onboarding.js';
@@ -70,13 +78,18 @@ import {
   fillPdfTemplateRechnungForm,
   readImageFileAsDataUrl,
   updateImagePreview,
+  formatRgbFromHex,
+  parseRgbInput,
+  rgbToHex,
 } from './pdfTemplate.js';
 import {
   bindPdfTemplatePreview,
   createPdfLayoutPreviewMarkup,
   mountPdfTemplateFormSections,
+  normalizePdfLayoutVariant,
   updatePdfTemplatePreview,
 } from './pdfTemplatePreview.js';
+import { PDF_LAYOUT_VARIANTS } from './pdfLayoutVariants.js';
 import {
   generiereAngebotsnummer as erzeugeAngebotsnummer,
   previewAngebotsnummer,
@@ -148,6 +161,22 @@ function createRechnungMeta() {
 
 let pendingRegistrationPlan = 'free';
 
+const BEREICH_STORAGE_KEY = 'klemdesk_bereich';
+
+function loadSavedBereich() {
+  return localStorage.getItem(BEREICH_STORAGE_KEY) === 'rechnungen' ? 'rechnungen' : 'angebote';
+}
+
+function saveBereich(bereich) {
+  if (bereich === 'angebote' || bereich === 'rechnungen') {
+    localStorage.setItem(BEREICH_STORAGE_KEY, bereich);
+  }
+}
+
+function getDefaultViewForBereich(bereich = state.bereich) {
+  return bereich === 'rechnungen' ? 'rechnung-neu' : 'neu';
+}
+
 const state = {
   appStarted: false,
   view: 'neu',
@@ -212,6 +241,10 @@ const els = {
   profilTenantName: document.getElementById('profil-tenant-name'),
   profilEmail: document.getElementById('profil-email'),
   profilPlan: document.getElementById('profil-plan'),
+  profilPlanChangeBtn: document.getElementById('profil-plan-change-btn'),
+  profilPlanModal: document.getElementById('profil-plan-modal'),
+  profilPlanModalList: document.getElementById('profil-plan-modal-list'),
+  profilPlanModalStatus: document.getElementById('profil-plan-modal-status'),
   profilAccountStatus: document.getElementById('profil-account-status'),
   profilPasswordForm: document.getElementById('profil-password-form'),
   profilCurrentPassword: document.getElementById('profil-current-password'),
@@ -1569,6 +1602,77 @@ async function renderProfilView() {
   }
   updateProfilSchemaPreviews();
   syncProfilNummernAccess();
+  syncProfilPlanAccess();
+}
+
+function syncProfilPlanAccess() {
+  const plan = getSession()?.tenant?.plan;
+  const hideChange = plan === 'admin';
+  els.profilPlanChangeBtn?.classList.toggle('hidden', hideChange);
+}
+
+function setProfilPlanModalStatus(message, isError = false) {
+  if (!els.profilPlanModalStatus) return;
+  if (!message) {
+    els.profilPlanModalStatus.classList.add('hidden');
+    els.profilPlanModalStatus.textContent = '';
+    els.profilPlanModalStatus.classList.remove('settings-status--error');
+    return;
+  }
+  els.profilPlanModalStatus.textContent = message;
+  els.profilPlanModalStatus.classList.toggle('settings-status--error', isError);
+  els.profilPlanModalStatus.classList.remove('hidden');
+}
+
+function renderProfilPlanModalList() {
+  if (!els.profilPlanModalList) return;
+
+  const currentPlan = normalizeRegistrationPlan(getSession()?.tenant?.plan);
+  els.profilPlanModalList.innerHTML = REGISTRATION_PLANS.map((planId) => {
+    const isCurrent = planId === currentPlan;
+    const actionLabel = isCurrent ? 'Aktueller Tarif' : 'Wechseln';
+    const actionClass = isCurrent ? 'btn btn-ghost btn-sm' : 'btn btn-primary btn-sm';
+    return `
+      <article
+        class="profil-plan-option${isCurrent ? ' profil-plan-option--current' : ''}"
+        role="listitem"
+        data-plan-id="${escapeHtml(planId)}"
+      >
+        <div class="profil-plan-option__main">
+          <h3 class="profil-plan-option__name">${escapeHtml(PLAN_LABELS[planId] || planId)}</h3>
+          <p class="profil-plan-option__meta">
+            ${escapeHtml(PLAN_PRICES[planId] || '')}${PLAN_TAGLINES[planId] ? ` · ${escapeHtml(PLAN_TAGLINES[planId])}` : ''}
+          </p>
+        </div>
+        <div class="profil-plan-option__action">
+          <button
+            type="button"
+            class="${actionClass}"
+            data-profil-plan-select="${escapeHtml(planId)}"
+            ${isCurrent ? 'disabled aria-current="true"' : 'disabled title="Tarifwechsel demnächst verfügbar"'}
+          >
+            ${actionLabel}
+          </button>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function openProfilPlanModal() {
+  if (!els.profilPlanModal) return;
+  renderProfilPlanModalList();
+  setProfilPlanModalStatus('');
+  els.profilPlanModal.classList.remove('hidden');
+  els.profilPlanModal.setAttribute('aria-hidden', 'false');
+  els.profilPlanModal.querySelector('[data-close-profil-plan-modal].btn')?.focus();
+}
+
+function closeProfilPlanModal() {
+  if (!els.profilPlanModal) return;
+  els.profilPlanModal.classList.add('hidden');
+  els.profilPlanModal.setAttribute('aria-hidden', 'true');
+  setProfilPlanModalStatus('');
 }
 
 function syncProfilNummernAccess() {
@@ -1918,6 +2022,7 @@ function toggleBereichDropdown() {
 function setBereich(bereich, viewAfter) {
   closeBereichDropdown();
   state.bereich = bereich;
+  saveBereich(bereich);
   state.expandedKundeDokumenteId = null;
   syncBereichSwitcher();
   syncBereichNav();
@@ -2053,7 +2158,7 @@ function showView(view) {
     } else if (view === 'admin') {
       renderAdminView();
     } else if (isPdfVorlageView(view)) {
-      renderPdfTemplateView(view);
+      renderPdfTemplateView(view, { syncLayoutFromTemplate: true });
     } else if (view === 'profil') {
       renderProfilView();
     } else if (view === 'rechnung-neu') {
@@ -2090,7 +2195,7 @@ function showView(view) {
     renderAdminView();
   } else if (isPdfVorlageView(view)) {
     els.angebotStickyFooter.classList.add('hidden');
-    renderPdfTemplateView(view);
+    renderPdfTemplateView(view, { syncLayoutFromTemplate: true });
   } else if (view === 'profil') {
     els.angebotStickyFooter.classList.add('hidden');
     renderProfilView();
@@ -2113,28 +2218,46 @@ function setPdfTemplateStatus(form, message, isError = false) {
   status.classList.remove('hidden');
 }
 
+function syncColorFieldValues(form, name, hex) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return false;
+  const colorInput = form.elements[name];
+  const hexInput = form.querySelector(`[data-sync-color="${name}"]`);
+  const rgbInput = form.querySelector(`[data-sync-color-rgb="${name}"]`);
+  if (colorInput) colorInput.value = hex;
+  if (hexInput) hexInput.value = hex;
+  if (rgbInput) rgbInput.value = formatRgbFromHex(hex);
+  return true;
+}
+
 function syncColorHexFields(form) {
   form.querySelectorAll('[data-sync-color]').forEach((hexInput) => {
     const name = hexInput.dataset.syncColor;
     const colorInput = form.elements[name];
-    if (colorInput) hexInput.value = colorInput.value;
+    if (colorInput) syncColorFieldValues(form, name, colorInput.value);
   });
 }
 
 function bindColorFieldSync(form) {
   form.querySelectorAll('input[type="color"]').forEach((colorInput) => {
     colorInput.addEventListener('input', () => {
-      const hex = form.querySelector(`[data-sync-color="${colorInput.name}"]`);
-      if (hex) hex.value = colorInput.value;
+      syncColorFieldValues(form, colorInput.name, colorInput.value);
     });
   });
   form.querySelectorAll('[data-sync-color]').forEach((hexInput) => {
     hexInput.addEventListener('change', () => {
       const raw = hexInput.value.trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(raw)) {
-        const colorInput = form.elements[hexInput.dataset.syncColor];
-        if (colorInput) colorInput.value = raw;
+      const hex = raw.startsWith('#') ? raw : `#${raw}`;
+      if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+        syncColorFieldValues(form, hexInput.dataset.syncColor, hex);
       }
+    });
+  });
+  form.querySelectorAll('[data-sync-color-rgb]').forEach((rgbInput) => {
+    rgbInput.addEventListener('change', () => {
+      const rgb = parseRgbInput(rgbInput.value);
+      if (!rgb) return;
+      const hex = rgbToHex(rgb[0], rgb[1], rgb[2]);
+      syncColorFieldValues(form, rgbInput.dataset.syncColorRgb, hex);
     });
   });
 }
@@ -2280,49 +2403,79 @@ function bindPdfTemplateFormHighlight(form, previewRoot) {
   });
 }
 
-function ensurePdfTemplatePreview(form, previewRoot, type) {
+function getPdfLayoutVariant(scope) {
+  return normalizePdfLayoutVariant(state.pdfLayout?.[scope] ?? 1);
+}
+
+function pdfLayoutVariantKey(scope) {
+  return scope === 'angebot' ? 'angebotVariant' : 'rechnungVariant';
+}
+
+function ensurePdfTemplatePreview(form, previewRoot, type, variant = 1) {
   form.querySelectorAll('[data-pdf-shared-fields]').forEach((container) => {
     mountPdfTemplateFormSections(container, type);
   });
-  if (!previewRoot.querySelector('.pdf-layout-preview__sheet') || previewRoot.dataset.previewType !== type) {
-    previewRoot.innerHTML = createPdfLayoutPreviewMarkup(type);
+  const normalized = normalizePdfLayoutVariant(variant);
+  const needsRebuild =
+    !previewRoot.querySelector('.pdf-layout-preview__sheet') ||
+    previewRoot.dataset.previewType !== type ||
+    Number(previewRoot.dataset.previewVariant) !== normalized;
+  if (needsRebuild) {
+    previewRoot.innerHTML = createPdfLayoutPreviewMarkup(type, normalized);
     previewRoot.dataset.previewType = type;
+    previewRoot.dataset.previewVariant = String(normalized);
     delete previewRoot.dataset.sectionClicksBound;
   }
 }
 
-async function renderPdfTemplateView(view) {
+async function renderPdfTemplateView(view, { syncLayoutFromTemplate = false } = {}) {
   const isAngebot = view === 'pdf-vorlage-angebot';
   const scope = isAngebot ? 'angebot' : 'rechnung';
-  syncPdfLayoutTabs(scope);
   const form = isAngebot ? els.pdfAngebotForm : els.pdfRechnungForm;
   const previewRoot = isAngebot ? els.pdfPreviewAngebot : els.pdfPreviewRechnung;
   const type = isAngebot ? 'angebot' : 'rechnung';
   if (!form || !previewRoot) return;
-  if ((state.pdfLayout?.[scope] ?? 1) !== 1) return;
 
-  ensurePdfTemplatePreview(form, previewRoot, type);
+  const tpl = await loadPdfTemplate();
+  if (!state.pdfLayout) state.pdfLayout = { angebot: 1, rechnung: 1 };
+  if (syncLayoutFromTemplate) {
+    state.pdfLayout[scope] = normalizePdfLayoutVariant(tpl.layout?.[pdfLayoutVariantKey(scope)]);
+  }
+  syncPdfLayoutTabs(scope);
+
+  const variant = getPdfLayoutVariant(scope);
+  ensurePdfTemplatePreview(form, previewRoot, type, variant);
   enhancePdfTemplateCollapsibleSections(form);
   collapseAllPdfTemplateSections(form);
   setPdfTemplatePreviewHighlight(previewRoot, []);
   bindPdfTemplatePreviewSectionClicks(form, previewRoot);
-  const tpl = await loadPdfTemplate();
   if (isAngebot) fillPdfTemplateAngebotForm(form, tpl);
   else fillPdfTemplateRechnungForm(form, tpl);
   syncColorHexFields(form);
-  updatePdfTemplatePreview(form, previewRoot, type);
+  updatePdfTemplatePreview(form, previewRoot, type, variant);
   setPdfTemplateStatus(form, '');
 }
 
 async function handlePdfTemplateSubmit(e, type) {
   e.preventDefault();
   const form = e.target;
+  const scope = type;
+  const variantKey = pdfLayoutVariantKey(scope);
   try {
     const patch =
       type === 'angebot'
         ? templatePatchFromAngebotPage(form)
         : templatePatchFromRechnungPage(form);
-    await savePdfTemplate({ ...getPdfTemplate(), ...patch });
+    const current = getPdfTemplate();
+    await savePdfTemplate({
+      ...current,
+      ...patch,
+      layout: {
+        ...current.layout,
+        ...patch.layout,
+        [variantKey]: getPdfLayoutVariant(scope),
+      },
+    });
     setPdfTemplateStatus(form, 'Vorlage gespeichert.');
   } catch (err) {
     setPdfTemplateStatus(form, err.message, true);
@@ -2344,13 +2497,20 @@ async function handlePdfTemplateReset(form, type) {
     nummerSchema: current.rechnung?.nummerSchema ?? defaults.rechnung?.nummerSchema,
   };
   const isAngebot = type === 'angebot';
+  const scope = type;
   const previewRoot = isAngebot ? els.pdfPreviewAngebot : els.pdfPreviewRechnung;
   try {
     await savePdfTemplate(defaults);
+    if (!state.pdfLayout) state.pdfLayout = { angebot: 1, rechnung: 1 };
+    state.pdfLayout[scope] = normalizePdfLayoutVariant(defaults.layout?.[pdfLayoutVariantKey(scope)]);
+    syncPdfLayoutTabs(scope);
     if (isAngebot) fillPdfTemplateAngebotForm(form, defaults);
     else fillPdfTemplateRechnungForm(form, defaults);
     syncColorHexFields(form);
-    updatePdfTemplatePreview(form, previewRoot, type);
+    const variant = getPdfLayoutVariant(scope);
+    ensurePdfTemplatePreview(form, previewRoot, type, variant);
+    bindPdfTemplatePreviewSectionClicks(form, previewRoot);
+    updatePdfTemplatePreview(form, previewRoot, type, variant);
     setPdfTemplateStatus(form, 'Standardvorlage wiederhergestellt.');
   } catch (err) {
     setPdfTemplateStatus(form, err.message, true);
@@ -2368,7 +2528,7 @@ async function handlePdfTemplateImage(form, previewRoot, type, kind, file) {
       form.dataset.headerData = dataUrl;
       updateImagePreview(form.querySelector('[data-preview="header"]'), dataUrl);
     }
-    updatePdfTemplatePreview(form, previewRoot, type);
+    updatePdfTemplatePreview(form, previewRoot, type, getPdfLayoutVariant(type));
     setPdfTemplateStatus(form, '');
   } catch (err) {
     setPdfTemplateStatus(form, err.message, true);
@@ -2386,17 +2546,16 @@ function clearPdfTemplateImage(form, previewRoot, type, kind, fileInput) {
     if (fileInput) fileInput.value = '';
     updateImagePreview(form.querySelector('[data-preview="header"]'), '');
   }
-  updatePdfTemplatePreview(form, previewRoot, type);
+  updatePdfTemplatePreview(form, previewRoot, type, getPdfLayoutVariant(type));
 }
 
 function bindPdfTemplateForm(form, previewRoot, type) {
   if (!form || form.dataset.bound === 'true') return;
   form.dataset.bound = 'true';
-  const isAngebot = type === 'angebot';
 
   enhancePdfTemplateCollapsibleSections(form);
   bindColorFieldSync(form);
-  bindPdfTemplatePreview(form, previewRoot, type);
+  bindPdfTemplatePreview(form, previewRoot, type, () => getPdfLayoutVariant(type));
   bindPdfTemplateFormHighlight(form, previewRoot);
   bindPdfTemplatePreviewSectionClicks(form, previewRoot);
 
@@ -2429,8 +2588,18 @@ function bindPdfTemplateForm(form, previewRoot, type) {
 
 function bindPdfTemplateForms() {
   bindPdfLayoutTabs();
-  ensurePdfTemplatePreview(els.pdfAngebotForm, els.pdfPreviewAngebot, 'angebot');
-  ensurePdfTemplatePreview(els.pdfRechnungForm, els.pdfPreviewRechnung, 'rechnung');
+  ensurePdfTemplatePreview(
+    els.pdfAngebotForm,
+    els.pdfPreviewAngebot,
+    'angebot',
+    getPdfLayoutVariant('angebot')
+  );
+  ensurePdfTemplatePreview(
+    els.pdfRechnungForm,
+    els.pdfPreviewRechnung,
+    'rechnung',
+    getPdfLayoutVariant('rechnung')
+  );
   bindPdfTemplateForm(els.pdfAngebotForm, els.pdfPreviewAngebot, 'angebot');
   bindPdfTemplateForm(els.pdfRechnungForm, els.pdfPreviewRechnung, 'rechnung');
   syncPdfLayoutTabs('angebot');
@@ -2442,31 +2611,39 @@ function syncPdfLayoutTabs(scope) {
   const root = document.getElementById(viewId);
   if (!root) return;
 
-  const activeLayout = state.pdfLayout?.[scope] ?? 1;
+  const activeLayout = getPdfLayoutVariant(scope);
   root.querySelectorAll('[data-pdf-layout-tab]').forEach((btn) => {
     const layout = Number(btn.dataset.pdfLayoutTab);
     const isActive = layout === activeLayout;
     btn.classList.toggle('is-active', isActive);
     btn.setAttribute('aria-selected', String(isActive));
+    const meta = PDF_LAYOUT_VARIANTS[layout];
+    if (meta) btn.textContent = meta.label;
   });
 
-  root.querySelectorAll('[data-pdf-layout-panel]').forEach((panel) => {
-    const isActive = Number(panel.dataset.pdfLayoutPanel) === activeLayout;
-    panel.classList.toggle('hidden', !isActive);
-    panel.hidden = !isActive;
-  });
-
+  const variantMeta = PDF_LAYOUT_VARIANTS[activeLayout];
   const lead = root.querySelector('.pdf-vorlage-card__lead');
-  if (lead) lead.classList.toggle('hidden', activeLayout !== 1);
+  if (lead && variantMeta) {
+    lead.classList.remove('hidden');
+    lead.textContent = variantMeta.hint;
+  }
+
+  const previewLabel = root.querySelector('.pdf-vorlage-preview-label');
+  if (previewLabel && variantMeta) {
+    previewLabel.textContent = `Vorschau · ${variantMeta.label}`;
+  }
 }
 
 function setPdfLayoutTab(scope, layout) {
   if (!state.pdfLayout) state.pdfLayout = { angebot: 1, rechnung: 1 };
-  state.pdfLayout[scope] = layout;
-  syncPdfLayoutTabs(scope);
-  if (layout === 1) {
-    renderPdfTemplateView(scope === 'rechnung' ? 'pdf-vorlage-rechnung' : 'pdf-vorlage-angebot');
+  const normalized = normalizePdfLayoutVariant(layout);
+  if (getPdfLayoutVariant(scope) === normalized) {
+    syncPdfLayoutTabs(scope);
+    return;
   }
+  state.pdfLayout[scope] = normalized;
+  syncPdfLayoutTabs(scope);
+  renderPdfTemplateView(scope === 'rechnung' ? 'pdf-vorlage-rechnung' : 'pdf-vorlage-angebot');
 }
 
 function bindPdfLayoutTabs() {
@@ -3074,7 +3251,7 @@ async function speichernUndRechnungPdf() {
     await saveRechnung(rechnung);
     state.rechnung.editingId = rechnung.id;
     updateRechnungPageHeader();
-    downloadRechnungPdf(rechnung, posten);
+    await downloadRechnungPdf(rechnung, posten);
   } catch (err) {
     alert(`Speichern fehlgeschlagen: ${err.message}`);
   } finally {
@@ -3123,6 +3300,20 @@ function showLogin(mode = 'login') {
   els.loginPass.value = '';
 }
 
+async function restoreLoginView() {
+  state.bereich = loadSavedBereich();
+  const startView = getDefaultViewForBereich();
+  state.view = startView;
+  state.lastNavBarView = startView;
+
+  await resetForm();
+  await resetRechnungForm();
+
+  syncBereichSwitcher();
+  syncBereichNav();
+  showView(startView);
+}
+
 async function showApp() {
   const flowId = ++appFlowGeneration;
 
@@ -3141,20 +3332,17 @@ async function showApp() {
       if (!isActiveAppFlow(flowId)) return;
       await loadKatalogPosten();
       if (!isActiveAppFlow(flowId)) return;
-      await resetForm();
-      if (!isActiveAppFlow(flowId)) return;
-      await resetRechnungForm();
     } catch (err) {
       console.error('App-Initialisierung fehlgeschlagen:', err);
     }
     if (!isActiveAppFlow(flowId)) return;
-    syncBereichSwitcher();
-    syncBereichNav();
-    syncNavState(state.view);
     state.appStarted = true;
   }
 
   if (!isActiveAppFlow(flowId)) return;
+  await restoreLoginView();
+  if (!isActiveAppFlow(flowId)) return;
+
   if (needsOnboarding()) {
     await openOnboarding();
   }
@@ -3259,6 +3447,10 @@ function bindAppEvents() {
   });
 
   els.profilDeleteAccountBtn?.addEventListener('click', openProfilDeleteModal);
+  els.profilPlanChangeBtn?.addEventListener('click', openProfilPlanModal);
+  els.profilPlanModal?.querySelectorAll('[data-close-profil-plan-modal]').forEach((el) => {
+    el.addEventListener('click', closeProfilPlanModal);
+  });
   els.profilDeleteModal?.querySelectorAll('[data-close-profil-delete-modal]').forEach((el) => {
     el.addEventListener('click', closeProfilDeleteModal);
   });
@@ -3692,6 +3884,7 @@ function bindAuthEvents() {
 async function bootstrap() {
   initTheme();
   initLegal();
+  initLanding();
   initDatePickers();
   initOnboarding({
     onComplete: async () => {

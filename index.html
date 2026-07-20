@@ -45,8 +45,10 @@
             <h2 id="landing-pricing-title">Preisstufen für jeden Bedarf</h2>
             <p>Starten Sie kostenlos — upgraden Sie, wenn Ihr Geschäft wächst.</p>
           </div>
-          <div class="landing-pricing__grid">
-            <article class="landing-plan landing-plan--free">
+          <div class="landing-pricing__carousel" data-landing-pricing-carousel>
+            <div class="landing-pricing__viewport">
+              <div class="landing-pricing__track" role="list">
+            <article class="landing-plan landing-plan--free" role="listitem">
               <header class="landing-plan__header">
                 <span class="landing-plan__badge">Stufe 1</span>
                 <h3 class="landing-plan__name">Free</h3>
@@ -67,7 +69,7 @@
               </button>
             </article>
 
-            <article class="landing-plan landing-plan--plus">
+            <article class="landing-plan landing-plan--plus" role="listitem">
               <header class="landing-plan__header">
                 <span class="landing-plan__badge">Stufe 2</span>
                 <h3 class="landing-plan__name">Plus</h3>
@@ -88,7 +90,7 @@
               </button>
             </article>
 
-            <article class="landing-plan landing-plan--pro">
+            <article class="landing-plan landing-plan--pro" role="listitem">
               <header class="landing-plan__header">
                 <span class="landing-plan__badge landing-plan__badge--popular">Stufe 3</span>
                 <h3 class="landing-plan__name">Pro</h3>
@@ -108,6 +110,65 @@
                 Mit Pro starten
               </button>
             </article>
+              </div>
+            </div>
+            <div class="landing-pricing__controls" aria-label="Preisstufen blättern">
+              <button
+                type="button"
+                class="landing-pricing__arrow landing-pricing__arrow--prev"
+                aria-label="Vorherige Preisstufe"
+                disabled
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path
+                    d="M10 4l-4 4 4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <div class="landing-pricing__dots" role="tablist" aria-label="Preisstufen">
+                <button
+                  type="button"
+                  class="landing-pricing__dot is-active"
+                  role="tab"
+                  aria-label="Free"
+                  aria-selected="true"
+                  data-landing-pricing-dot="0"
+                ></button>
+                <button
+                  type="button"
+                  class="landing-pricing__dot"
+                  role="tab"
+                  aria-label="Plus"
+                  aria-selected="false"
+                  data-landing-pricing-dot="1"
+                ></button>
+                <button
+                  type="button"
+                  class="landing-pricing__dot"
+                  role="tab"
+                  aria-label="Pro"
+                  aria-selected="false"
+                  data-landing-pricing-dot="2"
+                ></button>
+              </div>
+              <button type="button" class="landing-pricing__arrow landing-pricing__arrow--next" aria-label="Nächste Preisstufe">
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path
+                    d="M6 4l4 4-4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -585,12 +646,14 @@
                   <div class="angebot-kopf__divider" aria-hidden="true"></div>
                   <div class="angebot-kopf__col angebot-kopf__col--kunde">
                     <label>
-                      Kunde
+                      <span class="field-label-row">
+                        Kunde
+                        <span id="rechnung-kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
+                      </span>
                       <div class="input-row">
                         <input type="text" id="rechnung-kunde-name" placeholder="Freiname oder Kunde wählen" />
                         <button type="button" id="rechnung-kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
                       </div>
-                      <span id="rechnung-kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
                     </label>
                     <div class="adresse-fields">
                       <div id="rechnung-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
@@ -743,12 +806,14 @@
                   <div class="angebot-kopf__divider" aria-hidden="true"></div>
                   <div class="angebot-kopf__col angebot-kopf__col--kunde">
                     <label>
-                      Kunde
+                      <span class="field-label-row">
+                        Kunde
+                        <span id="kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
+                      </span>
                       <div class="input-row">
                         <input type="text" id="kunde-name" placeholder="Freiname oder Kunde wählen" />
                         <button type="button" id="kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
                       </div>
-                      <span id="kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
                     </label>
                     <div class="adresse-fields">
                       <div id="kunde-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
@@ -871,7 +936,7 @@
                   aria-selected="true"
                   data-pdf-layout-tab="1"
                 >
-                  Layout 1
+                  Klassisch
                 </button>
                 <button
                   type="button"
@@ -880,7 +945,7 @@
                   aria-selected="false"
                   data-pdf-layout-tab="2"
                 >
-                  Layout 2
+                  Banner
                 </button>
                 <button
                   type="button"
@@ -889,40 +954,27 @@
                   aria-selected="false"
                   data-pdf-layout-tab="3"
                 >
-                  Layout 3
+                  Formbrief
                 </button>
               </div>
             </div>
             <p class="settings-lead pdf-vorlage-card__lead">
-              Oben sehen Sie eine Vorschau des Angebots-PDFs. Klicken Sie auf einen Bereich
-              in der Vorschau oder klappen Sie die Einstellungen unten auf.
+              Logo links, Dokumentdaten rechts — der Standard für Angebote und Rechnungen.
             </p>
-            <div class="pdf-layout-panel" data-pdf-layout-panel="1">
-              <div class="pdf-vorlage-workspace">
-                <aside class="pdf-vorlage-preview-col">
-                  <p class="pdf-vorlage-preview-label">Layout-Vorschau</p>
-                  <div class="pdf-layout-preview" id="pdf-preview-angebot" aria-label="Angebots-PDF Vorschau"></div>
-                </aside>
-                <div class="pdf-vorlage-form-col">
-                  <form id="pdf-angebot-form" class="pdf-template-form">
-                    <div data-pdf-shared-fields></div>
-                    <div class="form-actions full settings-actions">
-                      <button type="submit" class="btn btn-primary">Angebots-Vorlage speichern</button>
-                      <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
-                      <p class="settings-status hidden pdf-template-status" role="status"></p>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-            <div class="pdf-layout-panel hidden" data-pdf-layout-panel="2" hidden>
-              <div class="pdf-layout-empty">
-                <p>Layout 2 ist noch nicht verfügbar.</p>
-              </div>
-            </div>
-            <div class="pdf-layout-panel hidden" data-pdf-layout-panel="3" hidden>
-              <div class="pdf-layout-empty">
-                <p>Layout 3 ist noch nicht verfügbar.</p>
+            <div class="pdf-vorlage-workspace">
+              <aside class="pdf-vorlage-preview-col">
+                <p class="pdf-vorlage-preview-label">Vorschau · Klassisch</p>
+                <div class="pdf-layout-preview" id="pdf-preview-angebot" aria-label="Angebots-PDF Vorschau"></div>
+              </aside>
+              <div class="pdf-vorlage-form-col">
+                <form id="pdf-angebot-form" class="pdf-template-form">
+                  <div data-pdf-shared-fields></div>
+                  <div class="form-actions full settings-actions">
+                    <button type="submit" class="btn btn-primary">Angebots-Vorlage speichern</button>
+                    <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
+                    <p class="settings-status hidden pdf-template-status" role="status"></p>
+                  </div>
+                </form>
               </div>
             </div>
           </section>
@@ -947,7 +999,7 @@
                   aria-selected="true"
                   data-pdf-layout-tab="1"
                 >
-                  Layout 1
+                  Klassisch
                 </button>
                 <button
                   type="button"
@@ -956,7 +1008,7 @@
                   aria-selected="false"
                   data-pdf-layout-tab="2"
                 >
-                  Layout 2
+                  Banner
                 </button>
                 <button
                   type="button"
@@ -965,40 +1017,31 @@
                   aria-selected="false"
                   data-pdf-layout-tab="3"
                 >
-                  Layout 3
+                  Formbrief
                 </button>
               </div>
             </div>
             <p class="settings-lead pdf-vorlage-card__lead">
-              Oben die Rechnungs-Vorschau, darunter die Bereiche Briefkopf, Dokumentenkopf,
-              Einleitung, Tabelle und Fußbereich.
+              Logo links, Dokumentdaten rechts — der Standard für Angebote und Rechnungen.
             </p>
-            <div class="pdf-layout-panel" data-pdf-layout-panel="1">
-              <div class="pdf-vorlage-workspace">
-                <aside class="pdf-vorlage-preview-col">
-                  <p class="pdf-vorlage-preview-label">Layout-Vorschau</p>
-                  <div class="pdf-layout-preview" id="pdf-preview-rechnung" aria-label="Rechnungs-PDF Vorschau"></div>
-                </aside>
-                <div class="pdf-vorlage-form-col">
-                  <form id="pdf-rechnung-form" class="pdf-template-form">
-                    <div data-pdf-shared-fields></div>
-                    <div class="form-actions full settings-actions">
-                      <button type="submit" class="btn btn-primary">Rechnungs-Vorlage speichern</button>
-                      <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
-                      <p class="settings-status hidden pdf-template-status" role="status"></p>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-            <div class="pdf-layout-panel hidden" data-pdf-layout-panel="2" hidden>
-              <div class="pdf-layout-empty">
-                <p>Layout 2 ist noch nicht verfügbar.</p>
-              </div>
-            </div>
-            <div class="pdf-layout-panel hidden" data-pdf-layout-panel="3" hidden>
-              <div class="pdf-layout-empty">
-                <p>Layout 3 ist noch nicht verfügbar.</p>
+            <p class="settings-note pdf-vorlage-card__zugferd-hint">
+              Rechnungs-PDFs werden als ZUGFeRD/Factur-X (Profil EN&nbsp;16931) mit eingebetteter
+              <code>factur-x.xml</code> erzeugt. IBAN und USt-IdNr. im Briefkopf sind Pflichtfelder.
+            </p>
+            <div class="pdf-vorlage-workspace">
+              <aside class="pdf-vorlage-preview-col">
+                <p class="pdf-vorlage-preview-label">Vorschau · Klassisch</p>
+                <div class="pdf-layout-preview" id="pdf-preview-rechnung" aria-label="Rechnungs-PDF Vorschau"></div>
+              </aside>
+              <div class="pdf-vorlage-form-col">
+                <form id="pdf-rechnung-form" class="pdf-template-form">
+                  <div data-pdf-shared-fields></div>
+                  <div class="form-actions full settings-actions">
+                    <button type="submit" class="btn btn-primary">Rechnungs-Vorlage speichern</button>
+                    <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
+                    <p class="settings-status hidden pdf-template-status" role="status"></p>
+                  </div>
+                </form>
               </div>
             </div>
           </section>
@@ -1021,7 +1064,12 @@
               </div>
               <div class="profil-field profil-field--static full">
                 <span class="profil-field__label">Tarif</span>
-                <span id="profil-plan" class="profil-field__value">—</span>
+                <div class="profil-plan-row">
+                  <span id="profil-plan" class="profil-field__value">—</span>
+                  <button type="button" id="profil-plan-change-btn" class="btn btn-ghost btn-sm">
+                    Tarif wechseln
+                  </button>
+                </div>
               </div>
               <div class="form-actions full">
                 <button type="submit" class="btn btn-primary">Speichern</button>
@@ -1486,6 +1534,26 @@
         <div id="kunden-picker-liste" class="kunden-picker-liste"></div>
         <div class="kunden-modal__footer">
           <button type="button" class="btn btn-ghost btn-sm" data-close-modal>Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="profil-plan-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-profil-plan-modal></div>
+      <div
+        class="modal-panel card profil-plan-modal"
+        role="dialog"
+        aria-labelledby="profil-plan-modal-title"
+        aria-modal="true"
+      >
+        <h2 id="profil-plan-modal-title">Tarif wechseln</h2>
+        <p class="settings-lead">
+          Wählen Sie den passenden Tarif für Ihren Mandanten. Der Wechsel wird in Kürze freigeschaltet.
+        </p>
+        <div id="profil-plan-modal-list" class="profil-plan-modal__list" role="list"></div>
+        <p id="profil-plan-modal-status" class="settings-status hidden" role="status"></p>
+        <div class="profil-plan-modal__actions">
+          <button type="button" class="btn btn-ghost" data-close-profil-plan-modal>Schließen</button>
         </div>
       </div>
     </div>

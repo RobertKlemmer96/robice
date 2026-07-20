@@ -107,6 +107,29 @@ export function hexToRgb(hex) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+export function formatRgbFromHex(hex) {
+  const [r, g, b] = hexToRgb(hex);
+  return `${r}, ${g}, ${b}`;
+}
+
+export function parseRgbInput(value) {
+  const trimmed = String(value || '').trim();
+  const match =
+    trimmed.match(/^rgb?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i) ||
+    trimmed.match(/^(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})$/);
+  if (!match) return null;
+  const rgb = [match[1], match[2], match[3]].map((part) => Number.parseInt(part, 10));
+  if (rgb.some((channel) => !Number.isFinite(channel) || channel < 0 || channel > 255)) return null;
+  return rgb;
+}
+
+export function rgbToHex(r, g, b) {
+  const clamp = (channel) => Math.max(0, Math.min(255, Math.round(channel)));
+  return `#${[clamp(r), clamp(g), clamp(b)]
+    .map((channel) => channel.toString(16).padStart(2, '0'))
+    .join('')}`;
+}
+
 export function getPdfTemplate() {
   return cachedTemplate || getDefaultPdfTemplate();
 }
@@ -186,6 +209,9 @@ export function templatePatchFromForm(form, section) {
           email: String(fd.get('firma-email') || '').trim(),
           web: String(fd.get('firma-web') || '').trim(),
           ustId: String(fd.get('firma-ustId') || '').trim(),
+          iban: String(fd.get('firma-iban') || '').trim(),
+          bic: String(fd.get('firma-bic') || '').trim(),
+          bankName: String(fd.get('firma-bankName') || '').trim(),
         },
       };
     case 'farben':
@@ -271,6 +297,9 @@ export function fillPdfTemplateSectionForm(form, template, section) {
       form.elements['firma-email'].value = tpl.firma.email;
       form.elements['firma-web'].value = tpl.firma.web;
       form.elements['firma-ustId'].value = tpl.firma.ustId;
+      form.elements['firma-iban'].value = tpl.firma.iban || '';
+      form.elements['firma-bic'].value = tpl.firma.bic || '';
+      form.elements['firma-bankName'].value = tpl.firma.bankName || '';
       break;
     case 'farben':
       form.elements['farbe-primaer'].value = tpl.farben.primaer;
@@ -344,6 +373,9 @@ export function templateFromForm(form) {
       email: String(fd.get('firma-email') || '').trim(),
       web: String(fd.get('firma-web') || '').trim(),
       ustId: String(fd.get('firma-ustId') || '').trim(),
+      iban: String(fd.get('firma-iban') || '').trim(),
+      bic: String(fd.get('firma-bic') || '').trim(),
+      bankName: String(fd.get('firma-bankName') || '').trim(),
     },
     farben: {
       primaer: String(fd.get('farbe-primaer') || '#1e3a5f'),
@@ -398,6 +430,9 @@ export function fillPdfTemplateForm(form, template) {
   form.elements['firma-email'].value = tpl.firma.email;
   form.elements['firma-web'].value = tpl.firma.web;
   form.elements['firma-ustId'].value = tpl.firma.ustId;
+  form.elements['firma-iban'].value = tpl.firma.iban || '';
+  form.elements['firma-bic'].value = tpl.firma.bic || '';
+  form.elements['firma-bankName'].value = tpl.firma.bankName || '';
 
   form.elements['farbe-primaer'].value = tpl.farben.primaer;
   form.elements['farbe-textMuted'].value = tpl.farben.textMuted;

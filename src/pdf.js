@@ -14,6 +14,7 @@ import {
 } from './pdfTemplate.js';
 
 import { adresseToLines } from './adresse.js';
+import { normalizePdfLayoutVariant } from './pdfLayoutVariants.js';
 
 
 
@@ -212,15 +213,246 @@ function addTemplateImage(doc, dataUrl, x, y, w, h) {
 
 
 
-export function buildPdfDoc(angebot, postenDetails) {
+function buildPostenTableBody(postenDetails) {
+  return postenDetails.map((p, index) => [
+    String(index + 1),
+    p.bezeichnung,
+    p.beschreibung,
+    String(formatMenge(p.menge)),
+    p.einheit,
+    formatEuro(p.preis),
+    formatEuro(p.preis * p.menge),
+  ]);
+}
 
-  const tpl = getPdfTemplate();
+const TABLE_COLUMN_STYLES = {
+  0: { cellWidth: 12, halign: 'center' },
+  3: { cellWidth: 16, halign: 'center' },
+  4: { cellWidth: 18, halign: 'center' },
+  5: { cellWidth: 28, halign: 'right' },
+  6: { cellWidth: 28, halign: 'right' },
+};
 
+function renderPdfTotalsBlock(
+  doc,
+  { netto, mwst, brutto },
+  startY,
+  variant,
+  primaerRgb,
+  labels = {}
+) {
+  const nettoLabel = labels.netto ?? 'Gesamt netto:';
+  const mwstLabel = labels.mwst ?? 'Umsatzsteuer 19 %:';
+  const bruttoLabel = labels.brutto ?? 'Gesamtbetrag:';
+
+  if (variant === 2) {
+    doc.setFillColor(primaerRgb[0], primaerRgb[1], primaerRgb[2], 0.08);
+    doc.setDrawColor(primaerRgb[0], primaerRgb[1], primaerRgb[2]);
+    doc.setLineWidth(0.2);
+    doc.rect(122, startY - 4, 68, 24, 'FD');
+  }
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text(nettoLabel, 130, startY);
+  doc.text(formatEuro(netto), 190, startY, { align: 'right' });
+  doc.text(mwstLabel, 130, startY + 6);
+  doc.text(formatEuro(mwst), 190, startY + 6, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text(bruttoLabel, 130, startY + 14);
+  doc.text(formatEuro(brutto), 190, startY + 14, { align: 'right' });
+}
+
+function renderPostenTable(doc, startY, tableBody, variant, primaerRgb, lineRgb) {
+  const tableOptions = {
+    startY,
+    head: [['Pos', 'Bezeichnung', 'Beschreibung', 'Menge', 'Einheit', 'Einzelpreis', 'Gesamt']],
+    body: tableBody,
+    styles: { fontSize: 9, cellPadding: 3 },
+    columnStyles: TABLE_COLUMN_STYLES,
+    margin: { left: 20, right: 20, bottom: 38 },
+  };
+
+  if (variant === 2) {
+    autoTable(doc, {
+      ...tableOptions,
+      theme: 'plain',
+      headStyles: {
+        fillColor: [255, 255, 255],
+        textColor: primaerRgb,
+        lineWidth: { bottom: 0.6 },
+        lineColor: primaerRgb,
+      },
+      bodyStyles: { lineColor: lineRgb },
+    });
+    return;
+  }
+
+  if (variant === 3) {
+    autoTable(doc, {
+      ...tableOptions,
+      theme: 'plain',
+      headStyles: {
+        fillColor: [255, 255, 255],
+        textColor: [55, 65, 81],
+        lineWidth: { bottom: 0.4 },
+        lineColor: lineRgb,
+      },
+      bodyStyles: {
+        lineWidth: { bottom: 0.2 },
+        lineColor: lineRgb,
+      },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+    });
+    return;
+  }
+
+  autoTable(doc, {
+    ...tableOptions,
+    theme: 'grid',
+    headStyles: { fillColor: primaerRgb, textColor: 255 },
+  });
+}
+
+function buildAngebotPdfV2(angebot, postenDetails, tpl) {
   const { netto, mwst, brutto } = berechneSummenAusPosten(postenDetails);
-
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const erstelltAm = angebot.angebotsdatum
+    ? formatDatum(new Date(angebot.angebotsdatum))
+    : angebot.erstelltAm
+      ? formatDatum(new Date(angebot.erstelltAm))
+      : formatDatum(new Date());
+  const gueltigBis = angebot.gueltigBis ? formatDatum(new Date(angebot.gueltigBis)) : '—';
+  const mutedRgb = hexToRgb(tpl.farben.textMuted);
+  const lineRgb = hexToRgb(tpl.farben.trennlinie);
+  const primaerRgb = hexToRgb(tpl.farben.primaer);
+  const bannerH = 50;
 
+  doc.setFillColor(...primaerRgb);
+  doc.rect(0, 0, 210, bannerH, 'F');
 
+  if (tpl.bilder.logo) {
+    addTemplateImage(doc, tpl.bilder.logo, 20, 10, tpl.layout.logoBreiteMm, Math.min(tpl.layout.logoHoeheMm, 20));
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(255);
+    doc.text(tpl.firma.name, 20, 22);
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(24);
+  doc.setTextColor(255);
+  doc.text(tpl.texte.titel || 'ANGEBOT', 190, 24, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(255);
+  doc.text(`${tpl.firma.telefon} · ${tpl.firma.email}`, 20, 30);
+
+  const chips = [
+    `Angebotsnr.: ${angebot.angebotNr}`,
+    `Datum: ${erstelltAm}`,
+    `Gültig bis: ${gueltigBis}`,
+  ];
+  let chipX = 20;
+  const chipY = bannerH - 9;
+  doc.setFontSize(7);
+  chips.forEach((label) => {
+    const chipW = doc.getTextWidth(label) + 8;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(chipX, chipY, chipW, 8, 2, 2, 'F');
+    doc.setTextColor(40);
+    doc.text(label, chipX + 4, chipY + 5.5);
+    chipX += chipW + 4;
+  });
+
+  let y = bannerH + 12;
+  doc.setFillColor(...primaerRgb);
+  doc.rect(20, y, 2, 24, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...mutedRgb);
+  doc.text('ANGEBOT FÜR', 26, y + 4);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  y = writeKundeAdressBlock(doc, angebot.kunde, y + 9);
+
+  if (tpl.texte.einleitung) {
+    doc.setFontSize(10);
+    doc.text(tpl.texte.einleitung, 20, y + 10);
+    y += 10;
+  }
+
+  renderPostenTable(doc, y + 8, buildPostenTableBody(postenDetails), 2, primaerRgb, lineRgb);
+  renderPdfTotalsBlock(doc, { netto, mwst, brutto }, doc.lastAutoTable.finalY + 10, 2, primaerRgb);
+  renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
+  return doc;
+}
+
+function buildAngebotPdfV3(angebot, postenDetails, tpl) {
+  const { netto, mwst, brutto } = berechneSummenAusPosten(postenDetails);
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const erstelltAm = angebot.angebotsdatum
+    ? formatDatum(new Date(angebot.angebotsdatum))
+    : angebot.erstelltAm
+      ? formatDatum(new Date(angebot.erstelltAm))
+      : formatDatum(new Date());
+  const gueltigBis = angebot.gueltigBis ? formatDatum(new Date(angebot.gueltigBis)) : '—';
+  const mutedRgb = hexToRgb(tpl.farben.textMuted);
+  const lineRgb = hexToRgb(tpl.farben.trennlinie);
+  const primaerRgb = hexToRgb(tpl.farben.primaer);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(0);
+  doc.text(String(tpl.firma.name || '').toUpperCase(), 105, 20, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...mutedRgb);
+  doc.text(`${tpl.firma.strasse} · ${tpl.firma.plzOrt}`, 105, 26, { align: 'center' });
+  doc.text(`${tpl.firma.telefon} · ${tpl.firma.email}`, 105, 31, { align: 'center' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(0);
+  doc.text(tpl.texte.titel || 'Angebot', 190, 48, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...mutedRgb);
+  doc.text(`Angebotsnr.: ${angebot.angebotNr}`, 190, 54, { align: 'right' });
+  doc.text(`Angebotsdatum: ${erstelltAm}`, 190, 59, { align: 'right' });
+  doc.text(`Gültig bis: ${gueltigBis}`, 190, 64, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...mutedRgb);
+  doc.text('Angebot für', 20, 50);
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  let y = writeKundeAdressBlock(doc, angebot.kunde, 56);
+
+  doc.setDrawColor(...primaerRgb);
+  doc.setLineWidth(0.6);
+  doc.line(20, y + 12, 190, y + 12);
+
+  if (tpl.texte.einleitung) {
+    doc.text(tpl.texte.einleitung, 20, y + 20);
+    y += 8;
+  }
+
+  renderPostenTable(doc, y + 16, buildPostenTableBody(postenDetails), 3, primaerRgb, lineRgb);
+  renderPdfTotalsBlock(doc, { netto, mwst, brutto }, doc.lastAutoTable.finalY + 10, 3, primaerRgb);
+  renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
+  return doc;
+}
+
+function buildAngebotPdfV1(angebot, postenDetails, tpl) {
+  const { netto, mwst, brutto } = berechneSummenAusPosten(postenDetails);
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
   const erstelltAm = angebot.angebotsdatum
     ? formatDatum(new Date(angebot.angebotsdatum))
@@ -376,96 +608,23 @@ export function buildPdfDoc(angebot, postenDetails) {
 
 
 
-  const tableBody = postenDetails.map((p, index) => [
+  const tableBody = buildPostenTableBody(postenDetails);
 
-    String(index + 1),
+  renderPostenTable(doc, y + 18, tableBody, 1, primaerRgb, lineRgb);
 
-    p.bezeichnung,
-
-    p.beschreibung,
-
-    String(formatMenge(p.menge)),
-
-    p.einheit,
-
-    formatEuro(p.preis),
-
-    formatEuro(p.preis * p.menge),
-
-  ]);
-
-
-
-  autoTable(doc, {
-
-    startY: y + 18,
-
-    head: [['Pos', 'Bezeichnung', 'Beschreibung', 'Menge', 'Einheit', 'Einzelpreis', 'Gesamt']],
-
-    body: tableBody,
-
-    theme: 'grid',
-
-    styles: { fontSize: 9, cellPadding: 3 },
-
-    headStyles: { fillColor: primaerRgb, textColor: 255 },
-
-    columnStyles: {
-
-      0: { cellWidth: 12, halign: 'center' },
-
-      3: { cellWidth: 16, halign: 'center' },
-
-      4: { cellWidth: 18, halign: 'center' },
-
-      5: { cellWidth: 28, halign: 'right' },
-
-      6: { cellWidth: 28, halign: 'right' },
-
-    },
-
-    margin: { left: 20, right: 20, bottom: 38 },
-
-  });
-
-
-
-  const endY = doc.lastAutoTable.finalY + 10;
-
-
-
-  doc.setFont('helvetica', 'normal');
-
-  doc.setFontSize(10);
-
-  doc.setTextColor(0);
-
-  doc.text('Gesamt netto:', 130, endY);
-
-  doc.text(formatEuro(netto), 190, endY, { align: 'right' });
-
-  doc.text('Umsatzsteuer 19 %:', 130, endY + 6);
-
-  doc.text(formatEuro(mwst), 190, endY + 6, { align: 'right' });
-
-
-
-  doc.setFont('helvetica', 'bold');
-
-  doc.setFontSize(11);
-
-  doc.text('Gesamtbetrag:', 130, endY + 14);
-
-  doc.text(formatEuro(brutto), 190, endY + 14, { align: 'right' });
-
-
+  renderPdfTotalsBlock(doc, { netto, mwst, brutto }, doc.lastAutoTable.finalY + 10, 1, primaerRgb);
 
   renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
 
-
-
   return doc;
+}
 
+export function buildPdfDoc(angebot, postenDetails) {
+  const tpl = getPdfTemplate();
+  const variant = normalizePdfLayoutVariant(tpl.layout?.angebotVariant);
+  if (variant === 2) return buildAngebotPdfV2(angebot, postenDetails, tpl);
+  if (variant === 3) return buildAngebotPdfV3(angebot, postenDetails, tpl);
+  return buildAngebotPdfV1(angebot, postenDetails, tpl);
 }
 
 
@@ -494,6 +653,179 @@ export function openPdfPreview(angebot, postenDetails) {
 
 export function buildRechnungPdfDoc(rechnung, postenDetails) {
   const tpl = getPdfTemplate();
+  const variant = normalizePdfLayoutVariant(tpl.layout?.rechnungVariant);
+  if (variant === 2) return buildRechnungPdfV2(rechnung, postenDetails, tpl);
+  if (variant === 3) return buildRechnungPdfV3(rechnung, postenDetails, tpl);
+  return buildRechnungPdfV1(rechnung, postenDetails, tpl);
+}
+
+const RECHNUNG_TOTAL_LABELS = {
+  netto: 'Nettobetrag:',
+  mwst: 'MwSt. 19 %:',
+  brutto: 'Gesamtbetrag:',
+};
+
+function buildRechnungPdfV2(rechnung, postenDetails, tpl) {
+  const texte = tpl.texteRechnung || {};
+  const { netto, mwst, brutto } = berechneSummenAusPosten(postenDetails);
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const rechnungsdatum = rechnung.rechnungsdatum
+    ? formatDatum(new Date(rechnung.rechnungsdatum))
+    : rechnung.erstelltAm
+      ? formatDatum(new Date(rechnung.erstelltAm))
+      : formatDatum(new Date());
+  const faelligAm = rechnung.faelligAm ? formatDatum(new Date(rechnung.faelligAm)) : '—';
+  const mutedRgb = hexToRgb(tpl.farben.textMuted);
+  const lineRgb = hexToRgb(tpl.farben.trennlinie);
+  const primaerRgb = hexToRgb(tpl.farben.primaer);
+  const bannerH = 50;
+
+  doc.setFillColor(...primaerRgb);
+  doc.rect(0, 0, 210, bannerH, 'F');
+
+  if (tpl.bilder.logo) {
+    addTemplateImage(doc, tpl.bilder.logo, 20, 10, tpl.layout.logoBreiteMm, Math.min(tpl.layout.logoHoeheMm, 20));
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(255);
+    doc.text(tpl.firma.name, 20, 22);
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(24);
+  doc.setTextColor(255);
+  doc.text(texte.titel || 'RECHNUNG', 190, 24, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(255);
+  doc.text(`${tpl.firma.telefon} · ${tpl.firma.email}`, 20, 30);
+
+  const chips = [
+    `Rechnungsnr.: ${rechnung.rechnungNr}`,
+    `Datum: ${rechnungsdatum}`,
+    `Fällig: ${faelligAm}`,
+  ];
+  let chipX = 20;
+  const chipY = bannerH - 9;
+  doc.setFontSize(7);
+  chips.forEach((label) => {
+    const chipW = doc.getTextWidth(label) + 8;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(chipX, chipY, chipW, 8, 2, 2, 'F');
+    doc.setTextColor(40);
+    doc.text(label, chipX + 4, chipY + 5.5);
+    chipX += chipW + 4;
+  });
+
+  let y = bannerH + 12;
+  doc.setFillColor(...primaerRgb);
+  doc.rect(20, y, 2, 24, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...mutedRgb);
+  doc.text('RECHNUNG AN', 26, y + 4);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  y = writeKundeAdressBlock(doc, rechnung.kunde, y + 9);
+
+  if (rechnung.angebotNr) {
+    doc.setFontSize(9);
+    doc.setTextColor(...mutedRgb);
+    doc.text(`Bezug Angebot: ${rechnung.angebotNr}`, 26, y + 6);
+    y += 6;
+  }
+
+  if (texte.einleitung) {
+    doc.setFontSize(10);
+    doc.text(texte.einleitung, 20, y + 10);
+    y += 10;
+  }
+
+  renderPostenTable(doc, y + 8, buildPostenTableBody(postenDetails), 2, primaerRgb, lineRgb);
+  renderPdfTotalsBlock(
+    doc,
+    { netto, mwst, brutto },
+    doc.lastAutoTable.finalY + 10,
+    2,
+    primaerRgb,
+    RECHNUNG_TOTAL_LABELS
+  );
+  renderPdfFooter(doc, tpl, { fuss1: texte.fuss1, fuss2: texte.fuss2 });
+  return doc;
+}
+
+function buildRechnungPdfV3(rechnung, postenDetails, tpl) {
+  const texte = tpl.texteRechnung || {};
+  const { netto, mwst, brutto } = berechneSummenAusPosten(postenDetails);
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const rechnungsdatum = rechnung.rechnungsdatum
+    ? formatDatum(new Date(rechnung.rechnungsdatum))
+    : rechnung.erstelltAm
+      ? formatDatum(new Date(rechnung.erstelltAm))
+      : formatDatum(new Date());
+  const faelligAm = rechnung.faelligAm ? formatDatum(new Date(rechnung.faelligAm)) : '—';
+  const mutedRgb = hexToRgb(tpl.farben.textMuted);
+  const lineRgb = hexToRgb(tpl.farben.trennlinie);
+  const primaerRgb = hexToRgb(tpl.farben.primaer);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(0);
+  doc.text(String(tpl.firma.name || '').toUpperCase(), 105, 20, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...mutedRgb);
+  doc.text(`${tpl.firma.strasse} · ${tpl.firma.plzOrt}`, 105, 26, { align: 'center' });
+  doc.text(`${tpl.firma.telefon} · ${tpl.firma.email}`, 105, 31, { align: 'center' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(0);
+  doc.text(texte.titel || 'Rechnung', 190, 48, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...mutedRgb);
+  doc.text(`Rechnungsnr.: ${rechnung.rechnungNr}`, 190, 54, { align: 'right' });
+  doc.text(`Rechnungsdatum: ${rechnungsdatum}`, 190, 59, { align: 'right' });
+  doc.text(`Fällig am: ${faelligAm}`, 190, 64, { align: 'right' });
+  if (rechnung.angebotNr) {
+    doc.text(`Bezug: ${rechnung.angebotNr}`, 190, 69, { align: 'right' });
+  }
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...mutedRgb);
+  doc.text('Rechnung an', 20, 50);
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  let y = writeKundeAdressBlock(doc, rechnung.kunde, 56);
+
+  doc.setDrawColor(...primaerRgb);
+  doc.setLineWidth(0.6);
+  doc.line(20, y + 12, 190, y + 12);
+
+  if (texte.einleitung) {
+    doc.text(texte.einleitung, 20, y + 20);
+    y += 8;
+  }
+
+  renderPostenTable(doc, y + 16, buildPostenTableBody(postenDetails), 3, primaerRgb, lineRgb);
+  renderPdfTotalsBlock(
+    doc,
+    { netto, mwst, brutto },
+    doc.lastAutoTable.finalY + 10,
+    3,
+    primaerRgb,
+    RECHNUNG_TOTAL_LABELS
+  );
+  renderPdfFooter(doc, tpl, { fuss1: texte.fuss1, fuss2: texte.fuss2 });
+  return doc;
+}
+
+function buildRechnungPdfV1(rechnung, postenDetails, tpl) {
   const texte = tpl.texteRechnung || {};
   const { netto, mwst, brutto } = berechneSummenAusPosten(postenDetails);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -587,63 +919,69 @@ export function buildRechnungPdfDoc(rechnung, postenDetails) {
     doc.text(texte.einleitung, 20, y + 12);
   }
 
-  const tableBody = postenDetails.map((p, index) => [
-    String(index + 1),
-    p.bezeichnung,
-    p.beschreibung,
-    String(formatMenge(p.menge)),
-    p.einheit,
-    formatEuro(p.preis),
-    formatEuro(p.preis * p.menge),
-  ]);
+  const tableBody = buildPostenTableBody(postenDetails);
 
-  autoTable(doc, {
-    startY: y + 18,
-    head: [['Pos', 'Bezeichnung', 'Beschreibung', 'Menge', 'Einheit', 'Einzelpreis', 'Gesamt']],
-    body: tableBody,
-    theme: 'grid',
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: primaerRgb, textColor: 255 },
-    columnStyles: {
-      0: { cellWidth: 12, halign: 'center' },
-      3: { cellWidth: 16, halign: 'center' },
-      4: { cellWidth: 18, halign: 'center' },
-      5: { cellWidth: 28, halign: 'right' },
-      6: { cellWidth: 28, halign: 'right' },
-    },
-    margin: { left: 20, right: 20, bottom: 38 },
-  });
+  renderPostenTable(doc, y + 18, tableBody, 1, primaerRgb, lineRgb);
 
-  const endY = doc.lastAutoTable.finalY + 10;
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(0);
-  doc.text('Nettobetrag:', 130, endY);
-  doc.text(formatEuro(netto), 190, endY, { align: 'right' });
-  doc.text('MwSt. 19 %:', 130, endY + 6);
-  doc.text(formatEuro(mwst), 190, endY + 6, { align: 'right' });
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('Gesamtbetrag:', 130, endY + 14);
-  doc.text(formatEuro(brutto), 190, endY + 14, { align: 'right' });
+  renderPdfTotalsBlock(
+    doc,
+    { netto, mwst, brutto },
+    doc.lastAutoTable.finalY + 10,
+    1,
+    primaerRgb,
+    RECHNUNG_TOTAL_LABELS
+  );
 
   renderPdfFooter(doc, tpl, { fuss1: texte.fuss1, fuss2: texte.fuss2 });
 
   return doc;
 }
 
-export function downloadRechnungPdf(rechnung, postenDetails) {
-  const doc = buildRechnungPdfDoc(rechnung, postenDetails);
-  const dateiname = `Rechnung_${rechnung.rechnungNr.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`;
-  doc.save(dateiname);
+import { exportRechnungZugferdPdf } from './rechnungen.js';
+
+function downloadBlob(blob, dateiname) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = dateiname;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
-export function openRechnungPdfPreview(rechnung, postenDetails) {
+export async function downloadRechnungPdf(rechnung, postenDetails) {
   const doc = buildRechnungPdfDoc(rechnung, postenDetails);
-  const url = doc.output('bloburl');
-  window.open(url, '_blank');
+  const dateiname = `Rechnung_${rechnung.rechnungNr.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`;
+
+  try {
+    const blob = await exportRechnungZugferdPdf(
+      rechnung,
+      postenDetails,
+      doc.output('arraybuffer')
+    );
+    downloadBlob(blob, dateiname);
+  } catch (err) {
+    console.warn('ZUGFeRD-Export nicht verfügbar, Fallback auf Standard-PDF:', err);
+    doc.save(dateiname);
+  }
+}
+
+export async function openRechnungPdfPreview(rechnung, postenDetails) {
+  const doc = buildRechnungPdfDoc(rechnung, postenDetails);
+
+  try {
+    const blob = await exportRechnungZugferdPdf(
+      rechnung,
+      postenDetails,
+      doc.output('arraybuffer')
+    );
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return;
+  } catch {
+    const url = doc.output('bloburl');
+    window.open(url, '_blank');
+  }
 }
 
 

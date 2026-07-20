@@ -7,6 +7,9 @@ export const PDF_TEMPLATE_DEFAULT = {
     email: 'info@ihr-unternehmen.de',
     web: 'www.ihr-unternehmen.de',
     ustId: 'DE123456789',
+    iban: 'DE89370400440532013000',
+    bic: 'COBADEFFXXX',
+    bankName: 'Sparkasse Musterstadt',
   },
   farben: {
     primaer: '#1e3a5f',
@@ -28,6 +31,8 @@ export const PDF_TEMPLATE_DEFAULT = {
     logoHoeheMm: 18,
     headerHoeheMm: 22,
     headerAktiv: false,
+    angebotVariant: 1,
+    rechnungVariant: 1,
   },
   angebot: {
     nummerSchema: 'ANG-{YYYY}{MM}{DD}-{NR:3}',
@@ -35,6 +40,10 @@ export const PDF_TEMPLATE_DEFAULT = {
   rechnung: {
     nummerSchema: 'RE-{YYYY}{MM}{DD}-{NR:3}',
     zahlungszielTage: 14,
+  },
+  zugferd: {
+    profile: 'EN16931',
+    enabled: true,
   },
   texteRechnung: {
     titel: 'RECHNUNG',

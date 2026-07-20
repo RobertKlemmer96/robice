@@ -1,6 +1,13 @@
 import { previewAngebotsnummer, previewRechnungsnummer } from './dokumentnummer.js';
 import { berechneSummenAusPosten, formatEuro } from './pdf.js';
 import { getPdfTemplate } from './pdfTemplate.js';
+import {
+  applyPdfLayoutPreviewVariantStyles,
+  createPdfLayoutPreviewMarkup,
+  normalizePdfLayoutVariant,
+} from './pdfLayoutVariants.js';
+
+export { createPdfLayoutPreviewMarkup, normalizePdfLayoutVariant };
 
 const SAMPLE_KUNDE = {
   name: 'Musterkunde GmbH',
@@ -41,8 +48,19 @@ function setStyle(root, selector, prop, value) {
   if (el) el.style[prop] = value;
 }
 
-export function updatePdfTemplatePreview(form, previewRoot, type) {
+export function updatePdfTemplatePreview(form, previewRoot, type, variant = 1) {
   if (!form || !previewRoot) return;
+  const layoutVariant = normalizePdfLayoutVariant(variant);
+  if (
+    previewRoot.dataset.previewType !== type ||
+    Number(previewRoot.dataset.previewVariant) !== layoutVariant ||
+    !previewRoot.querySelector('.pdf-layout-preview__sheet')
+  ) {
+    previewRoot.innerHTML = createPdfLayoutPreviewMarkup(type, layoutVariant);
+    previewRoot.dataset.previewType = type;
+    previewRoot.dataset.previewVariant = String(layoutVariant);
+    delete previewRoot.dataset.sectionClicksBound;
+  }
 
   const firmaName = readFormValue(form, 'firma-name', 'Ihre Firma');
   const firmaStrasse = readFormValue(form, 'firma-strasse', 'Straße');
@@ -94,11 +112,21 @@ export function updatePdfTemplatePreview(form, previewRoot, type) {
   } else {
     logoWrap?.classList.add('hidden');
     logoFallback?.classList.remove('hidden');
-    setText(previewRoot, '[data-preview-part="logo-fallback"]', firmaName);
+    setText(previewRoot, '[data-preview-part="logo-fallback"]', layoutVariant === 3 ? firmaName.toUpperCase() : firmaName);
   }
 
   setText(previewRoot, '[data-preview-part="firma-strasse"]', firmaStrasse);
   setText(previewRoot, '[data-preview-part="firma-plz"]', firmaPlzOrt);
+  setText(
+    previewRoot,
+    '[data-preview-part="letterhead-address"]',
+    [firmaStrasse, firmaPlzOrt].filter(Boolean).join(' · ') || 'Adresse'
+  );
+  setText(
+    previewRoot,
+    '[data-preview-part="sender-text"]',
+    [firmaName, firmaStrasse, firmaPlzOrt].filter(Boolean).join(' · ') || 'Absender'
+  );
   setText(
     previewRoot,
     '[data-preview-part="firma-kontakt"]',
@@ -159,9 +187,49 @@ export function updatePdfTemplatePreview(form, previewRoot, type) {
   );
 
   const tableHead = previewRoot.querySelector('[data-preview-part="table-head"]');
-  if (tableHead) tableHead.style.backgroundColor = primaer;
+  if (tableHead) {
+    tableHead.style.backgroundColor = '';
+    tableHead.style.color = '';
+    tableHead.style.borderBottom = '';
+    tableHead.querySelectorAll('th').forEach((th) => {
+      th.style.borderColor = '';
+      th.style.backgroundColor = '';
+      th.style.color = '';
+    });
 
-  setStyle(previewRoot, '[data-preview-part="trennlinie"]', 'borderColor', lineColor);
+    if (layoutVariant === 2) {
+      tableHead.style.backgroundColor = 'transparent';
+      tableHead.style.color = primaer;
+      tableHead.style.borderBottom = `2px solid ${primaer}`;
+      tableHead.querySelectorAll('th').forEach((th) => {
+        th.style.borderColor = 'transparent';
+        th.style.borderBottom = `2px solid ${primaer}`;
+        th.style.backgroundColor = 'transparent';
+        th.style.color = primaer;
+      });
+    } else if (layoutVariant === 3) {
+      tableHead.style.backgroundColor = 'transparent';
+      tableHead.style.color = '#374151';
+      tableHead.style.borderBottom = `1px solid ${lineColor}`;
+      tableHead.querySelectorAll('th').forEach((th) => {
+        th.style.border = 'none';
+        th.style.borderBottom = `1px solid ${lineColor}`;
+        th.style.fontWeight = '600';
+      });
+    } else {
+      tableHead.style.backgroundColor = primaer;
+      tableHead.style.color = '#ffffff';
+    }
+  }
+
+  applyPdfLayoutPreviewVariantStyles(previewRoot, layoutVariant, {
+    primaer,
+    lineColor,
+  });
+
+  if (layoutVariant === 1) {
+    setStyle(previewRoot, '[data-preview-part="trennlinie"]', 'borderColor', lineColor);
+  }
   setStyle(previewRoot, '[data-preview-part="fuss-trennlinie"]', 'borderColor', lineColor);
   setStyle(previewRoot, '[data-preview-part="firma-block"]', 'color', textMuted);
   setStyle(previewRoot, '[data-preview-part="fuss-block"]', 'color', fussfarbe);
@@ -169,17 +237,40 @@ export function updatePdfTemplatePreview(form, previewRoot, type) {
 
   const tbody = previewRoot.querySelector('[data-preview-part="table-body"]');
   if (tbody) {
-    tbody.innerHTML = SAMPLE_POSTEN.map(
-      (row, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${row.bez}</td>
-        <td>${row.menge}</td>
-        <td>${row.einheit}</td>
-        <td>${formatEuro(row.preis)}</td>
-        <td>${row.sum}</td>
-      </tr>`
-    ).join('');
+    if (layoutVariant === 3) {
+      tbody.innerHTML = SAMPLE_POSTEN.map(
+        (row, i) => `
+        <tr class="${i % 2 === 1 ? 'is-alt' : ''}">
+          <td>${i + 1}.</td>
+          <td>${row.bez}</td>
+          <td>${row.menge} ${row.einheit}</td>
+          <td>${row.sum}</td>
+        </tr>`
+      ).join('');
+    } else if (layoutVariant === 2) {
+      tbody.innerHTML = SAMPLE_POSTEN.map(
+        (row, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${row.bez}</td>
+          <td>${row.menge}</td>
+          <td>${formatEuro(row.preis)}</td>
+          <td>${row.sum}</td>
+        </tr>`
+      ).join('');
+    } else {
+      tbody.innerHTML = SAMPLE_POSTEN.map(
+        (row, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${row.bez}</td>
+          <td>${row.menge}</td>
+          <td>${row.einheit}</td>
+          <td>${formatEuro(row.preis)}</td>
+          <td>${row.sum}</td>
+        </tr>`
+      ).join('');
+    }
   }
 
   const { netto, mwst, brutto } = samplePreviewTotals();
@@ -188,9 +279,9 @@ export function updatePdfTemplatePreview(form, previewRoot, type) {
   setText(previewRoot, '[data-preview-part="total-brutto"]', formatEuro(brutto));
 }
 
-export function bindPdfTemplatePreview(form, previewRoot, type) {
+export function bindPdfTemplatePreview(form, previewRoot, type, getVariant = () => 1) {
   if (!form || !previewRoot) return;
-  const update = () => updatePdfTemplatePreview(form, previewRoot, type);
+  const update = () => updatePdfTemplatePreview(form, previewRoot, type, getVariant());
   if (form.dataset.previewBound === 'true') {
     update();
     return;
@@ -269,6 +360,9 @@ export function getPdfTemplateFormSectionsHtml(type) {
         <label>E-Mail<input type="email" name="firma-email" autocomplete="email" /></label>
         <label>Webseite<input type="text" name="firma-web" /></label>
         <label class="full">USt-IdNr.<input type="text" name="firma-ustId" /></label>
+        <label class="full">IBAN (ZUGFeRD)<input type="text" name="firma-iban" autocomplete="off" placeholder="DE89 3704 0044 0532 0130 00" /></label>
+        <label>BIC<input type="text" name="firma-bic" autocomplete="off" placeholder="COBADEFFXXX" /></label>
+        <label>Bank<input type="text" name="firma-bankName" autocomplete="organization" /></label>
         <label class="color-field full">Gedämpfter Text (Briefkopf)
           <span class="color-field-row"><input type="color" name="farbe-textMuted" /><input type="text" class="color-hex" data-sync-color="farbe-textMuted" /></span>
         </label>
@@ -293,7 +387,17 @@ export function getPdfTemplateFormSectionsHtml(type) {
       <legend>Tabelle</legend>
       <div class="form-grid form-grid--colors">
         <label class="color-field full">Primärfarbe (Tabellenkopf)
-          <span class="color-field-row"><input type="color" name="farbe-primaer" /><input type="text" class="color-hex" data-sync-color="farbe-primaer" /></span>
+          <span class="color-field-row">
+            <input type="color" name="farbe-primaer" aria-label="Primärfarbe wählen" />
+            <span class="color-value-field">
+              <span class="color-value-field__label">HEX</span>
+              <input type="text" class="color-hex" data-sync-color="farbe-primaer" placeholder="#1e3a5f" aria-label="Hex-Farbcode" />
+            </span>
+            <span class="color-value-field">
+              <span class="color-value-field__label">RGB</span>
+              <input type="text" class="color-rgb" data-sync-color-rgb="farbe-primaer" placeholder="30, 58, 95" aria-label="RGB-Farbwerte" />
+            </span>
+          </span>
         </label>
       </div>
     </fieldset>
@@ -328,90 +432,3 @@ export function getSharedPdfTemplateFieldsHtml() {
   return getPdfTemplateFormSectionsHtml('angebot');
 }
 
-export function createPdfLayoutPreviewMarkup(type) {
-  const isAngebot = type === 'angebot';
-  return `
-    <div class="pdf-layout-preview__sheet" aria-hidden="true">
-      <div class="pdf-layout-preview__region pdf-layout-preview__region--banner hidden" data-preview-part="banner" data-region="briefkopf">
-        <span class="pdf-layout-preview__tag">Header-Banner</span>
-        <img alt="" class="pdf-layout-preview__banner-img hidden" />
-      </div>
-      <div class="pdf-layout-preview__header">
-        <div class="pdf-layout-preview__region pdf-layout-preview__region--firma" data-region="briefkopf">
-          <span class="pdf-layout-preview__tag">Briefkopf</span>
-          <div class="pdf-layout-preview__firma" data-preview-part="firma-block">
-            <div class="pdf-layout-preview__logo hidden" data-preview-part="logo"><img alt="" /></div>
-            <strong class="pdf-layout-preview__firma-name" data-preview-part="logo-fallback">Firma</strong>
-            <p data-preview-part="firma-strasse">Straße</p>
-            <p data-preview-part="firma-plz">PLZ Ort</p>
-            <p class="pdf-layout-preview__small" data-preview-part="firma-kontakt">Kontakt</p>
-          </div>
-        </div>
-        <div class="pdf-layout-preview__region pdf-layout-preview__region--meta" data-region="meta">
-          <span class="pdf-layout-preview__tag">Dokumentenkopf</span>
-          <h3 class="pdf-layout-preview__doc-title" data-preview-part="doc-titel">${isAngebot ? 'ANGEBOT' : 'RECHNUNG'}</h3>
-          <p data-preview-part="meta-1">Nr.</p>
-          <p data-preview-part="meta-2">Datum</p>
-          <p data-preview-part="meta-3">Termin</p>
-          <p class="pdf-layout-preview__small hidden" data-preview-part="meta-4">Bezug</p>
-        </div>
-      </div>
-      <hr class="pdf-layout-preview__line" data-preview-part="trennlinie" data-region="briefkopf" />
-      <div class="pdf-layout-preview__region pdf-layout-preview__region--kunde" data-region="kunde">
-        <span class="pdf-layout-preview__tag">Empfänger</span>
-        <strong data-preview-part="kunde-label">${isAngebot ? 'Angebot für:' : 'Rechnung an:'}</strong>
-        <p class="pdf-layout-preview__kunde-name" data-preview-part="kunde-name">Musterkunde GmbH</p>
-        <div class="pdf-layout-preview__kunde-adresse" data-preview-part="kunde-adresse"></div>
-      </div>
-      <div class="pdf-layout-preview__region pdf-layout-preview__region--text" data-region="text">
-        <span class="pdf-layout-preview__tag">Einleitung</span>
-        <p data-preview-part="einleitung">Einleitungstext</p>
-      </div>
-      <div class="pdf-layout-preview__region pdf-layout-preview__region--table" data-region="table">
-        <span class="pdf-layout-preview__tag">Tabelle</span>
-        <table class="pdf-layout-preview__table">
-          <thead data-preview-part="table-head">
-            <tr><th>Pos</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th><th>Preis</th><th>Gesamt</th></tr>
-          </thead>
-          <tbody data-preview-part="table-body"></tbody>
-        </table>
-        <div class="pdf-layout-preview__totals">
-          <div class="pdf-layout-preview__total-row">
-            <span>Gesamt netto</span>
-            <span data-preview-part="total-netto">235,00 €</span>
-          </div>
-          <div class="pdf-layout-preview__total-row">
-            <span>19&nbsp;% Umsatzsteuer</span>
-            <span data-preview-part="total-mwst">44,65 €</span>
-          </div>
-          <div class="pdf-layout-preview__total-row pdf-layout-preview__total-row--bold">
-            <span>Gesamtbetrag</span>
-            <strong data-preview-part="total-brutto">279,65 €</strong>
-          </div>
-        </div>
-      </div>
-      <div class="pdf-layout-preview__region pdf-layout-preview__region--fuss" data-region="fuss">
-        <span class="pdf-layout-preview__tag">Fußbereich</span>
-        <div class="pdf-layout-preview__fuss-closing" data-preview-part="fuss-closing">
-          <p data-preview-part="fuss1">Fußzeile 1</p>
-          <p data-preview-part="fuss2">Fußzeile 2</p>
-        </div>
-        <hr class="pdf-layout-preview__line pdf-layout-preview__line--fuss" data-preview-part="fuss-trennlinie" />
-        <div class="pdf-layout-preview__fuss-cols" data-preview-part="fuss-block">
-          <div class="pdf-layout-preview__fuss-col">
-            <strong data-preview-part="fuss-col1-header">Spalte 1</strong>
-            <p data-preview-part="fuss-col1-text">Text</p>
-          </div>
-          <div class="pdf-layout-preview__fuss-col">
-            <strong data-preview-part="fuss-col2-header">Spalte 2</strong>
-            <p data-preview-part="fuss-col2-text">Text</p>
-          </div>
-          <div class="pdf-layout-preview__fuss-col">
-            <strong data-preview-part="fuss-col3-header">Spalte 3</strong>
-            <p data-preview-part="fuss-col3-text">Text</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}

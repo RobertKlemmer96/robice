@@ -14,6 +14,7 @@ import * as kundenRepo from './server/repositories/kunden.js';
 import * as angeboteRepo from './server/repositories/angebote.js';
 import * as rechnungenRepo from './server/repositories/rechnungen.js';
 import * as katalogPostenRepo from './server/repositories/katalogPosten.js';
+import { createRechnungenExportRouter } from './server/routes/rechnungenExport.js';
 import {
   getPdfTemplate,
   savePdfTemplate,
@@ -70,6 +71,11 @@ app.use(
     save: angeboteRepo.saveAngebot,
     remove: angeboteRepo.deleteAngebot,
   })
+);
+
+app.use(
+  '/api/rechnungen',
+  createRechnungenExportRouter()
 );
 
 app.use(

@@ -13,6 +13,12 @@ export const PLAN_PRICES = {
   pro: '7,99 €/Monat',
 };
 
+export const PLAN_TAGLINES = {
+  free: 'Zum Ausprobieren',
+  plus: 'Für regelmäßigen Versand',
+  pro: 'Unbegrenzt & weniger Tipparbeit',
+};
+
 export function normalizeRegistrationPlan(plan) {
   const value = String(plan || 'free').trim().toLowerCase();
   return REGISTRATION_PLANS.includes(value) ? value : 'free';
