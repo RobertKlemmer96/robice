@@ -14,6 +14,8 @@ import {
 } from './pdfTemplate.js';
 
 import { adresseToLines } from './adresse.js';
+import { formatPostenArt } from './data.js';
+import { formatKundeDisplayName } from './kundeStammdaten.js';
 import { normalizePdfLayoutVariant } from './pdfLayoutVariants.js';
 
 
@@ -22,7 +24,7 @@ const MWST_SATZ = 0.19;
 
 function writeKundeAdressBlock(doc, kunde, startY) {
   let y = startY;
-  const kundeName = kunde.name || 'Kunde';
+  const kundeName = formatKundeDisplayName(kunde) || kunde.name || 'Kunde';
 
   doc.text(kundeName, 20, y);
 
@@ -217,6 +219,7 @@ function buildPostenTableBody(postenDetails) {
   return postenDetails.map((p, index) => [
     String(index + 1),
     p.bezeichnung,
+    formatPostenArt(p.art),
     p.beschreibung,
     String(formatMenge(p.menge)),
     p.einheit,
@@ -227,10 +230,11 @@ function buildPostenTableBody(postenDetails) {
 
 const TABLE_COLUMN_STYLES = {
   0: { cellWidth: 12, halign: 'center' },
-  3: { cellWidth: 16, halign: 'center' },
-  4: { cellWidth: 18, halign: 'center' },
-  5: { cellWidth: 28, halign: 'right' },
-  6: { cellWidth: 28, halign: 'right' },
+  2: { cellWidth: 16, halign: 'center' },
+  4: { cellWidth: 16, halign: 'center' },
+  5: { cellWidth: 18, halign: 'center' },
+  6: { cellWidth: 26, halign: 'right' },
+  7: { cellWidth: 26, halign: 'right' },
 };
 
 function renderPdfTotalsBlock(
@@ -268,7 +272,7 @@ function renderPdfTotalsBlock(
 function renderPostenTable(doc, startY, tableBody, variant, primaerRgb, lineRgb) {
   const tableOptions = {
     startY,
-    head: [['Pos', 'Bezeichnung', 'Beschreibung', 'Menge', 'Einheit', 'Einzelpreis', 'Gesamt']],
+    head: [['Pos', 'Bezeichnung', 'Art', 'Beschreibung', 'Menge', 'Einheit', 'Einzelpreis', 'Gesamt']],
     body: tableBody,
     styles: { fontSize: 9, cellPadding: 3 },
     columnStyles: TABLE_COLUMN_STYLES,

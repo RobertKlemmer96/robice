@@ -740,6 +740,24 @@
             </section>
 
             <div id="rechnung-pdf-footer" class="pdf-footer">
+              <div class="pdf-footer__save-row">
+                <button
+                  type="button"
+                  id="rechnung-save-btn"
+                  class="btn btn-ghost is-disabled"
+                  aria-disabled="true"
+                >
+                  Speichern
+                </button>
+                <button
+                  type="button"
+                  id="rechnung-save-close-btn"
+                  class="btn btn-ghost is-disabled"
+                  aria-disabled="true"
+                >
+                  Speichern &amp; schließen
+                </button>
+              </div>
               <button type="button" id="rechnung-reset-btn" class="btn btn-ghost hidden">Neu starten</button>
               <button type="button" id="rechnung-pdf-btn" class="btn btn-primary is-disabled" aria-disabled="true">PDF erstellen</button>
             </div>
@@ -900,6 +918,14 @@
             </section>
 
             <div id="pdf-footer" class="pdf-footer">
+              <div class="pdf-footer__save-row">
+                <button type="button" id="save-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
+                  Speichern
+                </button>
+                <button type="button" id="save-close-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
+                  Speichern &amp; schließen
+                </button>
+              </div>
               <button type="button" id="reset-btn" class="btn btn-ghost hidden">Neu starten</button>
               <button type="button" id="pdf-btn" class="btn btn-primary is-disabled" aria-disabled="true">PDF erstellen</button>
             </div>
@@ -912,7 +938,7 @@
           <section class="card">
             <div class="card-header">
               <h2>Gespeicherte Angebote</h2>
-              <input type="search" id="archiv-suche" class="search" placeholder="Angebote suchen…" />
+              <input type="search" id="archiv-suche" class="search" placeholder="Angebote suchen (Nr., Kunde, Datum)…" />
             </div>
             <div id="archiv-liste" class="archiv-liste"></div>
           </section>
@@ -1090,56 +1116,31 @@
                   i
                 </button>
                 <span id="profil-schema-tip" class="info-tip__flyout" role="tooltip">
-                  Die Nummernschemas werden bei der Einrichtung festgelegt. Für Änderungen wenden
-                  Sie sich bitte an Ihren Administrator.
+                  Die Nummernschemas werden bei der Einrichtung festgelegt und können im Profil nicht
+                  geändert werden.
                 </span>
               </span>
             </div>
             <p class="settings-lead profil-nummern-note">
-              Schemata für die automatische Vergabe von Angebots- und Rechnungsnummern.
+              Festgelegt bei der Einrichtung — hier nur zur Ansicht.
             </p>
-            <form id="profil-nummern-form" class="form-grid">
-              <label class="full pdf-schema-field">
-                Angebotsnummer-Schema
-                <input
-                  type="text"
-                  id="profil-angebot-nummer-schema"
-                  name="angebot-nummer-schema"
-                  class="pdf-schema-input"
-                  spellcheck="false"
-                  autocomplete="off"
-                  readonly
-                  tabindex="-1"
-                  aria-readonly="true"
-                />
-              </label>
+            <div id="profil-nummern-form" class="form-grid">
+              <div class="profil-field profil-field--static full">
+                <span class="profil-field__label">Angebotsnummer-Schema</span>
+                <span id="profil-angebot-nummer-schema" class="profil-field__value profil-field__value--mono">—</span>
+              </div>
               <p class="schema-hint">
                 Vorschau: <strong id="profil-angebot-schema-preview">—</strong>
               </p>
 
-              <label class="full pdf-schema-field">
-                Rechnungsnummer-Schema
-                <input
-                  type="text"
-                  id="profil-rechnung-nummer-schema"
-                  name="rechnung-nummer-schema"
-                  class="pdf-schema-input"
-                  spellcheck="false"
-                  autocomplete="off"
-                  readonly
-                  tabindex="-1"
-                  aria-readonly="true"
-                />
-              </label>
+              <div class="profil-field profil-field--static full">
+                <span class="profil-field__label">Rechnungsnummer-Schema</span>
+                <span id="profil-rechnung-nummer-schema" class="profil-field__value profil-field__value--mono">—</span>
+              </div>
               <p class="schema-hint">
                 Vorschau: <strong id="profil-rechnung-schema-preview">—</strong>
               </p>
-
-              <div id="profil-nummern-actions" class="form-actions full hidden">
-                <button type="submit" class="btn btn-primary">Schemas speichern</button>
-              </div>
-            </form>
-            <p id="profil-nummern-status" class="settings-status hidden" role="status"></p>
+            </div>
           </section>
 
           <section class="card">
@@ -1220,6 +1221,13 @@
                 <textarea id="katalog-form-beschreibung" rows="2" placeholder="Kurze Beschreibung (optional)"></textarea>
               </label>
               <label>
+                Art
+                <select id="katalog-form-art">
+                  <option value="lohn">Lohn</option>
+                  <option value="material">Material</option>
+                </select>
+              </label>
+              <label>
                 Preis (Stk.)
                 <input type="text" id="katalog-form-preis-stk" placeholder="0,00" inputmode="decimal" />
               </label>
@@ -1252,6 +1260,25 @@
           <section id="kunden-form-section" class="card">
             <h2 id="kunden-form-title">Neuer Kunde</h2>
             <form id="kunden-form" class="form-grid">
+              <label>
+                Anrede
+                <select id="kunden-form-anrede">
+                  <option value="">—</option>
+                  <option value="Herr">Herr</option>
+                  <option value="Frau">Frau</option>
+                  <option value="Firma">Firma</option>
+                </select>
+              </label>
+              <label>
+                Kundennummer
+                <input
+                  type="text"
+                  id="kunden-form-kunden-nr"
+                  readonly
+                  tabindex="-1"
+                  placeholder="Wird beim Speichern vergeben"
+                />
+              </label>
               <label class="full">
                 Firmenname / Name
                 <input type="text" id="kunden-form-name" required placeholder="Firma oder Name" />
@@ -1311,6 +1338,14 @@
             </div>
             <div class="kunden-detail__body">
               <dl class="kunden-detail__meta">
+                <div class="kunden-detail__row">
+                  <dt>Kundennummer</dt>
+                  <dd id="kunden-detail-kunden-nr"></dd>
+                </div>
+                <div class="kunden-detail__row">
+                  <dt>Anrede</dt>
+                  <dd id="kunden-detail-anrede"></dd>
+                </div>
                 <div class="kunden-detail__row">
                   <dt>Adresse</dt>
                   <dd id="kunden-detail-adresse"></dd>
@@ -1406,7 +1441,7 @@
           <header class="onboarding-header">
             <p class="onboarding-eyebrow">Willkommen bei Klemdesk</p>
             <h1 class="onboarding-title">Kurz einrichten</h1>
-            <p class="onboarding-lead">Damit Ihre PDFs und Dokumentnummern von Anfang an passen.</p>
+            <p class="onboarding-lead">Damit Ihre PDFs, Nummern und Layout von Anfang an passen.</p>
           </header>
 
           <div class="onboarding-progress" aria-label="Fortschritt">
@@ -1487,6 +1522,17 @@
                 </p>
               </form>
             </section>
+
+            <section class="onboarding-step hidden" data-onboarding-step="layout">
+              <h2>PDF-Layout</h2>
+              <p class="settings-lead">
+                Wählen Sie das Erscheinungsbild für Angebote und Rechnungen. Sie können es später in den
+                PDF-Vorlagen anpassen.
+              </p>
+              <form id="onboarding-layout-form">
+                <div id="onboarding-layout-options" class="onboarding-layout-options" role="radiogroup" aria-label="PDF-Layout"></div>
+              </form>
+            </section>
           </div>
 
           <footer class="onboarding-footer">
@@ -1499,7 +1545,7 @@
     </div>
 
     <div id="katalog-modal" class="modal hidden" aria-hidden="true">
-      <div class="modal-backdrop" aria-hidden="true"></div>
+      <div class="modal-backdrop" data-close-katalog-modal aria-hidden="true"></div>
       <div class="modal-panel card katalog-modal-panel" role="dialog" aria-labelledby="katalog-modal-title">
         <div class="katalog-modal__header card-header">
           <h2 id="katalog-modal-title">Katalog</h2>

@@ -12,12 +12,15 @@ import {
   schemaHasSequenceToken,
 } from './dokumentnummer.js';
 import { ENABLED_ONBOARDING_STEPS, ONBOARDING_STEPS } from './onboardingConfig.js';
+import { PDF_LAYOUT_VARIANTS, normalizePdfLayoutVariant } from './pdfLayoutVariants.js';
 
 let screenEl = null;
 let progressFillEl = null;
 let progressStepsEl = null;
 let firmaFormEl = null;
 let nummernFormEl = null;
+let layoutFormEl = null;
+let layoutOptionsEl = null;
 let backBtn = null;
 let nextBtn = null;
 let statusEl = null;
@@ -60,6 +63,55 @@ function updateSchemaPreviews() {
 
   updateOne(angebotInput, angebotPreview, previewAngebotsnummer);
   updateOne(rechnungInput, rechnungPreview, previewRechnungsnummer);
+}
+
+function renderLayoutOptions() {
+  if (!layoutOptionsEl) return;
+  layoutOptionsEl.innerHTML = Object.values(PDF_LAYOUT_VARIANTS)
+    .map(
+      (variant) => `
+      <label class="onboarding-layout-option">
+        <input type="radio" name="pdf-layout" value="${variant.id}" />
+        <span class="onboarding-layout-option__text">
+          <strong>${variant.label}</strong>
+          <span>${variant.hint}</span>
+        </span>
+      </label>`
+    )
+    .join('');
+}
+
+function getSelectedLayoutVariant() {
+  const selected = layoutFormEl?.querySelector('input[name="pdf-layout"]:checked');
+  return normalizePdfLayoutVariant(selected?.value ?? 1);
+}
+
+function fillLayoutStep() {
+  if (!layoutFormEl) return;
+  const tpl = mergePdfTemplate(getPdfTemplate());
+  const variant = normalizePdfLayoutVariant(
+    tpl.layout?.angebotVariant ?? tpl.layout?.rechnungVariant ?? 1
+  );
+  const input = layoutFormEl.querySelector(`input[name="pdf-layout"][value="${variant}"]`);
+  if (input) input.checked = true;
+  else {
+    const fallback = layoutFormEl.querySelector('input[name="pdf-layout"][value="1"]');
+    if (fallback) fallback.checked = true;
+  }
+}
+
+async function saveLayoutStep() {
+  const variant = getSelectedLayoutVariant();
+  const current = getPdfTemplate();
+  await savePdfTemplate({
+    ...current,
+    layout: {
+      ...current.layout,
+      angebotVariant: variant,
+      rechnungVariant: variant,
+    },
+  });
+  return true;
 }
 
 function renderProgress() {
@@ -201,7 +253,7 @@ async function saveNummernStep() {
 }
 
 async function finishOnboarding() {
-  if (!(await saveNummernStep())) return;
+  if (!(await saveLayoutStep())) return;
   await markOnboardingComplete();
   closeOnboarding();
   await onCompleteCallback?.();
@@ -216,6 +268,12 @@ async function goNext() {
     return;
   }
   if (stepId === 'nummern') {
+    if (!(await saveNummernStep())) return;
+    fillLayoutStep();
+    showStep(currentStepIndex + 1);
+    return;
+  }
+  if (stepId === 'layout') {
     await finishOnboarding();
   }
 }
@@ -253,6 +311,8 @@ export function initOnboarding({ onComplete } = {}) {
   progressStepsEl = document.getElementById('onboarding-progress-steps');
   firmaFormEl = document.getElementById('onboarding-firma-form');
   nummernFormEl = document.getElementById('onboarding-nummern-form');
+  layoutFormEl = document.getElementById('onboarding-layout-form');
+  layoutOptionsEl = document.getElementById('onboarding-layout-options');
   backBtn = document.getElementById('onboarding-back');
   nextBtn = document.getElementById('onboarding-next');
   statusEl = document.getElementById('onboarding-status');
@@ -275,6 +335,7 @@ export function initOnboarding({ onComplete } = {}) {
       input.addEventListener('input', updateSchemaPreviews);
     });
 
+  renderLayoutOptions();
   renderProgress();
 }
 

@@ -20,6 +20,8 @@ CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id);
 CREATE TABLE IF NOT EXISTS kunden (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  kunden_nr TEXT NOT NULL DEFAULT '',
+  anrede TEXT NOT NULL DEFAULT '',
   name TEXT NOT NULL,
   adresse TEXT NOT NULL DEFAULT '',
   strasse TEXT NOT NULL DEFAULT '',
@@ -94,6 +96,7 @@ CREATE TABLE IF NOT EXISTS katalog_posten (
   beschreibung TEXT NOT NULL DEFAULT '',
   preis_stk REAL NOT NULL DEFAULT 0,
   preis_std REAL NOT NULL DEFAULT 0,
+  art TEXT NOT NULL DEFAULT 'lohn',
   erstellt_am TEXT NOT NULL,
   aktualisiert_am TEXT NOT NULL
 );

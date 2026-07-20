@@ -19,6 +19,25 @@ export function getDb() {
   return db;
 }
 
+function backfillKundennummern(database) {
+  const tenants = database.prepare('SELECT id FROM tenants').all();
+  for (const { id: tenantId } of tenants) {
+    const rows = database
+      .prepare(
+        `SELECT id FROM kunden WHERE tenant_id = ? AND (kunden_nr IS NULL OR kunden_nr = '')
+         ORDER BY erstellt_am ASC, id ASC`
+      )
+      .all(tenantId);
+
+    rows.forEach((row, index) => {
+      const nr = `K-${String(index + 1).padStart(5, '0')}`;
+      database
+        .prepare('UPDATE kunden SET kunden_nr = ? WHERE tenant_id = ? AND id = ?')
+        .run(nr, tenantId, row.id);
+    });
+  }
+}
+
 function runMigrations(database) {
   const cols = database.prepare('PRAGMA table_info(kunden)').all();
   const names = new Set(cols.map((c) => c.name));
@@ -36,6 +55,13 @@ function runMigrations(database) {
   }
   if (!names.has('plz_ort')) {
     database.exec(`ALTER TABLE kunden ADD COLUMN plz_ort TEXT NOT NULL DEFAULT ''`);
+  }
+  if (!names.has('anrede')) {
+    database.exec(`ALTER TABLE kunden ADD COLUMN anrede TEXT NOT NULL DEFAULT ''`);
+  }
+  if (!names.has('kunden_nr')) {
+    database.exec(`ALTER TABLE kunden ADD COLUMN kunden_nr TEXT NOT NULL DEFAULT ''`);
+    backfillKundennummern(database);
   }
 
   migrateAdresseColumns(database, 'kunden');
@@ -78,6 +104,7 @@ function runMigrations(database) {
       beschreibung TEXT NOT NULL DEFAULT '',
       preis_stk REAL NOT NULL DEFAULT 0,
       preis_std REAL NOT NULL DEFAULT 0,
+      art TEXT NOT NULL DEFAULT 'lohn',
       erstellt_am TEXT NOT NULL,
       aktualisiert_am TEXT NOT NULL
     )
@@ -85,6 +112,12 @@ function runMigrations(database) {
   database.exec(`
     CREATE INDEX IF NOT EXISTS idx_katalog_posten_tenant ON katalog_posten(tenant_id)
   `);
+
+  const katalogCols = database.prepare('PRAGMA table_info(katalog_posten)').all();
+  const katalogNames = new Set(katalogCols.map((c) => c.name));
+  if (!katalogNames.has('art')) {
+    database.exec(`ALTER TABLE katalog_posten ADD COLUMN art TEXT NOT NULL DEFAULT 'lohn'`);
+  }
 
   const angebotCols = database.prepare('PRAGMA table_info(angebote)').all();
   const angebotNames = new Set(angebotCols.map((c) => c.name));

@@ -1,4 +1,4 @@
-import { getDefaultEinheit, getPostenPreis } from './data.js';
+import { getDefaultEinheit, getPostenPreis, normalizePostenArt } from './data.js';
 import { findKatalogPosten, getKatalogPosten } from './katalogPosten.js';
 import {
   formatEuro,
@@ -12,7 +12,7 @@ import {
 export const ENTWURF_ID = '__entwurf__';
 
 export function createEmptyEntwurf() {
-  return { bezeichnung: '', preis: '', einheit: 'Std.' };
+  return { bezeichnung: '', preis: '', einheit: 'Std.', art: 'lohn' };
 }
 
 export function createFreiId() {
@@ -25,6 +25,7 @@ export function createEditorState() {
     freiePosten: new Map(),
     entwurf: createEmptyEntwurf(),
     einheitPrefs: new Map(),
+    artPrefs: new Map(),
     suche: '',
   };
 }
@@ -32,7 +33,7 @@ export function createEditorState() {
 export function resolvePostenDetails(postenAuswahl) {
   return postenAuswahl
     .map((item) => {
-      const { id, menge, einheit, bezeichnung, beschreibung, preis } = item;
+      const { id, menge, einheit, bezeichnung, beschreibung, preis, art } = item;
       const katalog = findKatalogPosten(id);
       if (katalog) {
         const ein = einheit || getDefaultEinheit(katalog);
@@ -40,6 +41,7 @@ export function resolvePostenDetails(postenAuswahl) {
           ...katalog,
           menge,
           einheit: ein,
+          art: normalizePostenArt(art ?? katalog.art),
           preis: getPostenPreis(katalog, ein),
         };
       }
@@ -50,6 +52,7 @@ export function resolvePostenDetails(postenAuswahl) {
           beschreibung: beschreibung || '',
           menge,
           einheit: einheit || 'Std.',
+          art: normalizePostenArt(art),
           preis: Number(preis) || 0,
         };
       }
@@ -67,13 +70,28 @@ export function createPostenEditor(editorState, els) {
     return getDefaultEinheit(posten);
   }
 
+  function getPostenArt(id) {
+    const raw = editorState.auswahl.get(id);
+    if (raw && typeof raw === 'object' && raw.art) return normalizePostenArt(raw.art);
+    if (editorState.artPrefs.has(id)) return editorState.artPrefs.get(id);
+    const posten = findKatalogPosten(id);
+    return normalizePostenArt(posten?.art);
+  }
+
   function normalizeAuswahl(id) {
     const raw = editorState.auswahl.get(id);
-    if (raw && typeof raw === 'object') return raw;
     const posten = findKatalogPosten(id);
+    if (raw && typeof raw === 'object') {
+      return {
+        menge: Number(raw.menge) || 1,
+        einheit: raw.einheit || editorState.einheitPrefs.get(id) || getDefaultEinheit(posten),
+        art: normalizePostenArt(raw.art ?? editorState.artPrefs.get(id) ?? posten?.art),
+      };
+    }
     return {
       menge: Number(raw) || 1,
       einheit: editorState.einheitPrefs.get(id) || getDefaultEinheit(posten),
+      art: normalizePostenArt(editorState.artPrefs.get(id) ?? posten?.art),
     };
   }
 
@@ -96,6 +114,7 @@ export function createPostenEditor(editorState, els) {
         ...p,
         menge: sel.menge,
         einheit,
+        art: sel.art,
         preis: getPostenPreis(p, einheit),
       };
     });
@@ -106,6 +125,7 @@ export function createPostenEditor(editorState, els) {
       beschreibung: data.beschreibung,
       menge: data.menge,
       einheit: data.einheit,
+      art: normalizePostenArt(data.art),
       preis: data.preis,
       custom: true,
     }));
@@ -118,6 +138,7 @@ export function createPostenEditor(editorState, els) {
     editorState.freiePosten.clear();
     editorState.entwurf = createEmptyEntwurf();
     editorState.einheitPrefs.clear();
+    editorState.artPrefs.clear();
     editorState.suche = '';
     if (els.suche) els.suche.value = '';
   }
@@ -127,14 +148,17 @@ export function createPostenEditor(editorState, els) {
     editorState.freiePosten.clear();
     editorState.entwurf = createEmptyEntwurf();
     editorState.einheitPrefs.clear();
+    editorState.artPrefs.clear();
 
     posten.forEach((item) => {
-      const { id, menge, einheit, bezeichnung, beschreibung, preis } = item;
+      const { id, menge, einheit, bezeichnung, beschreibung, preis, art } = item;
       const katalogPosten = findKatalogPosten(id);
       if (katalogPosten) {
         const ein = einheit || getDefaultEinheit(katalogPosten);
+        const itemArt = normalizePostenArt(art ?? katalogPosten.art);
         editorState.einheitPrefs.set(id, ein);
-        editorState.auswahl.set(id, { menge, einheit: ein });
+        editorState.artPrefs.set(id, itemArt);
+        editorState.auswahl.set(id, { menge, einheit: ein, art: itemArt });
         return;
       }
 
@@ -145,6 +169,7 @@ export function createPostenEditor(editorState, els) {
         preis: Number(preis) || 0,
         menge,
         einheit: einheit || 'Std.',
+        art: normalizePostenArt(art),
       });
     });
   }
@@ -202,6 +227,16 @@ export function createPostenEditor(editorState, els) {
   </select>`;
   }
 
+  function renderPostenArtFeld(modus, { id, sel }) {
+    const artAction = modus === 'entwurf' ? 'entwurf-art' : 'art';
+    const art = normalizePostenArt(sel.art);
+
+    return `<select class="posten-art" data-action="${artAction}" data-id="${id}" aria-label="Lohn oder Material">
+    <option value="lohn" ${art === 'lohn' ? 'selected' : ''}>Lohn</option>
+    <option value="material" ${art === 'material' ? 'selected' : ''}>Material</option>
+  </select>`;
+  }
+
   function renderPostenZeile(config) {
     const { id, bezeichnung, preis, sel, modus, aktiv = modus === 'frei' } = config;
 
@@ -211,7 +246,7 @@ export function createPostenEditor(editorState, els) {
         : `posten-item ${aktiv ? 'posten-item--aktiv' : ''}`;
 
     return `
-    <article class="${itemClass}${aktiv ? ' posten-item--mit-zeile' : ''}" data-id="${id}" data-modus="${modus}">
+    <article class="${itemClass}" data-id="${id}" data-modus="${modus}">
       <div class="posten-menge-feld">
         <input
           type="text"
@@ -225,13 +260,15 @@ export function createPostenEditor(editorState, els) {
         />
       </div>
       ${renderPostenInfo(modus, { id, bezeichnung })}
+      <div class="posten-art-feld">
+        ${renderPostenArtFeld(modus, { id, sel })}
+      </div>
       <div class="posten-preis-feld">
         ${renderPostenPreisFeld(modus, { id, preis })}
       </div>
       <div class="posten-einheit-feld">
         ${renderPostenEinheitFeld(modus, { id, sel })}
       </div>
-      ${aktiv ? `<span class="posten-zeile">${formatEuro(preis * sel.menge)}</span>` : ''}
     </article>
   `;
   }
@@ -241,6 +278,7 @@ export function createPostenEditor(editorState, els) {
     <div class="posten-legende" aria-hidden="true">
       <span class="posten-legende__label posten-legende__menge">Anzahl</span>
       <span class="posten-legende__label posten-legende__info">Tätigkeit</span>
+      <span class="posten-legende__label posten-legende__art">Lohn/Material</span>
       <span class="posten-legende__label posten-legende__preis">Preis in Euro</span>
       <span class="posten-legende__label posten-legende__einheit">Std/Stück</span>
     </div>
@@ -257,7 +295,7 @@ export function createPostenEditor(editorState, els) {
         id: ENTWURF_ID,
         bezeichnung: editorState.entwurf.bezeichnung,
         preis: editorState.entwurf.preis,
-        sel: { menge: 1, einheit: editorState.entwurf.einheit },
+        sel: { menge: 1, einheit: editorState.entwurf.einheit, art: editorState.entwurf.art },
         modus: 'entwurf',
       })
     );
@@ -286,7 +324,7 @@ export function createPostenEditor(editorState, els) {
           bezeichnung: data.bezeichnung,
           beschreibung: data.beschreibung,
           preis: data.preis,
-          sel: { menge: data.menge, einheit: data.einheit },
+          sel: { menge: data.menge, einheit: data.einheit, art: data.art },
           modus: 'frei',
         })
       );
@@ -296,7 +334,7 @@ export function createPostenEditor(editorState, els) {
       if (suchergebnisse.length > 0) {
         teile.push('<p class="posten-suche-hinweis">Katalog-Treffer</p>');
         suchergebnisse.forEach((p) => {
-          const sel = { menge: 1, einheit: getPostenEinheit(p.id) };
+          const sel = { menge: 1, einheit: getPostenEinheit(p.id), art: getPostenArt(p.id) };
           teile.push(
             renderPostenZeile({
               id: p.id,
@@ -327,6 +365,8 @@ export function createPostenEditor(editorState, els) {
     if (bezeichnungEl) editorState.entwurf.bezeichnung = bezeichnungEl.value;
     if (preisEl) editorState.entwurf.preis = preisEl.value;
     if (einheitEl) editorState.entwurf.einheit = einheitEl.value;
+    const artEl = item.querySelector('[data-action="entwurf-art"]');
+    if (artEl) editorState.entwurf.art = normalizePostenArt(artEl.value);
   }
 
   function isEntwurfVollstaendig() {
@@ -348,6 +388,7 @@ export function createPostenEditor(editorState, els) {
       preis,
       menge,
       einheit: editorState.entwurf.einheit,
+      art: normalizePostenArt(editorState.entwurf.art),
     });
     editorState.entwurf = createEmptyEntwurf();
     render();
@@ -415,6 +456,8 @@ export function createPostenEditor(editorState, els) {
   function toggleKatalogPosten(id) {
     if (editorState.auswahl.has(id)) {
       editorState.auswahl.delete(id);
+      editorState.einheitPrefs.delete(id);
+      editorState.artPrefs.delete(id);
       render();
       return;
     }
@@ -436,7 +479,6 @@ export function createPostenEditor(editorState, els) {
       return;
     }
 
-    const einheit = getPostenEinheit(id);
     if (editorState.auswahl.has(id)) {
       const sel = normalizeAuswahl(id);
       editorState.auswahl.set(id, {
@@ -444,7 +486,12 @@ export function createPostenEditor(editorState, els) {
         menge: Math.min(9999, sel.menge + 1),
       });
     } else {
-      editorState.auswahl.set(id, { menge: 1, einheit });
+      const posten = findKatalogPosten(id);
+      const einheit = getDefaultEinheit(posten);
+      const art = normalizePostenArt(posten?.art);
+      editorState.einheitPrefs.set(id, einheit);
+      editorState.artPrefs.set(id, art);
+      editorState.auswahl.set(id, { menge: 1, einheit, art });
     }
     render();
   }
@@ -486,7 +533,29 @@ export function createPostenEditor(editorState, els) {
       return;
     }
 
-    editorState.auswahl.set(id, { menge: wert, einheit: getPostenEinheit(id) });
+    editorState.auswahl.set(id, { ...normalizeAuswahl(id), menge: wert });
+    render();
+  }
+
+  function setArt(id, art) {
+    const normalized = normalizePostenArt(art);
+
+    if (id === ENTWURF_ID) {
+      editorState.entwurf.art = normalized;
+      return;
+    }
+
+    if (editorState.freiePosten.has(id)) {
+      updateFreiPosten(id, { art: normalized });
+      render();
+      return;
+    }
+
+    editorState.artPrefs.set(id, normalized);
+    if (editorState.auswahl.has(id)) {
+      const sel = normalizeAuswahl(id);
+      editorState.auswahl.set(id, { ...sel, art: normalized });
+    }
     render();
   }
 
@@ -520,11 +589,12 @@ export function createPostenEditor(editorState, els) {
     if (els.summeBrutto) els.summeBrutto.textContent = formatEuro(brutto);
 
     const kannSpeichern = posten.length > 0 && (els.canSave?.() ?? true);
-    if (els.pdfBtn) {
-      els.pdfBtn.disabled = !kannSpeichern;
-      els.pdfBtn.setAttribute('aria-disabled', String(!kannSpeichern));
-      els.pdfBtn.classList.toggle('is-disabled', !kannSpeichern);
-    }
+    const actionBtns = [els.pdfBtn, els.saveBtn, els.saveCloseBtn].filter(Boolean);
+    actionBtns.forEach((btn) => {
+      btn.disabled = !kannSpeichern;
+      btn.setAttribute('aria-disabled', String(!kannSpeichern));
+      btn.classList.toggle('is-disabled', !kannSpeichern);
+    });
 
   }
 
@@ -610,6 +680,8 @@ export function createPostenEditor(editorState, els) {
       if (target.dataset.action === 'menge') setMenge(id, target.value);
       else if (target.dataset.action === 'einheit' || target.dataset.action === 'entwurf-einheit') {
         setEinheit(id, target.value);
+      } else if (target.dataset.action === 'art' || target.dataset.action === 'entwurf-art') {
+        setArt(id, target.value);
       }
     });
 
@@ -655,12 +727,13 @@ export function createPostenEditor(editorState, els) {
             id: p.id,
             menge: p.menge,
             einheit: p.einheit,
+            art: normalizePostenArt(p.art),
             bezeichnung: p.bezeichnung,
             beschreibung: p.beschreibung,
             preis: p.preis,
           };
         }
-        return { id: p.id, menge: p.menge, einheit: p.einheit };
+        return { id: p.id, menge: p.menge, einheit: p.einheit, art: normalizePostenArt(p.art) };
       }),
   };
 }

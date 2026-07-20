@@ -5,10 +5,10 @@ foreach ($port in $ports) {
   $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
   if (-not $conns) { continue }
   $pids = $conns | Select-Object -ExpandProperty OwningProcess -Unique
-  foreach ($pid in $pids) {
-    if ($pid -le 0) { continue }
-    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
-    $killed += $pid
+  foreach ($procId in $pids) {
+    if ($procId -le 0) { continue }
+    Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
+    $killed += $procId
   }
 }
 

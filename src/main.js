@@ -7,14 +7,8 @@ import {
   readAdresseFieldPair,
   clearAdresseFieldPair,
 } from './adresse.js';
-import {
-  formatPlanLabel,
-  normalizeRegistrationPlan,
-  PLAN_LABELS,
-  PLAN_PRICES,
-  PLAN_TAGLINES,
-  REGISTRATION_PLANS,
-} from './plans.js';
+import { formatPlanLabel, normalizeRegistrationPlan, PLAN_LABELS, PLAN_PRICES, PLAN_TAGLINES, REGISTRATION_PLANS } from './plans.js';
+import { formatPostenArt, normalizePostenArt } from './data.js';
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
 import { loadAdminUsers } from './adminUsers.js';
 import { initOnboarding, openOnboarding, closeOnboarding } from './onboarding.js';
@@ -95,10 +89,16 @@ import {
   previewAngebotsnummer,
   generiereRechnungsnummer as erzeugeRechnungsnummer,
   previewRechnungsnummer,
-  schemaHasSequenceToken,
   getZahlungszielTage,
   addDaysIso,
 } from './dokumentnummer.js';
+import { generiereKundennummer } from './kundennummer.js';
+import {
+  normalizeKundeAnrede,
+  formatKundeAnredeLabel,
+  formatKundeDisplayName,
+} from './kundeStammdaten.js';
+import { matchesDateSearch } from './dateSearch.js';
 import {
   createEditorState,
   createPostenEditor,
@@ -142,6 +142,8 @@ function createDocMeta() {
   return {
     editingId: null,
     selectedKundeId: null,
+    kundeAnrede: '',
+    kundeKundenNr: '',
     selectedObjektId: null,
     selectedAdresseKey: null,
     objekt: null,
@@ -251,13 +253,10 @@ const els = {
   profilNewPassword: document.getElementById('profil-new-password'),
   profilConfirmPassword: document.getElementById('profil-confirm-password'),
   profilPasswordStatus: document.getElementById('profil-password-status'),
-  profilNummernForm: document.getElementById('profil-nummern-form'),
   profilAngebotNummerSchema: document.getElementById('profil-angebot-nummer-schema'),
   profilRechnungNummerSchema: document.getElementById('profil-rechnung-nummer-schema'),
   profilAngebotSchemaPreview: document.getElementById('profil-angebot-schema-preview'),
   profilRechnungSchemaPreview: document.getElementById('profil-rechnung-schema-preview'),
-  profilNummernStatus: document.getElementById('profil-nummern-status'),
-  profilNummernActions: document.getElementById('profil-nummern-actions'),
   profilDeleteAccountBtn: document.getElementById('profil-delete-account-btn'),
   profilDeleteModal: document.getElementById('profil-delete-modal'),
   profilDeletePlz: document.getElementById('profil-delete-plz'),
@@ -266,6 +265,8 @@ const els = {
   archivSuche: document.getElementById('archiv-suche'),
   archivListe: document.getElementById('archiv-liste'),
   resetBtn: document.getElementById('reset-btn'),
+  saveBtn: document.getElementById('save-btn'),
+  saveCloseBtn: document.getElementById('save-close-btn'),
   pdfFooter: document.getElementById('pdf-footer'),
   angebotStickyFooter: document.getElementById('angebot-sticky-footer'),
   pdfBtn: document.getElementById('pdf-btn'),
@@ -288,6 +289,8 @@ const els = {
   kundenForm: document.getElementById('kunden-form'),
   kundenFormTitle: document.getElementById('kunden-form-title'),
   kundenFormReset: document.getElementById('kunden-form-reset'),
+  kundenFormAnrede: document.getElementById('kunden-form-anrede'),
+  kundenFormKundenNr: document.getElementById('kunden-form-kunden-nr'),
   kundenFormName: document.getElementById('kunden-form-name'),
   kundenFormStrasse: document.getElementById('kunden-form-strasse'),
   kundenFormPlzOrt: document.getElementById('kunden-form-plz-ort'),
@@ -297,6 +300,8 @@ const els = {
   kundenFormSection: document.getElementById('kunden-form-section'),
   kundenDetail: document.getElementById('kunden-detail'),
   kundenDetailTitle: document.getElementById('kunden-detail-title'),
+  kundenDetailKundenNr: document.getElementById('kunden-detail-kunden-nr'),
+  kundenDetailAnrede: document.getElementById('kunden-detail-anrede'),
   kundenDetailAdresse: document.getElementById('kunden-detail-adresse'),
   kundenDetailTelefon: document.getElementById('kunden-detail-telefon'),
   kundenDetailEmail: document.getElementById('kunden-detail-email'),
@@ -323,6 +328,7 @@ const els = {
   katalogFormReset: document.getElementById('katalog-form-reset'),
   katalogFormBezeichnung: document.getElementById('katalog-form-bezeichnung'),
   katalogFormBeschreibung: document.getElementById('katalog-form-beschreibung'),
+  katalogFormArt: document.getElementById('katalog-form-art'),
   katalogFormPreisStk: document.getElementById('katalog-form-preis-stk'),
   katalogFormPreisStd: document.getElementById('katalog-form-preis-std'),
   katalogNeuBtn: document.getElementById('katalog-neu-btn'),
@@ -341,6 +347,8 @@ const els = {
   postenKopfSummaryCount: document.getElementById('posten-kopf-summary-count'),
   postenKopfBody: document.getElementById('posten-kopf-body'),
   rechnungResetBtn: document.getElementById('rechnung-reset-btn'),
+  rechnungSaveBtn: document.getElementById('rechnung-save-btn'),
+  rechnungSaveCloseBtn: document.getElementById('rechnung-save-close-btn'),
   rechnungStickyFooter: document.getElementById('rechnung-sticky-footer'),
   rechnungPdfBtn: document.getElementById('rechnung-pdf-btn'),
   rechnungKopf: document.getElementById('rechnung-kopf'),
@@ -384,6 +392,8 @@ const angebotPostenEditor = createPostenEditor(angebotPostenState, {
   summeMwst: els.summeMwst,
   summeBrutto: els.summeBrutto,
   pdfBtn: els.pdfBtn,
+  saveBtn: els.saveBtn,
+  saveCloseBtn: els.saveCloseBtn,
   canSave: () => isAngebotKopfComplete(),
   onUpdate: () => updatePostenKopfSummary(),
 });
@@ -395,6 +405,8 @@ const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
   summeMwst: els.rechnungSummeMwst,
   summeBrutto: els.rechnungSummeBrutto,
   pdfBtn: els.rechnungPdfBtn,
+  saveBtn: els.rechnungSaveBtn,
+  saveCloseBtn: els.rechnungSaveCloseBtn,
   canSave: () => isRechnungKopfComplete(),
   onUpdate: () => updateRechnungPostenKopfSummary(),
 });
@@ -441,6 +453,8 @@ function kundeMatchesSearch(k, q) {
   if (!q) return true;
   const addr = normalizeAdresse(k);
   return (
+    (k.kundenNr || '').toLowerCase().includes(q) ||
+    (k.anrede || '').toLowerCase().includes(q) ||
     k.name.toLowerCase().includes(q) ||
     (k.adresse || '').toLowerCase().includes(q) ||
     addr.strasse.toLowerCase().includes(q) ||
@@ -477,6 +491,8 @@ function clearObjektMeta(meta) {
   meta.objekteCache = [];
   meta.billingAdresse = '';
   meta.billingSnapshot = null;
+  meta.kundeAnrede = '';
+  meta.kundeKundenNr = '';
 }
 
 function setBillingSnapshot(meta, adresseLike) {
@@ -654,6 +670,9 @@ function buildKundePayload(name, adresseData, meta) {
     plzOrt: addr.plzOrt,
     adresse: addr.adresse,
   };
+  const anrede = normalizeKundeAnrede(meta.kundeAnrede);
+  if (anrede) kunde.anrede = anrede;
+  if (meta.kundeKundenNr) kunde.kundenNr = meta.kundeKundenNr;
   if (meta.selectedObjektId) {
     kunde.objektId = meta.selectedObjektId;
   }
@@ -758,6 +777,8 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
       return {
         kundeId: selectedKunde.id,
         kunde: {
+          anrede: normalizeKundeAnrede(updated.anrede),
+          kundenNr: updated.kundenNr || '',
           name: updated.name,
           strasse: normalized.strasse,
           plzOrt: normalized.plzOrt,
@@ -778,6 +799,8 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
     return {
       kundeId: byName.id,
       kunde: {
+        anrede: normalizeKundeAnrede(updated.anrede),
+        kundenNr: updated.kundenNr || '',
         name: updated.name,
         strasse: normalized.strasse,
         plzOrt: normalized.plzOrt,
@@ -786,8 +809,11 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
     };
   }
 
+  const kundenNr = await generiereKundennummer(getAllKunden);
   const neu = {
     id: createKundeId(),
+    kundenNr,
+    anrede: '',
     name: trimmedName,
     strasse: addr.strasse,
     plzOrt: addr.plzOrt,
@@ -796,7 +822,13 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
     aktualisiertAm: jetzt,
   };
   await saveKunde(neu);
-  return { kundeId: neu.id, kunde: kundeSnapshot };
+  return {
+    kundeId: neu.id,
+    kunde: {
+      ...kundeSnapshot,
+      kundenNr,
+    },
+  };
 }
 
 function dokumenteFuerKunde(kundeId, kundeName, angebote, rechnungen) {
@@ -1008,6 +1040,8 @@ function updateRechnungAngebotRef() {
 async function setupAngebotKundeAdressen(kunde) {
   const addr = normalizeAdresse(kunde);
   state.angebot.selectedKundeId = kunde.id;
+  state.angebot.kundeAnrede = normalizeKundeAnrede(kunde.anrede);
+  state.angebot.kundeKundenNr = kunde.kundenNr || '';
   setBillingSnapshot(state.angebot, addr);
   els.kundeName.value = kunde.name;
   setAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt, addr);
@@ -1025,6 +1059,8 @@ async function setupAngebotKundeAdressen(kunde) {
 async function setupRechnungKundeAdressen(kunde) {
   const addr = normalizeAdresse(kunde);
   state.rechnung.selectedKundeId = kunde.id;
+  state.rechnung.kundeAnrede = normalizeKundeAnrede(kunde.anrede);
+  state.rechnung.kundeKundenNr = kunde.kundenNr || '';
   setBillingSnapshot(state.rechnung, addr);
   els.rechnungKundeName.value = kunde.name;
   setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, addr);
@@ -1147,6 +1183,8 @@ async function loadAngebotIntoForm(angebot) {
   state.angebot.editingId = angebot.id;
   setAngebotKopfCollapsed(isMobileLayout());
   state.angebot.selectedKundeId = angebot.kundeId || null;
+  state.angebot.kundeAnrede = normalizeKundeAnrede(angebot.kunde?.anrede);
+  state.angebot.kundeKundenNr = angebot.kunde?.kundenNr || '';
   setBillingSnapshot(state.angebot, angebot.kunde);
   angebotPostenEditor.loadPostenFromDocument(angebot.posten);
 
@@ -1158,7 +1196,11 @@ async function loadAngebotIntoForm(angebot) {
   els.gueltigBis.value = angebot.gueltigBis;
   if (angebot.kundeId) {
     const stamm = await getKunde(angebot.kundeId);
-    if (stamm) setBillingSnapshot(state.angebot, stamm);
+    if (stamm) {
+      setBillingSnapshot(state.angebot, stamm);
+      state.angebot.kundeAnrede = normalizeKundeAnrede(stamm.anrede);
+      state.angebot.kundeKundenNr = stamm.kundenNr || '';
+    }
     await restoreAdresseFromDocument(
       angebot.kundeId,
       angebot.kunde,
@@ -1187,6 +1229,8 @@ async function loadRechnungIntoForm(rechnung) {
   state.rechnung.editingId = rechnung.id;
   setRechnungKopfCollapsed(isMobileLayout());
   state.rechnung.selectedKundeId = rechnung.kundeId || null;
+  state.rechnung.kundeAnrede = normalizeKundeAnrede(rechnung.kunde?.anrede);
+  state.rechnung.kundeKundenNr = rechnung.kunde?.kundenNr || '';
   setBillingSnapshot(state.rechnung, rechnung.kunde);
   state.rechnung.angebotId = rechnung.angebotId || null;
   state.rechnung.angebotNr = rechnung.angebotNr || null;
@@ -1199,7 +1243,11 @@ async function loadRechnungIntoForm(rechnung) {
   els.rechnungFaellig.value = rechnung.faelligAm || '';
   if (rechnung.kundeId) {
     const stamm = await getKunde(rechnung.kundeId);
-    if (stamm) setBillingSnapshot(state.rechnung, stamm);
+    if (stamm) {
+      setBillingSnapshot(state.rechnung, stamm);
+      state.rechnung.kundeAnrede = normalizeKundeAnrede(stamm.anrede);
+      state.rechnung.kundeKundenNr = stamm.kundenNr || '';
+    }
     await restoreAdresseFromDocument(
       rechnung.kundeId,
       rechnung.kunde,
@@ -1234,6 +1282,8 @@ async function loadAngebotAsRechnungEntwurf(angebot) {
   state.rechnung.angebotId = angebot.id;
   state.rechnung.angebotNr = angebot.angebotNr;
   state.rechnung.selectedKundeId = angebot.kundeId || null;
+  state.rechnung.kundeAnrede = normalizeKundeAnrede(angebot.kunde?.anrede);
+  state.rechnung.kundeKundenNr = angebot.kunde?.kundenNr || '';
   setBillingSnapshot(state.rechnung, angebot.kunde);
   rechnungPostenEditor.loadPostenFromDocument(angebot.posten);
 
@@ -1241,7 +1291,11 @@ async function loadAngebotAsRechnungEntwurf(angebot) {
   setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, angebot.kunde);
   if (angebot.kundeId) {
     const stamm = await getKunde(angebot.kundeId);
-    if (stamm) setBillingSnapshot(state.rechnung, stamm);
+    if (stamm) {
+      setBillingSnapshot(state.rechnung, stamm);
+      state.rechnung.kundeAnrede = normalizeKundeAnrede(stamm.anrede);
+      state.rechnung.kundeKundenNr = stamm.kundenNr || '';
+    }
     await restoreAdresseFromDocument(
       angebot.kundeId,
       angebot.kunde,
@@ -1539,23 +1593,19 @@ function setProfilPasswordStatus(message, isError = false) {
   els.profilPasswordStatus.classList.remove('hidden');
 }
 
-function setProfilNummernStatus(message, isError = false) {
-  if (!els.profilNummernStatus) return;
-  if (!message) {
-    els.profilNummernStatus.classList.add('hidden');
-    els.profilNummernStatus.textContent = '';
-    els.profilNummernStatus.classList.remove('settings-status--error');
-    return;
-  }
-  els.profilNummernStatus.textContent = message;
-  els.profilNummernStatus.classList.toggle('settings-status--error', isError);
-  els.profilNummernStatus.classList.remove('hidden');
-}
+function updateProfilSchemaPreviews(tpl = getPdfTemplate()) {
+  const angebotSchema = tpl.angebot?.nummerSchema || '';
+  const rechnungSchema = tpl.rechnung?.nummerSchema || '';
 
-function updateProfilSchemaPreviews() {
-  const updateOne = (input, preview, previewFn) => {
-    if (!input || !preview) return;
-    const schema = String(input.value || '').trim();
+  if (els.profilAngebotNummerSchema) {
+    els.profilAngebotNummerSchema.textContent = angebotSchema || '—';
+  }
+  if (els.profilRechnungNummerSchema) {
+    els.profilRechnungNummerSchema.textContent = rechnungSchema || '—';
+  }
+
+  const updatePreview = (schema, preview, previewFn) => {
+    if (!preview) return;
     if (!schema) {
       preview.textContent = '—';
       return;
@@ -1567,12 +1617,8 @@ function updateProfilSchemaPreviews() {
     }
   };
 
-  updateOne(els.profilAngebotNummerSchema, els.profilAngebotSchemaPreview, previewAngebotsnummer);
-  updateOne(
-    els.profilRechnungNummerSchema,
-    els.profilRechnungSchemaPreview,
-    previewRechnungsnummer
-  );
+  updatePreview(angebotSchema, els.profilAngebotSchemaPreview, previewAngebotsnummer);
+  updatePreview(rechnungSchema, els.profilRechnungSchemaPreview, previewRechnungsnummer);
 }
 
 async function renderProfilView() {
@@ -1587,20 +1633,10 @@ async function renderProfilView() {
 
   setProfilAccountStatus('');
   setProfilPasswordStatus('');
-  setProfilNummernStatus('');
   els.profilPasswordForm?.reset();
 
   await loadPdfTemplate();
-  const tpl = getPdfTemplate();
-  if (els.profilAngebotNummerSchema) {
-    els.profilAngebotNummerSchema.value =
-      tpl.angebot?.nummerSchema || 'ANG-{YYYY}{MM}{DD}-{NR:3}';
-  }
-  if (els.profilRechnungNummerSchema) {
-    els.profilRechnungNummerSchema.value =
-      tpl.rechnung?.nummerSchema || 'RE-{YYYY}{MM}{DD}-{NR:3}';
-  }
-  updateProfilSchemaPreviews();
+  updateProfilSchemaPreviews(getPdfTemplate());
   syncProfilNummernAccess();
   syncProfilPlanAccess();
 }
@@ -1676,18 +1712,6 @@ function closeProfilPlanModal() {
 }
 
 function syncProfilNummernAccess() {
-  const admin = isAdmin();
-  const canEditSchemas = admin;
-
-  [els.profilAngebotNummerSchema, els.profilRechnungNummerSchema].forEach((input) => {
-    if (!input) return;
-    input.readOnly = !canEditSchemas;
-    input.tabIndex = canEditSchemas ? 0 : -1;
-    input.setAttribute('aria-readonly', canEditSchemas ? 'false' : 'true');
-    input.classList.toggle('pdf-schema-input', !canEditSchemas);
-  });
-
-  els.profilNummernActions?.classList.toggle('hidden', !canEditSchemas);
   els.profilDeleteAccountBtn?.classList.toggle(
     'hidden',
     getSession()?.tenant?.plan === 'admin'
@@ -2669,8 +2693,15 @@ async function renderArchiv() {
     if (q) {
       angebote = angebote.filter(
         (a) =>
-        a.angebotNr.toLowerCase().includes(q) ||
-        a.kunde.name.toLowerCase().includes(q)
+          a.angebotNr.toLowerCase().includes(q) ||
+          a.kunde.name.toLowerCase().includes(q) ||
+          matchesDateSearch(
+            q,
+            a.angebotsdatum,
+            a.gueltigBis,
+            a.erstelltAm,
+            a.aktualisiertAm
+          )
       );
     }
 
@@ -2690,7 +2721,7 @@ async function renderArchiv() {
 
         return `
         <article class="archiv-item" data-id="${a.id}">
-          <div class="archiv-info">
+          <div class="archiv-info" role="button" tabindex="0" aria-label="Angebot ${escapeHtml(a.angebotNr)} bearbeiten">
             <div class="archiv-top">
               <strong>${a.angebotNr}</strong>
               <span class="archiv-betrag">${formatEuro(brutto)}</span>
@@ -2701,7 +2732,6 @@ async function renderArchiv() {
           <div class="archiv-actions">
             <button type="button" class="btn btn-ghost btn-sm" data-action="rechnung" data-id="${a.id}">Rechnung erstellen</button>
             <button type="button" class="btn btn-ghost btn-sm" data-action="pdf" data-id="${a.id}">PDF ansehen</button>
-            <button type="button" class="btn btn-ghost btn-sm" data-action="edit" data-id="${a.id}">Bearbeiten</button>
             <button type="button" class="btn btn-danger btn-sm" data-action="delete" data-id="${a.id}">Löschen</button>
           </div>
         </article>
@@ -2748,7 +2778,7 @@ async function renderRechnungArchiv() {
 
         return `
         <article class="archiv-item" data-id="${r.id}">
-          <div class="archiv-info">
+          <div class="archiv-info" role="button" tabindex="0" aria-label="Rechnung ${escapeHtml(r.rechnungNr)} bearbeiten">
             <div class="archiv-top">
               <strong>${r.rechnungNr}</strong>
               <span class="archiv-betrag">${formatEuro(brutto)}</span>
@@ -2759,7 +2789,6 @@ async function renderRechnungArchiv() {
           </div>
           <div class="archiv-actions">
             <button type="button" class="btn btn-ghost btn-sm" data-action="pdf" data-id="${r.id}">PDF ansehen</button>
-            <button type="button" class="btn btn-ghost btn-sm" data-action="edit" data-id="${r.id}">Bearbeiten</button>
             <button type="button" class="btn btn-danger btn-sm" data-action="delete" data-id="${r.id}">Löschen</button>
           </div>
         </article>
@@ -2774,6 +2803,11 @@ async function renderRechnungArchiv() {
 function resetKundenForm() {
   state.editingKundeId = null;
   els.kundenForm.reset();
+  if (els.kundenFormAnrede) els.kundenFormAnrede.value = '';
+  if (els.kundenFormKundenNr) {
+    els.kundenFormKundenNr.value = '';
+    els.kundenFormKundenNr.placeholder = 'Wird beim Speichern vergeben';
+  }
   els.kundenFormTitle.textContent = 'Neuer Kunde';
   els.kundenFormReset.classList.add('hidden');
 }
@@ -2812,7 +2846,13 @@ async function refreshKundenDetail() {
       rechnungen
     );
 
-    els.kundenDetailTitle.textContent = kunde.name;
+    els.kundenDetailTitle.textContent = formatKundeDisplayName(kunde) || kunde.name;
+    if (els.kundenDetailKundenNr) {
+      els.kundenDetailKundenNr.textContent = kunde.kundenNr || '—';
+    }
+    if (els.kundenDetailAnrede) {
+      els.kundenDetailAnrede.textContent = formatKundeAnredeLabel(kunde.anrede);
+    }
     const adresseHtml = formatAdresseHtml(kunde);
     els.kundenDetailAdresse.innerHTML = adresseHtml || '—';
     setKundenDetailContact(els.kundenDetailTelefon, kunde.telefon, 'tel');
@@ -2840,6 +2880,13 @@ async function refreshKundenDetail() {
 function loadKundeIntoForm(kunde) {
   closeKundenDetail();
   state.editingKundeId = kunde.id;
+  if (els.kundenFormAnrede) {
+    els.kundenFormAnrede.value = normalizeKundeAnrede(kunde.anrede);
+  }
+  if (els.kundenFormKundenNr) {
+    els.kundenFormKundenNr.value = kunde.kundenNr || '';
+    els.kundenFormKundenNr.placeholder = kunde.kundenNr ? '' : 'Wird beim Speichern vergeben';
+  }
   els.kundenFormName.value = kunde.name;
   setAdresseFieldPair(els.kundenFormStrasse, els.kundenFormPlzOrt, kunde);
   els.kundenFormTelefon.value = kunde.telefon || '';
@@ -2866,6 +2913,9 @@ function fillKatalogForm(posten) {
   state.editingKatalogPostenId = posten.id;
   els.katalogFormBezeichnung.value = posten.bezeichnung || '';
   els.katalogFormBeschreibung.value = posten.beschreibung || '';
+  if (els.katalogFormArt) {
+    els.katalogFormArt.value = normalizePostenArt(posten.art);
+  }
   els.katalogFormPreisStk.value =
     posten.preisStk != null && posten.preisStk !== '' ? String(posten.preisStk).replace('.', ',') : '';
   els.katalogFormPreisStd.value =
@@ -2902,12 +2952,13 @@ async function renderKatalogView() {
       .map((p) => {
         const preisStk = formatEuro(p.preisStk ?? 0);
         const preisStd = formatEuro(p.preisStd ?? 0);
+        const artLabel = formatPostenArt(p.art);
         return `
         <article class="katalog-posten-item" data-id="${p.id}">
           <div class="katalog-posten-item__main">
             <h3>${escapeHtml(p.bezeichnung)}</h3>
             ${p.beschreibung ? `<p class="katalog-posten-item__desc">${escapeHtml(p.beschreibung)}</p>` : ''}
-            <p class="katalog-posten-item__preise">${preisStk} / Stk. · ${preisStd} / Std.</p>
+            <p class="katalog-posten-item__preise">${escapeHtml(artLabel)} · ${preisStk} / Stk. · ${preisStd} / Std.</p>
           </div>
           <div class="katalog-posten-item__actions">
             <button type="button" class="btn btn-ghost btn-sm" data-action="edit-katalog-posten" data-id="${p.id}">Bearbeiten</button>
@@ -2956,6 +3007,7 @@ async function saveKatalogForm(e) {
     id: state.editingKatalogPostenId || createKatalogPostenId(),
     bezeichnung,
     beschreibung: els.katalogFormBeschreibung.value.trim(),
+    art: normalizePostenArt(els.katalogFormArt?.value),
     preisStk,
     preisStd,
     erstelltAm,
@@ -3009,6 +3061,7 @@ async function renderKundenView() {
     els.kundenListe.innerHTML = filtered
       .map((k) => {
         const kontakt = [k.telefon, k.email].filter((v) => (v || '').trim()).join(' · ');
+        const nrPrefix = k.kundenNr ? `<span class="kunden-info__nr">${escapeHtml(k.kundenNr)}</span> · ` : '';
         const docs = dokumenteFuerKunde(k.id, k.name, angebote, rechnungen);
         const kundenDokumente = showRechnungen ? docs.rechnungen : docs.angebote;
         const docCount = kundenDokumente.length;
@@ -3025,7 +3078,8 @@ async function renderKundenView() {
         <article class="kunden-item" data-id="${k.id}">
           <div class="kunden-item__header">
             <div class="kunden-info">
-              <h3>${escapeHtml(k.name)}</h3>
+              <h3>${nrPrefix}${escapeHtml(k.name)}</h3>
+              ${formatKundeAnredeLabel(k.anrede) !== '—' ? `<p class="kunden-info__anrede">${escapeHtml(formatKundeAnredeLabel(k.anrede))}</p>` : ''}
               ${formatAdresseHtml(k) ? `<p>${formatAdresseHtml(k)}</p>` : ''}
               ${kontakt ? `<p class="kunden-info__kontakt">${escapeHtml(kontakt)}</p>` : ''}
             </div>
@@ -3082,7 +3136,8 @@ async function renderKundenPicker() {
         (k) => `
         <article class="kunden-picker-item" data-id="${k.id}" tabindex="0">
           <div class="kunden-info">
-            <h3>${k.name}</h3>
+            <h3>${k.kundenNr ? `<span class="kunden-info__nr">${escapeHtml(k.kundenNr)}</span> · ` : ''}${escapeHtml(k.name)}</h3>
+            ${formatKundeAnredeLabel(k.anrede) !== '—' ? `<p class="kunden-info__anrede">${escapeHtml(formatKundeAnredeLabel(k.anrede))}</p>` : ''}
             ${formatAdresseInline(k) ? `<p>${escapeHtml(formatAdresseInline(k))}</p>` : ''}
           </div>
         </article>
@@ -3129,8 +3184,15 @@ async function saveKundenForm(e) {
   const bestehend = isEdit ? await getKunde(state.editingKundeId) : null;
 
   const formAdresse = readAdresseFieldPair(els.kundenFormStrasse, els.kundenFormPlzOrt);
+  let kundenNr = bestehend?.kundenNr || '';
+  if (!kundenNr) {
+    kundenNr = await generiereKundennummer(getAllKunden);
+  }
+
   const kunde = {
     id: isEdit ? state.editingKundeId : createKundeId(),
+    kundenNr,
+    anrede: normalizeKundeAnrede(els.kundenFormAnrede?.value),
     name,
     strasse: formAdresse.strasse,
     plzOrt: formAdresse.plzOrt,
@@ -3199,29 +3261,69 @@ async function saveKundenObjektForm(e) {
   }
 }
 
-async function speichernUndPdf() {
+async function persistAngebotFromForm() {
   angebotPostenEditor.flushEntwurfIfComplete();
   const posten = angebotPostenEditor.getAusgewaehltePosten();
-  if (posten.length === 0 || !isAngebotKopfComplete()) return;
+  if (posten.length === 0 || !isAngebotKopfComplete()) return null;
 
-  els.pdfBtn.disabled = true;
+  const angebot = await getFormAngebot();
+  const formKunde = angebot.kunde;
+  const resolved = await resolveKundeIdForSave(
+    formKunde.name,
+    formKunde,
+    state.angebot.selectedKundeId
+  );
+  angebot.kundeId = resolved.kundeId;
+  angebot.kunde = { ...formKunde, ...resolved.kunde };
+  state.angebot.selectedKundeId = resolved.kundeId;
+  updateKundeHinweis();
+  await saveAngebot(angebot);
+  state.angebot.editingId = angebot.id;
+  updatePageHeader();
+  return { angebot, posten };
+}
 
+async function persistRechnungFromForm() {
+  rechnungPostenEditor.flushEntwurfIfComplete();
+  const posten = rechnungPostenEditor.getAusgewaehltePosten();
+  if (posten.length === 0 || !isRechnungKopfComplete()) return null;
+
+  const rechnung = await getFormRechnung();
+  const formKunde = rechnung.kunde;
+  const resolved = await resolveKundeIdForSave(
+    formKunde.name,
+    formKunde,
+    state.rechnung.selectedKundeId
+  );
+  rechnung.kundeId = resolved.kundeId;
+  rechnung.kunde = { ...formKunde, ...resolved.kunde };
+  state.rechnung.selectedKundeId = resolved.kundeId;
+  updateRechnungKundeHinweis();
+  await saveRechnung(rechnung);
+  state.rechnung.editingId = rechnung.id;
+  updateRechnungPageHeader();
+  return { rechnung, posten };
+}
+
+function setAngebotFooterBusy(busy) {
+  [els.saveBtn, els.saveCloseBtn, els.pdfBtn, els.resetBtn].forEach((btn) => {
+    if (btn) btn.disabled = busy;
+  });
+}
+
+function setRechnungFooterBusy(busy) {
+  [els.rechnungSaveBtn, els.rechnungSaveCloseBtn, els.rechnungPdfBtn, els.rechnungResetBtn].forEach(
+    (btn) => {
+      if (btn) btn.disabled = busy;
+    }
+  );
+}
+
+async function speichernAngebot() {
+  setAngebotFooterBusy(true);
   try {
-    const angebot = await getFormAngebot();
-    const formKunde = angebot.kunde;
-    const resolved = await resolveKundeIdForSave(
-      formKunde.name,
-      formKunde,
-      state.angebot.selectedKundeId
-    );
-    angebot.kundeId = resolved.kundeId;
-    angebot.kunde = { ...formKunde, ...resolved.kunde };
-    state.angebot.selectedKundeId = resolved.kundeId;
-    updateKundeHinweis();
-    await saveAngebot(angebot);
-    state.angebot.editingId = angebot.id;
-    updatePageHeader();
-    downloadPdf(angebot, posten);
+    const result = await persistAngebotFromForm();
+    if (!result) return;
   } catch (err) {
     alert(`Speichern fehlgeschlagen: ${err.message}`);
   } finally {
@@ -3229,29 +3331,63 @@ async function speichernUndPdf() {
   }
 }
 
-async function speichernUndRechnungPdf() {
-  rechnungPostenEditor.flushEntwurfIfComplete();
-  const posten = rechnungPostenEditor.getAusgewaehltePosten();
-  if (posten.length === 0 || !isRechnungKopfComplete()) return;
-
-  els.rechnungPdfBtn.disabled = true;
-
+async function speichernAngebotUndSchliessen() {
+  setAngebotFooterBusy(true);
   try {
-    const rechnung = await getFormRechnung();
-    const formKunde = rechnung.kunde;
-    const resolved = await resolveKundeIdForSave(
-      formKunde.name,
-      formKunde,
-      state.rechnung.selectedKundeId
-    );
-    rechnung.kundeId = resolved.kundeId;
-    rechnung.kunde = { ...formKunde, ...resolved.kunde };
-    state.rechnung.selectedKundeId = resolved.kundeId;
-    updateRechnungKundeHinweis();
-    await saveRechnung(rechnung);
-    state.rechnung.editingId = rechnung.id;
-    updateRechnungPageHeader();
-    await downloadRechnungPdf(rechnung, posten);
+    const result = await persistAngebotFromForm();
+    if (!result) return;
+    await resetForm();
+  } catch (err) {
+    alert(`Speichern fehlgeschlagen: ${err.message}`);
+  } finally {
+    angebotPostenEditor.render();
+  }
+}
+
+async function speichernUndPdf() {
+  setAngebotFooterBusy(true);
+  try {
+    const result = await persistAngebotFromForm();
+    if (!result) return;
+    downloadPdf(result.angebot, result.posten);
+  } catch (err) {
+    alert(`Speichern fehlgeschlagen: ${err.message}`);
+  } finally {
+    angebotPostenEditor.render();
+  }
+}
+
+async function speichernRechnung() {
+  setRechnungFooterBusy(true);
+  try {
+    const result = await persistRechnungFromForm();
+    if (!result) return;
+  } catch (err) {
+    alert(`Speichern fehlgeschlagen: ${err.message}`);
+  } finally {
+    rechnungPostenEditor.render();
+  }
+}
+
+async function speichernRechnungUndSchliessen() {
+  setRechnungFooterBusy(true);
+  try {
+    const result = await persistRechnungFromForm();
+    if (!result) return;
+    await resetRechnungForm();
+  } catch (err) {
+    alert(`Speichern fehlgeschlagen: ${err.message}`);
+  } finally {
+    rechnungPostenEditor.render();
+  }
+}
+
+async function speichernUndRechnungPdf() {
+  setRechnungFooterBusy(true);
+  try {
+    const result = await persistRechnungFromForm();
+    if (!result) return;
+    await downloadRechnungPdf(result.rechnung, result.posten);
   } catch (err) {
     alert(`Speichern fehlgeschlagen: ${err.message}`);
   } finally {
@@ -3405,47 +3541,6 @@ function bindAppEvents() {
     }
   });
 
-  els.profilNummernForm?.addEventListener('input', () => {
-    if (isAdmin()) updateProfilSchemaPreviews();
-  });
-  els.profilNummernForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!isAdmin()) return;
-
-    setProfilNummernStatus('');
-
-    const angebotSchema = String(els.profilAngebotNummerSchema?.value || '').trim();
-    const rechnungSchema = String(els.profilRechnungNummerSchema?.value || '').trim();
-
-    if (!angebotSchema || !schemaHasSequenceToken(angebotSchema)) {
-      setProfilNummernStatus('Angebots-Schema braucht eine Laufnummer, z. B. {NR:3}.', true);
-      els.profilAngebotNummerSchema?.focus();
-      return;
-    }
-    if (!rechnungSchema || !schemaHasSequenceToken(rechnungSchema)) {
-      setProfilNummernStatus('Rechnungs-Schema braucht eine Laufnummer, z. B. {NR:3}.', true);
-      els.profilRechnungNummerSchema?.focus();
-      return;
-    }
-
-    try {
-      const angebotPatch = templatePatchFromForm(els.profilNummernForm, 'angebot-nummer');
-      const rechnungPatch = templatePatchFromForm(els.profilNummernForm, 'rechnung-nummer');
-      await savePdfTemplate({
-        ...getPdfTemplate(),
-        ...angebotPatch,
-        ...rechnungPatch,
-      });
-      updateProfilSchemaPreviews();
-      if (isPdfVorlageView(state.view)) {
-        renderPdfTemplateView(state.view);
-      }
-      setProfilNummernStatus('Nummernschemas wurden gespeichert.');
-    } catch (err) {
-      setProfilNummernStatus(err.message || 'Nummernschemas konnten nicht gespeichert werden.', true);
-    }
-  });
-
   els.profilDeleteAccountBtn?.addEventListener('click', openProfilDeleteModal);
   els.profilPlanChangeBtn?.addEventListener('click', openProfilPlanModal);
   els.profilPlanModal?.querySelectorAll('[data-close-profil-plan-modal]').forEach((el) => {
@@ -3479,8 +3574,12 @@ function bindAppEvents() {
   }
 
   els.resetBtn.addEventListener('click', () => resetForm());
+  els.saveBtn?.addEventListener('click', () => speichernAngebot());
+  els.saveCloseBtn?.addEventListener('click', () => speichernAngebotUndSchliessen());
   els.pdfBtn.addEventListener('click', () => speichernUndPdf());
   els.rechnungResetBtn?.addEventListener('click', () => resetRechnungForm());
+  els.rechnungSaveBtn?.addEventListener('click', () => speichernRechnung());
+  els.rechnungSaveCloseBtn?.addEventListener('click', () => speichernRechnungUndSchliessen());
   els.rechnungPdfBtn?.addEventListener('click', () => speichernUndRechnungPdf());
 
   els.kundeAuswahlBtn.addEventListener('click', () => openKundenModal('angebot'));
@@ -3773,56 +3872,94 @@ function bindAppEvents() {
 
   els.archivListe.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action]');
-    if (!btn) return;
+    if (btn) {
+      const { action, id } = btn.dataset;
 
-    const { action, id } = btn.dataset;
+      try {
+        const angebot = await getAngebot(id);
+        if (!angebot) return;
+
+        if (action === 'rechnung') {
+          await loadAngebotAsRechnungEntwurf(angebot);
+        } else if (action === 'pdf') {
+          openPdfPreview(angebot, resolvePostenDetails(angebot.posten));
+        } else if (action === 'delete') {
+          if (confirm(`Angebot „${angebot.angebotNr}" wirklich löschen?`)) {
+            await deleteAngebot(id);
+            if (state.angebot.editingId === id) await resetForm();
+            renderArchiv();
+          }
+        }
+      } catch (err) {
+        alert(`Fehler: ${err.message}`);
+      }
+      return;
+    }
+
+    const info = e.target.closest('.archiv-info');
+    if (!info) return;
+    const item = info.closest('.archiv-item');
+    if (!item?.dataset.id) return;
 
     try {
-      const angebot = await getAngebot(id);
-      if (!angebot) return;
-
-      if (action === 'rechnung') {
-        await loadAngebotAsRechnungEntwurf(angebot);
-      } else if (action === 'pdf') {
-        openPdfPreview(angebot, resolvePostenDetails(angebot.posten));
-      } else if (action === 'edit') {
-        await loadAngebotIntoForm(angebot);
-      } else if (action === 'delete') {
-        if (confirm(`Angebot „${angebot.angebotNr}" wirklich löschen?`)) {
-          await deleteAngebot(id);
-          if (state.angebot.editingId === id) await resetForm();
-          renderArchiv();
-        }
-      }
+      const angebot = await getAngebot(item.dataset.id);
+      if (angebot) await loadAngebotIntoForm(angebot);
     } catch (err) {
       alert(`Fehler: ${err.message}`);
     }
   });
 
+  els.archivListe.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const info = e.target.closest('.archiv-info');
+    if (!info) return;
+    e.preventDefault();
+    info.click();
+  });
+
   els.rechnungArchivListe?.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action]');
-    if (!btn) return;
+    if (btn) {
+      const { action, id } = btn.dataset;
 
-    const { action, id } = btn.dataset;
+      try {
+        const rechnung = await getRechnung(id);
+        if (!rechnung) return;
+
+        if (action === 'pdf') {
+          openRechnungPdfPreview(rechnung, resolvePostenDetails(rechnung.posten));
+        } else if (action === 'delete') {
+          if (confirm(`Rechnung „${rechnung.rechnungNr}" wirklich löschen?`)) {
+            await deleteRechnung(id);
+            if (state.rechnung.editingId === id) await resetRechnungForm();
+            renderRechnungArchiv();
+          }
+        }
+      } catch (err) {
+        alert(`Fehler: ${err.message}`);
+      }
+      return;
+    }
+
+    const info = e.target.closest('.archiv-info');
+    if (!info) return;
+    const item = info.closest('.archiv-item');
+    if (!item?.dataset.id) return;
 
     try {
-      const rechnung = await getRechnung(id);
-      if (!rechnung) return;
-
-      if (action === 'pdf') {
-        openRechnungPdfPreview(rechnung, resolvePostenDetails(rechnung.posten));
-      } else if (action === 'edit') {
-        await loadRechnungIntoForm(rechnung);
-      } else if (action === 'delete') {
-        if (confirm(`Rechnung „${rechnung.rechnungNr}" wirklich löschen?`)) {
-          await deleteRechnung(id);
-          if (state.rechnung.editingId === id) await resetRechnungForm();
-          renderRechnungArchiv();
-        }
-      }
+      const rechnung = await getRechnung(item.dataset.id);
+      if (rechnung) await loadRechnungIntoForm(rechnung);
     } catch (err) {
       alert(`Fehler: ${err.message}`);
     }
+  });
+
+  els.rechnungArchivListe?.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const info = e.target.closest('.archiv-info');
+    if (!info) return;
+    e.preventDefault();
+    info.click();
   });
 }
 

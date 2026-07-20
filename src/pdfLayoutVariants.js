@@ -53,7 +53,7 @@ function previewTableBlockV1() {
         <span class="pdf-layout-preview__tag">Tabelle</span>
         <table class="pdf-layout-preview__table">
           <thead data-preview-part="table-head">
-            <tr><th>Pos</th><th>Bezeichnung</th><th>Menge</th><th>Einh.</th><th>Preis</th><th>Gesamt</th></tr>
+            <tr><th>Pos</th><th>Bezeichnung</th><th>Art</th><th>Menge</th><th>Einh.</th><th>Preis</th><th>Gesamt</th></tr>
           </thead>
           <tbody data-preview-part="table-body"></tbody>
         </table>
@@ -154,7 +154,7 @@ function createPdfLayoutPreviewMarkupV2(type) {
           <span class="pdf-layout-preview__tag">Tabelle</span>
           <table class="pdf-layout-preview__table pdf-layout-preview__table--open">
             <thead data-preview-part="table-head">
-              <tr><th>Pos</th><th>Bezeichnung</th><th>Menge</th><th>Preis</th><th>Gesamt</th></tr>
+              <tr><th>Pos</th><th>Bezeichnung</th><th>Art</th><th>Menge</th><th>Preis</th><th>Gesamt</th></tr>
             </thead>
             <tbody data-preview-part="table-body"></tbody>
           </table>

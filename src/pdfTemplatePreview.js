@@ -15,8 +15,8 @@ const SAMPLE_KUNDE = {
 };
 
 const SAMPLE_POSTEN = [
-  { bez: 'Beratung vor Ort', menge: 2, einheit: 'Std.', preis: 95, sum: '190,00 €' },
-  { bez: 'Materialpauschale', menge: 1, einheit: 'Stk.', preis: 45, sum: '45,00 €' },
+  { bez: 'Beratung vor Ort', art: 'Lohn', menge: 2, einheit: 'Std.', preis: 95, sum: '190,00 €' },
+  { bez: 'Materialpauschale', art: 'Material', menge: 1, einheit: 'Stk.', preis: 45, sum: '45,00 €' },
 ];
 
 function samplePreviewTotals() {
@@ -253,6 +253,7 @@ export function updatePdfTemplatePreview(form, previewRoot, type, variant = 1) {
         <tr>
           <td>${i + 1}</td>
           <td>${row.bez}</td>
+          <td>${row.art}</td>
           <td>${row.menge}</td>
           <td>${formatEuro(row.preis)}</td>
           <td>${row.sum}</td>
@@ -264,6 +265,7 @@ export function updatePdfTemplatePreview(form, previewRoot, type, variant = 1) {
         <tr>
           <td>${i + 1}</td>
           <td>${row.bez}</td>
+          <td>${row.art}</td>
           <td>${row.menge}</td>
           <td>${row.einheit}</td>
           <td>${formatEuro(row.preis)}</td>

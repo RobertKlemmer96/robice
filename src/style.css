@@ -101,8 +101,7 @@ body {
 
 [data-theme='light'] .archiv-item,
 [data-theme='light'] .kunden-item,
-[data-theme='light'] .posten-item,
-[data-theme='light'] .posten-item--mit-zeile {
+[data-theme='light'] .posten-item {
   border: 2px solid var(--form-frame-soft);
   background: var(--surface);
 }
@@ -1497,6 +1496,55 @@ body {
   color: var(--accent);
 }
 
+.onboarding-layout-options {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.onboarding-layout-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--accent-soft));
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.onboarding-layout-option:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.onboarding-layout-option:has(input:checked) {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  background: var(--accent-soft);
+}
+
+.onboarding-layout-option input {
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.onboarding-layout-option__text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.onboarding-layout-option__text strong {
+  font-size: 0.95rem;
+}
+
+.onboarding-layout-option__text span {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 .pdf-schema-note {
   display: flex;
   align-items: center;
@@ -2340,6 +2388,13 @@ body {
 .archiv-info {
   flex: 1;
   min-width: 0;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.archiv-info:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .archiv-top {
@@ -2662,6 +2717,19 @@ body {
   font-size: 0.95rem;
 }
 
+.kunden-info__nr {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.kunden-info__anrede {
+  margin: 0 0 2px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 .kunden-info p {
   margin: 0;
   font-size: 0.82rem;
@@ -2779,6 +2847,11 @@ body {
   font-size: 0.95rem;
   font-weight: 500;
   word-break: break-word;
+}
+
+.profil-field__value--mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88rem;
 }
 
 .profil-plan-row {
@@ -4665,6 +4738,17 @@ textarea:focus,
   background: transparent;
 }
 
+.pdf-footer__save-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pdf-footer__save-row .btn {
+  width: 100%;
+  padding: 12px 14px;
+}
+
 .pdf-footer .btn-primary {
   width: 100%;
   padding: 16px 20px;
@@ -4683,8 +4767,8 @@ textarea:focus,
 
 .posten-legende {
   display: grid;
-  grid-template-columns: 60px minmax(0, 1fr) 84px 76px;
-  grid-template-areas: 'menge info preis einheit';
+  grid-template-columns: 60px minmax(0, 1fr) 96px 84px 76px;
+  grid-template-areas: 'menge info art preis einheit';
   align-items: end;
   gap: 12px;
   padding: 0 16px 4px;
@@ -4708,9 +4792,14 @@ textarea:focus,
   grid-area: info;
 }
 
+.posten-legende__art {
+  grid-area: art;
+  text-align: center;
+}
+
 .posten-legende__preis {
   grid-area: preis;
-  text-align: right;
+  text-align: center;
 }
 
 .posten-legende__einheit {
@@ -4721,21 +4810,14 @@ textarea:focus,
 .posten-item {
   --posten-field-height: 34px;
   display: grid;
-  grid-template-columns: 60px minmax(0, 1fr) 84px 76px;
-  grid-template-areas: 'menge info preis einheit';
+  grid-template-columns: 60px minmax(0, 1fr) 96px 84px 76px;
+  grid-template-areas: 'menge info art preis einheit';
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
   border: 1px solid var(--border);
   border-radius: 10px;
   transition: border-color 0.15s, background 0.15s;
-}
-
-.posten-item--mit-zeile {
-  grid-template-areas:
-    'menge info preis einheit'
-    '. . zeile zeile';
-  row-gap: 8px;
 }
 
 .posten-menge-feld {
@@ -4749,11 +4831,17 @@ textarea:focus,
   min-width: 0;
 }
 
+.posten-art-feld {
+  grid-area: art;
+  display: flex;
+  align-items: center;
+}
+
 .posten-preis-feld {
   grid-area: preis;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .posten-einheit-feld {
@@ -4762,18 +4850,11 @@ textarea:focus,
   align-items: center;
 }
 
-.posten-zeile {
-  grid-area: zeile;
-  justify-self: end;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--success);
-}
-
 .posten-menge-input,
 .posten-info-input,
 .posten-preis-input,
-.posten-einheit {
+.posten-einheit,
+.posten-art {
   height: var(--posten-field-height);
   box-sizing: border-box;
   font: inherit;
@@ -4856,7 +4937,7 @@ textarea:focus,
 
 .posten-preis-input {
   width: 100%;
-  text-align: right;
+  text-align: center;
   padding: 0 8px;
   font-weight: 600;
   color: var(--primary);
@@ -4868,10 +4949,17 @@ textarea:focus,
   cursor: pointer;
 }
 
+.posten-art {
+  width: 100%;
+  min-width: 0;
+  padding: 0 8px;
+  cursor: pointer;
+}
+
 .posten-preis {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   width: 100%;
   min-height: var(--posten-field-height);
   font-size: 0.85rem;
@@ -5678,38 +5766,37 @@ textarea:focus,
   }
 
   .posten-item,
-  .posten-item--mit-zeile,
   .posten-item--entwurf {
     --posten-field-height: 32px;
     display: grid;
-    grid-template-columns: minmax(3.5rem, 4.25rem) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(3.5rem, 4.25rem) 96px 1fr 76px;
     grid-template-areas:
-      'info info info'
-      'menge preis einheit'
-      'zeile zeile zeile';
+      'info info info info'
+      'menge art preis einheit';
     align-items: stretch;
-    gap: 6px 8px;
+    gap: 6px 12px;
     padding: 10px;
     border-radius: 8px;
   }
 
-  .posten-item:not(.posten-item--mit-zeile) {
-    grid-template-areas:
-      'info info info'
-      'menge preis einheit';
-  }
-
   .posten-menge-feld,
   .posten-info,
+  .posten-art-feld,
   .posten-preis-feld,
-  .posten-einheit-feld,
-  .posten-zeile {
+  .posten-einheit-feld {
     width: auto;
   }
 
   .posten-menge-feld,
   .posten-preis-feld,
   .posten-einheit-feld {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
+  }
+
+  .posten-art-feld {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -5732,6 +5819,19 @@ textarea:focus,
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color: var(--text-muted);
+    text-align: center;
+    width: 100%;
+  }
+
+  .posten-art-feld::before {
+    content: 'Lohn/Material';
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    text-align: center;
+    width: 100%;
   }
 
   .posten-einheit-feld::before {
@@ -5764,14 +5864,6 @@ textarea:focus,
 
   .posten-info-add-zone {
     display: none;
-  }
-
-  .posten-zeile {
-    text-align: right;
-    font-weight: 700;
-    font-size: 0.88rem;
-    padding-top: 2px;
-    border-top: 1px dashed var(--border);
   }
 
   .posten-menge-input,
@@ -5819,6 +5911,15 @@ textarea:focus,
   .pdf-footer {
     gap: 6px;
     padding-bottom: 4px;
+  }
+
+  .pdf-footer__save-row {
+    gap: 6px;
+  }
+
+  .pdf-footer__save-row .btn {
+    padding: 10px 12px;
+    font-size: 0.88rem;
   }
 
   .pdf-footer .btn-primary {
@@ -5986,21 +6087,18 @@ textarea:focus,
   }
 
   .posten-item,
-  .posten-item--mit-zeile,
   .posten-item--entwurf {
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       'info info'
       'menge menge'
-      'preis einheit'
-      'zeile zeile';
+      'art art'
+      'preis einheit';
   }
 
-  .posten-item:not(.posten-item--mit-zeile) {
-    grid-template-areas:
-      'info info'
-      'menge menge'
-      'preis einheit';
+  .posten-art {
+    width: 100%;
+    min-width: 0;
   }
 }
 

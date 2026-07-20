@@ -10,6 +10,21 @@ export const FIRMA = {
 
 export const EINHEITEN = ['Stk.', 'Std.'];
 
+export const POSTEN_ART_LABELS = {
+  lohn: 'Lohn',
+  material: 'Material',
+};
+
+export const DEFAULT_POSTEN_ART = 'lohn';
+
+export function normalizePostenArt(art) {
+  return String(art || '').trim().toLowerCase() === 'material' ? 'material' : 'lohn';
+}
+
+export function formatPostenArt(art) {
+  return POSTEN_ART_LABELS[normalizePostenArt(art)];
+}
+
 export const POSTEN = [
   {
     id: 'beratung',
@@ -52,6 +67,7 @@ export const POSTEN = [
     beschreibung: 'Material nach Aufwand',
     preisStk: 45,
     preisStd: 75,
+    art: 'material',
   },
   {
     id: 'anfahrt',
@@ -84,6 +100,11 @@ export const POSTEN = [
 ];
 
 export function getDefaultEinheit(posten) {
+  if (!posten) return 'Std.';
+  const preisStk = Number(posten.preisStk) || 0;
+  const preisStd = Number(posten.preisStd) || 0;
+  if (preisStk > preisStd) return 'Stk.';
+  if (preisStd > preisStk) return 'Std.';
   return 'Std.';
 }
 

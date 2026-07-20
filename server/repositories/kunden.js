@@ -1,9 +1,12 @@
 import { getDb } from '../db/index.js';
 import { normalizeAdresse } from '../../src/adresse.js';
+import { normalizeKundeAnrede } from '../../src/kundeStammdaten.js';
 
 function rowToKunde(row) {
   return {
     id: row.id,
+    kundenNr: row.kunden_nr || '',
+    anrede: normalizeKundeAnrede(row.anrede),
     name: row.name,
     ...normalizeAdresse({
       strasse: row.strasse,
@@ -22,6 +25,8 @@ function prepareKundeForSave(kunde) {
   const addr = normalizeAdresse(kunde);
   return {
     ...kunde,
+    kundenNr: String(kunde.kundenNr || '').trim(),
+    anrede: normalizeKundeAnrede(kunde.anrede),
     strasse: addr.strasse,
     plzOrt: addr.plzOrt,
     adresse: addr.adresse,
@@ -59,9 +64,11 @@ export function saveKunde(tenantId, kunde) {
 
   if (existing) {
     db.prepare(
-      `UPDATE kunden SET name = ?, adresse = ?, strasse = ?, plz_ort = ?, telefon = ?, email = ?, notiz = ?, aktualisiert_am = ?
+      `UPDATE kunden SET kunden_nr = ?, anrede = ?, name = ?, adresse = ?, strasse = ?, plz_ort = ?, telefon = ?, email = ?, notiz = ?, aktualisiert_am = ?
        WHERE tenant_id = ? AND id = ?`
     ).run(
+      prepared.kundenNr,
+      prepared.anrede,
       prepared.name,
       prepared.adresse,
       prepared.strasse,
@@ -75,11 +82,13 @@ export function saveKunde(tenantId, kunde) {
     );
   } else {
     db.prepare(
-      `INSERT INTO kunden (id, tenant_id, name, adresse, strasse, plz_ort, telefon, email, notiz, erstellt_am, aktualisiert_am)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO kunden (id, tenant_id, kunden_nr, anrede, name, adresse, strasse, plz_ort, telefon, email, notiz, erstellt_am, aktualisiert_am)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       prepared.id,
       tenantId,
+      prepared.kundenNr,
+      prepared.anrede,
       prepared.name,
       prepared.adresse,
       prepared.strasse,
