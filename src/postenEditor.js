@@ -1,5 +1,6 @@
 import { getDefaultEinheit, getPostenPreis, normalizePostenArt } from './data.js';
 import { findKatalogPosten, getKatalogPosten } from './katalogPosten.js';
+import { t } from './i18n.js';
 import {
   formatEuro,
   formatMenge,
@@ -48,7 +49,7 @@ export function resolvePostenDetails(postenAuswahl) {
       if (bezeichnung || String(id).startsWith('frei_')) {
         return {
           id,
-          bezeichnung: bezeichnung || 'Posten',
+          bezeichnung: bezeichnung || t('posten.lineItem'),
           beschreibung: beschreibung || '',
           menge,
           einheit: einheit || 'Std.',
@@ -191,12 +192,12 @@ export function createPostenEditor(editorState, els) {
         type="text"
         class="posten-info-input posten-info-input--title"
         value="${bezeichnung}"
-        placeholder="Tätigkeit"
-        aria-label="Tätigkeit"
+        placeholder="${t('posten.activity')}"
+        aria-label="${t('posten.activity')}"
         data-action="${bezeichnungAction}"
         data-id="${id}"
       />
-      <span class="posten-info-add-zone" title="Klicken: +1"></span>
+      <span class="posten-info-add-zone" title="${t('posten.addOneTitle')}"></span>
     </div>
   `;
   }
@@ -212,7 +213,7 @@ export function createPostenEditor(editorState, els) {
     class="posten-preis-input"
     value="${preis === '' || preis === undefined ? '' : typeof preis === 'string' ? preis : formatMenge(preis)}"
     placeholder="0,00"
-    aria-label="Einzelpreis"
+    aria-label="${t('posten.unitPrice')}"
     data-action="${modus === 'entwurf' ? 'entwurf-preis' : 'frei-preis'}"
     data-id="${id}"
   />`;
@@ -222,8 +223,8 @@ export function createPostenEditor(editorState, els) {
     const einheitAction = modus === 'entwurf' ? 'entwurf-einheit' : 'einheit';
 
     return `<select class="posten-einheit" data-action="${einheitAction}" data-id="${id}">
-    <option value="Stk." ${sel.einheit === 'Stk.' ? 'selected' : ''}>Stück</option>
-    <option value="Std." ${sel.einheit === 'Std.' ? 'selected' : ''}>Std.</option>
+    <option value="Stk." ${sel.einheit === 'Stk.' ? 'selected' : ''}>${t('posten.pieces')}</option>
+    <option value="Std." ${sel.einheit === 'Std.' ? 'selected' : ''}>${t('posten.hoursAbbr')}</option>
   </select>`;
   }
 
@@ -231,9 +232,9 @@ export function createPostenEditor(editorState, els) {
     const artAction = modus === 'entwurf' ? 'entwurf-art' : 'art';
     const art = normalizePostenArt(sel.art);
 
-    return `<select class="posten-art" data-action="${artAction}" data-id="${id}" aria-label="Lohn oder Material">
-    <option value="lohn" ${art === 'lohn' ? 'selected' : ''}>Lohn</option>
-    <option value="material" ${art === 'material' ? 'selected' : ''}>Material</option>
+    return `<select class="posten-art" data-action="${artAction}" data-id="${id}" aria-label="${t('posten.laborOrMaterial')}">
+    <option value="lohn" ${art === 'lohn' ? 'selected' : ''}>${t('posten.labor')}</option>
+    <option value="material" ${art === 'material' ? 'selected' : ''}>${t('posten.material')}</option>
   </select>`;
   }
 
@@ -254,7 +255,7 @@ export function createPostenEditor(editorState, els) {
           class="posten-menge-input"
           value="${aktiv ? formatMenge(sel.menge) : ''}"
           placeholder="${modus === 'entwurf' ? '1' : '–'}"
-          aria-label="Anzahl ${bezeichnung || 'Posten'}"
+          aria-label="${t('posten.quantityFor', { name: bezeichnung || t('posten.lineItem') })}"
           data-action="menge"
           data-id="${id}"
         />
@@ -276,11 +277,11 @@ export function createPostenEditor(editorState, els) {
   function renderPostenLegende() {
     return `
     <div class="posten-legende" aria-hidden="true">
-      <span class="posten-legende__label posten-legende__menge">Anzahl</span>
-      <span class="posten-legende__label posten-legende__info">Tätigkeit</span>
-      <span class="posten-legende__label posten-legende__art">Lohn/Material</span>
-      <span class="posten-legende__label posten-legende__preis">Preis in Euro</span>
-      <span class="posten-legende__label posten-legende__einheit">Std/Stück</span>
+      <span class="posten-legende__label posten-legende__menge">${t('posten.legendQuantity')}</span>
+      <span class="posten-legende__label posten-legende__info">${t('posten.legendActivity')}</span>
+      <span class="posten-legende__label posten-legende__art">${t('posten.legendType')}</span>
+      <span class="posten-legende__label posten-legende__preis">${t('posten.legendPrice')}</span>
+      <span class="posten-legende__label posten-legende__einheit">${t('posten.legendUnit')}</span>
     </div>
   `;
   }
@@ -332,7 +333,7 @@ export function createPostenEditor(editorState, els) {
 
     if (editorState.suche.trim()) {
       if (suchergebnisse.length > 0) {
-        teile.push('<p class="posten-suche-hinweis">Katalog-Treffer</p>');
+        teile.push(`<p class="posten-suche-hinweis">${t('posten.catalogHits')}</p>`);
         suchergebnisse.forEach((p) => {
           const sel = { menge: 1, einheit: getPostenEinheit(p.id), art: getPostenArt(p.id) };
           teile.push(
@@ -349,7 +350,7 @@ export function createPostenEditor(editorState, els) {
         });
       } else {
         teile.push(
-          '<p class="empty posten-suche-leer">Keine Katalog-Posten gefunden. Legen Sie welche unter „Katalog“ an.</p>'
+          `<p class="empty posten-suche-leer">${t('posten.catalogEmpty')}</p>`
         );
       }
     }

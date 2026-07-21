@@ -8,6 +8,8 @@
       (function () {
         var theme = localStorage.getItem('angebot_theme') || 'dark';
         document.documentElement.setAttribute('data-theme', theme);
+        var locale = localStorage.getItem('klem_desk_locale') || 'de';
+        document.documentElement.lang = locale;
       })();
     </script>
     <link rel="stylesheet" href="/src/style.css" />
@@ -16,8 +18,8 @@
     <div id="landing" class="landing">
       <div class="landing-alpha-banner" role="status" aria-live="polite">
         <div class="landing-alpha-banner__inner">
-          <strong>Alpha-Vorschau</strong>
-          <span>
+          <strong data-i18n="landing.alpha">Alpha-Vorschau</strong>
+          <span data-i18n="landing.alphaText">
             KlemDesk befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können
             sich noch ändern.
           </span>
@@ -29,12 +31,36 @@
             <span class="landing-brand__mark" aria-hidden="true">Kd</span>
             <span class="landing-brand__text">
               <strong class="landing-brand__name">KlemDesk</strong>
-              <span class="landing-brand__tag">Angebote &amp; Rechnungen</span>
+              <span class="landing-brand__tag" data-i18n="landing.tagline">Angebote &amp; Rechnungen</span>
             </span>
           </div>
           <div class="landing-header__actions">
-            <button type="button" class="btn btn-ghost btn-sm" data-landing-action="login">Anmelden</button>
-            <button type="button" class="btn btn-primary btn-sm" data-landing-action="register" data-landing-plan="free">Kostenlos starten</button>
+            <div class="lang-switcher" id="landing-lang-switcher-wrap">
+              <button
+                type="button"
+                class="lang-switcher__trigger btn btn-ghost btn-sm"
+                id="landing-lang-switcher"
+                aria-haspopup="menu"
+                aria-expanded="false"
+                aria-controls="landing-lang-switcher-menu"
+                data-i18n-aria-label="lang.choose"
+                data-i18n-title="lang.choose"
+              >
+                <span class="lang-switcher__flag" aria-hidden="true"></span>
+              </button>
+              <div class="lang-switcher__menu hidden" id="landing-lang-switcher-menu" role="menu" data-i18n-aria-label="lang.menu">
+                <button type="button" class="lang-switcher__option is-active" role="menuitemradio" data-locale="de" aria-checked="true">
+                  <span class="lang-switcher__option-flag" data-flag-locale="de" aria-hidden="true"></span>
+                  <span>Deutsch</span>
+                </button>
+                <button type="button" class="lang-switcher__option" role="menuitemradio" data-locale="en" aria-checked="false">
+                  <span class="lang-switcher__option-flag" data-flag-locale="en" aria-hidden="true"></span>
+                  <span>English</span>
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" data-landing-action="login" data-i18n="landing.login">Anmelden</button>
+            <button type="button" class="btn btn-primary btn-sm" data-landing-action="register" data-landing-plan="free" data-i18n="landing.startFree">Kostenlos starten</button>
           </div>
         </div>
       </header>
@@ -174,25 +200,25 @@
 
         <section class="landing-hero">
           <div class="landing-hero__content">
-            <p class="landing-eyebrow">Kostenlos · Sofort startklar · Für Dienstleistung</p>
+            <p class="landing-eyebrow" data-i18n="landing.heroEyebrow">Kostenlos · Sofort startklar · Für Dienstleistung</p>
             <h1 class="landing-hero__title">
-              Angebote und Rechnungen erstellen —<br />
-              <span class="landing-hero__accent">professionell als PDF</span>
+              <span data-i18n="landing.heroTitle">Angebote und Rechnungen erstellen —</span><br />
+              <span class="landing-hero__accent" data-i18n="landing.heroAccent">professionell als PDF</span>
             </h1>
-            <p class="landing-hero__lead">
+            <p class="landing-hero__lead" data-i18n="landing.heroLead">
               KlemDesk bündelt Kunden, Katalog und Dokumente in einer Oberfläche.
               Registrieren, einloggen und in wenigen Minuten das erste Angebot versenden.
             </p>
             <div class="landing-hero__actions">
-              <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free">
+              <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free" data-i18n="landing.registerFree">
                 Jetzt kostenlos registrieren
               </button>
-              <button type="button" class="btn btn-ghost" data-landing-action="login">Bereits Konto? Anmelden</button>
+              <button type="button" class="btn btn-ghost" data-landing-action="login" data-i18n="landing.hasAccount">Bereits Konto? Anmelden</button>
             </div>
             <ul class="landing-badges" aria-label="Vorteile">
-              <li class="landing-badge">100&nbsp;% kostenlos nutzbar</li>
-              <li class="landing-badge">Eigener Mandant &amp; getrennte Daten</li>
-              <li class="landing-badge">Keine Installation nötig</li>
+              <li class="landing-badge" data-i18n="landing.badgeFree">100&nbsp;% kostenlos nutzbar</li>
+              <li class="landing-badge" data-i18n="landing.badgeTenant">Eigener Mandant &amp; getrennte Daten</li>
+              <li class="landing-badge" data-i18n="landing.badgeNoInstall">Keine Installation nötig</li>
             </ul>
           </div>
           <div class="landing-hero__visual" aria-hidden="true">
@@ -221,8 +247,8 @@
 
         <section class="landing-section" aria-labelledby="landing-features-title">
           <div class="landing-section__head">
-            <h2 id="landing-features-title">Alles für den Büroalltag</h2>
-            <p>Von der Kundenanfrage bis zum PDF — ohne Medienbruch.</p>
+            <h2 id="landing-features-title" data-i18n="landing.featuresTitle">Alles für den Büroalltag</h2>
+            <p data-i18n="landing.featuresLead">Von der Kundenanfrage bis zum PDF — ohne Medienbruch.</p>
           </div>
           <div class="landing-features">
             <article class="landing-feature">
@@ -301,78 +327,104 @@
 
         <section class="landing-cta">
           <div class="landing-cta__card">
-            <h2>Bereit für das erste Angebot?</h2>
-            <p>Registrierung dauert unter einer Minute. KlemDesk ist aktuell kostenlos nutzbar.</p>
+            <h2 data-i18n="landing.ctaTitle">Bereit für das erste Angebot?</h2>
+            <p data-i18n="landing.ctaLead">Registrierung dauert unter einer Minute. KlemDesk ist aktuell kostenlos nutzbar.</p>
             <div class="landing-cta__actions">
-              <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free">Kostenlos registrieren</button>
-              <button type="button" class="btn btn-ghost" data-landing-action="login">Anmelden</button>
+              <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free" data-i18n="landing.registerFree">Kostenlos registrieren</button>
+              <button type="button" class="btn btn-ghost" data-landing-action="login" data-i18n="landing.login">Anmelden</button>
             </div>
           </div>
         </section>
       </main>
 
       <footer class="landing-footer">
-        <nav class="legal-nav" aria-label="Rechtliches">
-          <button type="button" class="legal-nav__link" data-legal-page="impressum">Impressum</button>
+        <nav class="legal-nav" data-i18n-aria-label="legal.nav" aria-label="Rechtliches">
+          <button type="button" class="legal-nav__link" data-legal-page="impressum" data-i18n="legal.imprint">Impressum</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="datenschutz">Datenschutz</button>
+          <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="agb">AGB</button>
+          <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="roadmap">Roadmap</button>
+          <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
         </nav>
       </footer>
     </div>
 
     <div id="login-screen" class="login-screen hidden">
       <div class="login-screen__inner">
-        <button type="button" class="login-back btn btn-ghost btn-sm" id="login-back-btn">← Zur Startseite</button>
+        <div class="login-screen__top">
+          <button type="button" class="login-back btn btn-ghost btn-sm" id="login-back-btn" data-i18n="auth.backHome">← Zur Startseite</button>
+          <div class="lang-switcher" id="login-lang-switcher-wrap">
+            <button
+              type="button"
+              class="lang-switcher__trigger btn btn-ghost btn-sm"
+              id="login-lang-switcher"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="login-lang-switcher-menu"
+              data-i18n-aria-label="lang.choose"
+              data-i18n-title="lang.choose"
+            >
+              <span class="lang-switcher__flag" aria-hidden="true"></span>
+            </button>
+            <div class="lang-switcher__menu hidden" id="login-lang-switcher-menu" role="menu" data-i18n-aria-label="lang.menu">
+              <button type="button" class="lang-switcher__option is-active" role="menuitemradio" data-locale="de" aria-checked="true">
+                <span class="lang-switcher__option-flag" data-flag-locale="de" aria-hidden="true"></span>
+                <span>Deutsch</span>
+              </button>
+              <button type="button" class="lang-switcher__option" role="menuitemradio" data-locale="en" aria-checked="false">
+                <span class="lang-switcher__option-flag" data-flag-locale="en" aria-hidden="true"></span>
+                <span>English</span>
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="login-card">
           <div class="login-header">
-            <h1 id="auth-title">Anmelden</h1>
+            <h1 id="auth-title" data-i18n="auth.login">Anmelden</h1>
             <div class="login-tabs" role="tablist">
-              <button type="button" class="login-tab is-active" data-auth-tab="login" role="tab">Anmelden</button>
-              <button type="button" class="login-tab" data-auth-tab="register" role="tab">Registrieren</button>
+              <button type="button" class="login-tab is-active" data-auth-tab="login" role="tab" data-i18n="auth.login">Anmelden</button>
+              <button type="button" class="login-tab" data-auth-tab="register" role="tab" data-i18n="auth.register">Registrieren</button>
             </div>
           </div>
           <form id="login-form" class="login-form">
             <label>
-              E-Mail oder Benutzername
+              <span data-i18n="auth.emailOrUser">E-Mail oder Benutzername</span>
               <input type="text" id="login-user" autocomplete="username" value="admin" required />
             </label>
             <label>
-              Passwort
+              <span data-i18n="auth.password">Passwort</span>
               <input type="password" id="login-pass" autocomplete="current-password" value="admin" required />
             </label>
-            <p id="login-error" class="login-error hidden">Anmeldung fehlgeschlagen.</p>
-            <button type="submit" class="btn btn-primary btn-full">Einloggen</button>
+            <p id="login-error" class="login-error hidden" data-i18n="auth.loginFailed">Anmeldung fehlgeschlagen.</p>
+            <button type="submit" class="btn btn-primary btn-full" data-i18n="auth.signIn">Einloggen</button>
           </form>
           <form id="register-form" class="login-form hidden">
             <label>
-              Firmenname
+              <span data-i18n="auth.companyName">Firmenname</span>
               <input type="text" id="register-tenant" autocomplete="organization" required />
             </label>
             <label>
-              E-Mail
+              <span data-i18n="auth.email">E-Mail</span>
               <input type="email" id="register-email" autocomplete="email" required />
             </label>
             <label>
-              Passwort (min. 8 Zeichen)
+              <span data-i18n="auth.passwordMin">Passwort (min. 8 Zeichen)</span>
               <input type="password" id="register-pass" autocomplete="new-password" required minlength="8" />
             </label>
             <p id="register-plan-note" class="register-plan-note"></p>
-            <p id="register-error" class="login-error hidden">Registrierung fehlgeschlagen.</p>
-            <button type="submit" class="btn btn-primary btn-full">Konto anlegen</button>
+            <p id="register-error" class="login-error hidden" data-i18n="auth.registerFailed">Registrierung fehlgeschlagen.</p>
+            <button type="submit" class="btn btn-primary btn-full" data-i18n="auth.createAccount">Konto anlegen</button>
           </form>
         </div>
-        <nav class="legal-nav" aria-label="Rechtliches">
-          <button type="button" class="legal-nav__link" data-legal-page="impressum">Impressum</button>
+        <nav class="legal-nav" data-i18n-aria-label="legal.nav" aria-label="Rechtliches">
+          <button type="button" class="legal-nav__link" data-legal-page="impressum" data-i18n="legal.imprint">Impressum</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="datenschutz">Datenschutz</button>
+          <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="agb">AGB</button>
+          <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="roadmap">Roadmap</button>
+          <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
         </nav>
       </div>
     </div>
@@ -389,6 +441,7 @@
               aria-haspopup="menu"
               aria-expanded="false"
               aria-controls="bereich-switcher-menu"
+              data-i18n-aria-label="header.switchArea"
             >
               <span class="app-brand__mark app-brand__mark--angebote" id="bereich-switcher-mark" aria-hidden="true"
                 >A</span
@@ -409,6 +462,7 @@
               class="bereich-switcher__menu hidden"
               id="bereich-switcher-menu"
               role="menu"
+              data-i18n-aria-label="header.switchArea"
               aria-label="Bereich wechseln"
             >
               <button
@@ -418,10 +472,10 @@
                 data-bereich="angebote"
                 hidden
               >
-                <span class="app-brand__mark app-brand__mark--angebote" aria-hidden="true">A</span>
+                <span class="app-brand__mark app-brand__mark--angebote" data-bereich-mark="angebote" aria-hidden="true">A</span>
                 <span class="bereich-switcher__option-text">
-                  <span class="bereich-switcher__option-title">Angebote</span>
-                  <span class="bereich-switcher__option-desc">Angebote erstellen &amp; verwalten</span>
+                  <span class="bereich-switcher__option-title" data-i18n="bereich.offers">Angebote</span>
+                  <span class="bereich-switcher__option-desc" data-i18n="bereich.offersManage">Angebote erstellen &amp; verwalten</span>
                 </span>
               </button>
               <button
@@ -431,10 +485,10 @@
                 data-bereich="rechnungen"
                 hidden
               >
-                <span class="app-brand__mark app-brand__mark--rechnungen" aria-hidden="true">R</span>
+                <span class="app-brand__mark app-brand__mark--rechnungen" data-bereich-mark="rechnungen" aria-hidden="true">R</span>
                 <span class="bereich-switcher__option-text">
-                  <span class="bereich-switcher__option-title">Rechnungen</span>
-                  <span class="bereich-switcher__option-desc">Rechnungen erstellen &amp; verwalten</span>
+                  <span class="bereich-switcher__option-title" data-i18n="bereich.invoices">Rechnungen</span>
+                  <span class="bereich-switcher__option-desc" data-i18n="bereich.invoicesManage">Rechnungen erstellen &amp; verwalten</span>
                 </span>
               </button>
             </div>
@@ -446,14 +500,14 @@
             id="nav-mobile-toggle"
             aria-expanded="false"
             aria-controls="main-nav"
-            aria-label="Menü öffnen"
+            data-i18n-aria-label="header.menuOpen"
           >
             <span class="app-nav-toggle__bar" aria-hidden="true"></span>
             <span class="app-nav-toggle__bar" aria-hidden="true"></span>
             <span class="app-nav-toggle__bar" aria-hidden="true"></span>
           </button>
 
-          <nav class="app-nav" id="main-nav" aria-label="Hauptnavigation">
+          <nav class="app-nav" id="main-nav" data-i18n-aria-label="nav.main" aria-label="Hauptnavigation">
             <ul class="app-nav__list">
               <li class="app-nav__group" data-nav-group="angebote">
                 <button
@@ -463,21 +517,21 @@
                   aria-haspopup="true"
                   data-nav-trigger
                 >
-                  <span>Angebote</span>
+                  <span data-i18n="nav.offers">Angebote</span>
                   <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
                     <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 </button>
                 <div class="app-nav__menu" role="menu">
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="neu">
-                    <span class="app-nav__link-title app-nav__link-title--desktop">Neues Angebot</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile">Neu</span>
-                    <span class="app-nav__link-desc">Angebot &amp; PDF erstellen</span>
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.offersNew">Neues Angebot</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.offersNewShort">Neu</span>
+                    <span class="app-nav__link-desc" data-i18n="nav.offersNewDesc">Angebot &amp; PDF erstellen</span>
                   </button>
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="archiv">
-                    <span class="app-nav__link-title app-nav__link-title--desktop">Alle Angebote</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile">Archiv</span>
-                    <span class="app-nav__link-desc">Archiv durchsuchen</span>
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.offersArchive">Alle Angebote</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.offersArchiveShort">Archiv</span>
+                    <span class="app-nav__link-desc" data-i18n="nav.offersArchiveDesc">Archiv durchsuchen</span>
                   </button>
                 </div>
               </li>
@@ -489,58 +543,83 @@
                   aria-haspopup="true"
                   data-nav-trigger
                 >
-                  <span>Rechnungen</span>
+                  <span data-i18n="nav.invoices">Rechnungen</span>
                   <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
                     <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 </button>
                 <div class="app-nav__menu" role="menu">
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-neu">
-                    <span class="app-nav__link-title app-nav__link-title--desktop">Neue Rechnung</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile">Neu</span>
-                    <span class="app-nav__link-desc">Rechnung &amp; PDF erstellen</span>
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.invoicesNew">Neue Rechnung</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.invoicesNewShort">Neu</span>
+                    <span class="app-nav__link-desc" data-i18n="nav.invoicesNewDesc">Rechnung &amp; PDF erstellen</span>
                   </button>
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-archiv">
-                    <span class="app-nav__link-title app-nav__link-title--desktop">Alle Rechnungen</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile">Archiv</span>
-                    <span class="app-nav__link-desc">Archiv durchsuchen</span>
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.invoicesArchive">Alle Rechnungen</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.invoicesArchiveShort">Archiv</span>
+                    <span class="app-nav__link-desc" data-i18n="nav.invoicesArchiveDesc">Archiv durchsuchen</span>
                   </button>
                 </div>
               </li>
               <li class="app-nav__group app-nav__group--direct" data-nav-group="katalog">
                 <button type="button" class="app-nav__trigger" data-nav-view="katalog">
-                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">Katalog</span>
-                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">Katalog</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop" data-i18n="nav.catalog">Katalog</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile" data-i18n="nav.catalog">Katalog</span>
                 </button>
               </li>
               <li class="app-nav__group app-nav__group--direct" data-nav-group="kunden">
                 <button type="button" class="app-nav__trigger" data-nav-view="kunden">
-                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">Kunden</span>
-                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">Kunden</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop" data-i18n="nav.customers">Kunden</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile" data-i18n="nav.customers">Kunden</span>
                 </button>
               </li>
               <li class="app-nav__group app-nav__group--direct" data-nav-group="pdf-vorlage">
                 <button type="button" class="app-nav__trigger" data-nav-view="pdf-vorlage">
-                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">Vorlage</span>
-                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">Vorlage</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop" data-i18n="nav.template">Vorlage</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile" data-i18n="nav.template">Vorlage</span>
                 </button>
               </li>
               <li class="app-nav__group app-nav__group--direct is-admin-only hidden" data-nav-group="admin">
                 <button type="button" class="app-nav__trigger" data-nav-view="admin">
-                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">Admin</span>
-                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">Admin</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop" data-i18n="nav.admin">Admin</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile" data-i18n="nav.admin">Admin</span>
                 </button>
               </li>
             </ul>
           </nav>
 
           <div class="app-toolbar">
+            <div class="app-header__profile-group">
+              <div class="lang-switcher" id="lang-switcher-wrap">
+                <button
+                  type="button"
+                  class="lang-switcher__trigger app-header__action-btn app-header__action-btn--lang"
+                  id="lang-switcher"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  aria-controls="lang-switcher-menu"
+                  data-i18n-aria-label="lang.choose"
+                  data-i18n-title="lang.choose"
+                >
+                  <span class="lang-switcher__flag" aria-hidden="true"></span>
+                </button>
+                <div class="lang-switcher__menu hidden" id="lang-switcher-menu" role="menu" data-i18n-aria-label="lang.menu">
+                  <button type="button" class="lang-switcher__option is-active" role="menuitemradio" data-locale="de" aria-checked="true">
+                    <span class="lang-switcher__option-flag" data-flag-locale="de" aria-hidden="true"></span>
+                    <span>Deutsch</span>
+                  </button>
+                  <button type="button" class="lang-switcher__option" role="menuitemradio" data-locale="en" aria-checked="false">
+                    <span class="lang-switcher__option-flag" data-flag-locale="en" aria-hidden="true"></span>
+                    <span>English</span>
+                  </button>
+                </div>
+              </div>
             <button
               type="button"
               id="profile-btn"
               class="btn btn-ghost app-header__action-btn app-header__action-btn--profile profile-btn"
-              aria-label="Profil"
-              title="Profil"
+              data-i18n-aria-label="header.profile"
+              data-i18n-title="header.profile"
             >
               <svg class="profile-btn__icon app-header__action-icon app-header__action-icon--desktop" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                 <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.75" />
@@ -552,14 +631,15 @@
                   stroke-linecap="round"
                 />
               </svg>
-              <span class="app-header__action-label app-header__action-label--mobile">Profil</span>
+              <span class="app-header__action-label app-header__action-label--mobile" data-i18n="header.profile">Profil</span>
             </button>
+            </div>
             <button
               type="button"
               id="logout-btn"
               class="btn btn-ghost app-header__action-btn app-header__action-btn--logout"
-              aria-label="Abmelden"
-              title="Abmelden"
+              data-i18n-aria-label="header.logout"
+              data-i18n-title="header.logout"
             >
               <svg class="app-header__action-icon app-header__action-icon--desktop" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -571,18 +651,19 @@
                   stroke-linejoin="round"
                 />
               </svg>
-              <span class="app-header__action-label app-header__action-label--mobile">Abmelden</span>
+              <span class="app-header__action-label app-header__action-label--mobile" data-i18n="header.logout">Abmelden</span>
             </button>
           </div>
         </div>
 
-        <div class="app-bereich-segment" role="tablist" aria-label="Bereich wählen">
+        <div class="app-bereich-segment" role="tablist" data-i18n-aria-label="bereich.choose" aria-label="Bereich wählen">
           <button
             type="button"
             class="app-bereich-segment__btn is-active"
             data-bereich="angebote"
             role="tab"
             aria-selected="true"
+            data-i18n="bereich.offers"
           >
             Angebote
           </button>
@@ -592,6 +673,7 @@
             data-bereich="rechnungen"
             role="tab"
             aria-selected="false"
+            data-i18n="bereich.invoices"
           >
             Rechnungen
           </button>
@@ -609,7 +691,7 @@
               aria-controls="rechnung-kopf-body"
             >
               <span class="angebot-kopf__summary">
-                <span class="angebot-kopf__title">Allgemeine Informationen</span>
+                <span class="angebot-kopf__title" data-i18n="common.generalInfo">Allgemeine Informationen</span>
                 <span class="angebot-kopf__meta" id="rechnung-kopf-summary-meta">
                   <span id="rechnung-kopf-summary-kunde" class="angebot-kopf__kunde"></span>
                 </span>
@@ -630,15 +712,15 @@
                 <div class="angebot-kopf__split">
                   <div class="angebot-kopf__col angebot-kopf__col--meta">
                     <label>
-                      Rechnungsnummer
+                      <span data-i18n="form.invoiceNumber">Rechnungsnummer</span>
                       <input type="text" id="rechnung-nr" readonly tabindex="-1" aria-readonly="true" />
                     </label>
                     <label>
-                      Rechnungsdatum
+                      <span data-i18n="form.invoiceDate">Rechnungsdatum</span>
                       <input type="date" id="rechnung-datum" />
                     </label>
                     <label>
-                      Fällig am
+                      <span data-i18n="form.dueDate">Fällig am</span>
                       <input type="date" id="rechnung-faellig" />
                     </label>
                     <p id="rechnung-angebot-ref" class="field-hint hidden"></p>
@@ -647,40 +729,43 @@
                   <div class="angebot-kopf__col angebot-kopf__col--kunde">
                     <label>
                       <span class="field-label-row">
-                        Kunde
-                        <span id="rechnung-kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
+                        <span data-i18n="form.customer">Kunde</span>
+                        <span id="rechnung-kunde-hinweis" class="field-hint hidden" data-i18n="form.customerFromRecord">Vom Kunden übernommen</span>
                       </span>
                       <div class="input-row">
-                        <input type="text" id="rechnung-kunde-name" placeholder="Freiname oder Kunde wählen" />
-                        <button type="button" id="rechnung-kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
+                        <input type="text" id="rechnung-kunde-name" data-i18n-placeholder="form.customerPlaceholder" placeholder="Freiname oder Kunde wählen" />
+                        <button type="button" id="rechnung-kunde-auswahl-btn" class="btn btn-ghost" data-i18n="form.selectCustomer">Kunde auswählen</button>
                       </div>
                     </label>
                     <label>
-                      E-Mail
+                      <span data-i18n="form.email">E-Mail</span>
                       <input
                         type="email"
                         id="rechnung-kunde-email"
+                        data-i18n-placeholder="form.emailPlaceholder"
                         placeholder="kunde@beispiel.de"
                         autocomplete="email"
                       />
                     </label>
                     <div class="adresse-fields">
-                      <div id="rechnung-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
+                      <div id="rechnung-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" data-i18n-aria-label="form.savedAddresses" aria-label="Gespeicherte Adressen"></div>
                       <p id="rechnung-einsatzort-hinweis" class="adresse-auswahl__active hidden"></p>
                       <label>
-                        Straße, Hausnummer
+                        <span data-i18n="form.street">Straße, Hausnummer</span>
                         <input
                           type="text"
                           id="rechnung-kunde-strasse"
+                          data-i18n-placeholder="form.streetPlaceholder"
                           placeholder="Musterstraße 12"
                           autocomplete="street-address"
                         />
                       </label>
                       <label>
-                        PLZ, Ort
+                        <span data-i18n="form.zipCity">PLZ, Ort</span>
                         <input
                           type="text"
                           id="rechnung-kunde-plz-ort"
+                          data-i18n-placeholder="form.zipCityPlaceholder"
                           placeholder="12345 Musterstadt"
                           autocomplete="postal-code"
                         />
@@ -701,7 +786,7 @@
               aria-controls="rechnung-posten-kopf-body"
             >
               <span class="posten-kopf__summary">
-                <span class="posten-kopf__title">Posten</span>
+                <span class="posten-kopf__title" data-i18n="posten.title">Posten</span>
                 <span class="posten-kopf__meta" id="rechnung-posten-kopf-summary-meta">
                   <span id="rechnung-posten-kopf-summary-count" class="posten-kopf__count">Keine Posten</span>
                 </span>
@@ -720,9 +805,9 @@
             <div class="posten-kopf__collapse" id="rechnung-posten-kopf-body">
               <div class="posten-kopf__body">
                 <div class="card-header card-header--search posten-suche-row">
-                  <input type="search" id="rechnung-suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
-                  <button type="button" id="rechnung-katalog-oeffnen-btn" class="btn btn-ghost btn-sm posten-suche-row__btn" aria-label="Gesamten Katalog anzeigen">
-                    Katalog
+                  <input type="search" id="rechnung-suche" class="search search--full" data-i18n-placeholder="form.catalogSearch" placeholder="Katalog-Posten suchen…" />
+                  <button type="button" id="rechnung-katalog-oeffnen-btn" class="btn btn-ghost btn-sm posten-suche-row__btn" data-i18n-aria-label="form.showCatalog" aria-label="Gesamten Katalog anzeigen">
+                    <span data-i18n="form.catalogBtn">Katalog</span>
                   </button>
                 </div>
                 <div id="rechnung-posten-liste" class="posten-liste"></div>
@@ -734,15 +819,15 @@
             <section class="card summary-card">
               <div class="totals">
                 <div class="total-row">
-                  <span>Gesamt netto</span>
+                  <span data-i18n="form.totalNet">Gesamt netto</span>
                   <span id="rechnung-summe-netto">0,00 €</span>
                 </div>
                 <div class="total-row">
-                  <span>19 % Umsatzsteuer</span>
+                  <span data-i18n="form.vat">19 % Umsatzsteuer</span>
                   <span id="rechnung-summe-mwst">0,00 €</span>
                 </div>
                 <div class="total-row total-row--bold">
-                  <span>Gesamtbetrag</span>
+                  <span data-i18n="form.totalGross">Gesamtbetrag</span>
                   <span id="rechnung-summe-brutto">0,00 €</span>
                 </div>
               </div>
@@ -756,7 +841,7 @@
                   class="btn btn-ghost is-disabled"
                   aria-disabled="true"
                 >
-                  Speichern
+                  <span data-i18n="pdf.save">Speichern</span>
                 </button>
                 <button
                   type="button"
@@ -764,14 +849,9 @@
                   class="btn btn-ghost is-disabled"
                   aria-disabled="true"
                 >
-                  Speichern &amp; schließen
+                  <span data-i18n="pdf.saveClose">Speichern &amp; schließen</span>
                 </button>
-                <button
-                  type="button"
-                  id="rechnung-pdf-btn"
-                  class="btn btn-ghost is-disabled"
-                  aria-disabled="true"
-                >
+                <button type="button" id="rechnung-pdf-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
                   PDF erstellen
                 </button>
               </div>
@@ -782,9 +862,9 @@
                   class="btn btn-primary is-disabled"
                   aria-disabled="true"
                 >
-                  PDF generieren und an Kunden senden
+                  <span data-i18n="pdf.send">PDF generieren und an Kunden senden</span>
                 </button>
-                <button type="button" id="rechnung-reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true">Zurücksetzen</button>
+                <button type="button" id="rechnung-reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true"><span data-i18n="common.reset">Zurücksetzen</span></button>
               </div>
               <p id="rechnung-pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
             </div>
@@ -796,8 +876,8 @@
         <main class="main">
           <section class="card">
             <div class="card-header">
-              <h2>Gespeicherte Rechnungen</h2>
-              <input type="search" id="rechnung-archiv-suche" class="search" placeholder="Rechnungen suchen…" />
+              <h2 data-i18n="form.archivInvoicesTitle">Gespeicherte Rechnungen</h2>
+              <input type="search" id="rechnung-archiv-suche" class="search" data-i18n-placeholder="form.searchInvoices" placeholder="Rechnungen suchen…" />
             </div>
             <div id="rechnung-archiv-liste" class="archiv-liste"></div>
           </section>
@@ -815,7 +895,7 @@
               aria-controls="angebot-kopf-body"
             >
               <span class="angebot-kopf__summary">
-                <span class="angebot-kopf__title">Allgemeine Informationen</span>
+                <span class="angebot-kopf__title" data-i18n="common.generalInfo">Allgemeine Informationen</span>
                 <span class="angebot-kopf__meta" id="angebot-kopf-summary-meta">
                   <span id="angebot-kopf-summary-kunde" class="angebot-kopf__kunde"></span>
                 </span>
@@ -836,15 +916,15 @@
                 <div class="angebot-kopf__split">
                   <div class="angebot-kopf__col angebot-kopf__col--meta">
                     <label>
-                      Angebotsnummer
+                      <span data-i18n="form.quoteNumber">Angebotsnummer</span>
                       <input type="text" id="angebot-nr" readonly tabindex="-1" aria-readonly="true" />
                     </label>
                     <label>
-                      Angebotsdatum
+                      <span data-i18n="form.quoteDate">Angebotsdatum</span>
                       <input type="date" id="angebot-datum" />
                     </label>
                     <label>
-                      Gültig bis
+                      <span data-i18n="form.validUntil">Gültig bis</span>
                       <input type="date" id="gueltig-bis" />
                     </label>
                   </div>
@@ -852,40 +932,43 @@
                   <div class="angebot-kopf__col angebot-kopf__col--kunde">
                     <label>
                       <span class="field-label-row">
-                        Kunde
-                        <span id="kunde-hinweis" class="field-hint hidden">Vom Kunden übernommen</span>
+                        <span data-i18n="form.customer">Kunde</span>
+                        <span id="kunde-hinweis" class="field-hint hidden" data-i18n="form.customerFromRecord">Vom Kunden übernommen</span>
                       </span>
                       <div class="input-row">
-                        <input type="text" id="kunde-name" placeholder="Freiname oder Kunde wählen" />
-                        <button type="button" id="kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
+                        <input type="text" id="kunde-name" data-i18n-placeholder="form.customerPlaceholder" placeholder="Freiname oder Kunde wählen" />
+                        <button type="button" id="kunde-auswahl-btn" class="btn btn-ghost" data-i18n="form.selectCustomer">Kunde auswählen</button>
                       </div>
                     </label>
                     <label>
-                      E-Mail
+                      <span data-i18n="form.email">E-Mail</span>
                       <input
                         type="email"
                         id="kunde-email"
+                        data-i18n-placeholder="form.emailPlaceholder"
                         placeholder="kunde@beispiel.de"
                         autocomplete="email"
                       />
                     </label>
                     <div class="adresse-fields">
-                      <div id="kunde-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
+                      <div id="kunde-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" data-i18n-aria-label="form.savedAddresses" aria-label="Gespeicherte Adressen"></div>
                       <p id="kunde-einsatzort-hinweis" class="adresse-auswahl__active hidden"></p>
                       <label>
-                        Straße, Hausnummer
+                        <span data-i18n="form.street">Straße, Hausnummer</span>
                         <input
                           type="text"
                           id="kunde-strasse"
+                          data-i18n-placeholder="form.streetPlaceholder"
                           placeholder="Musterstraße 12"
                           autocomplete="street-address"
                         />
                       </label>
                       <label>
-                        PLZ, Ort
+                        <span data-i18n="form.zipCity">PLZ, Ort</span>
                         <input
                           type="text"
                           id="kunde-plz-ort"
+                          data-i18n-placeholder="form.zipCityPlaceholder"
                           placeholder="12345 Musterstadt"
                           autocomplete="postal-code"
                         />
@@ -906,7 +989,7 @@
               aria-controls="posten-kopf-body"
             >
               <span class="posten-kopf__summary">
-                <span class="posten-kopf__title">Posten</span>
+                <span class="posten-kopf__title" data-i18n="posten.title">Posten</span>
                 <span class="posten-kopf__meta" id="posten-kopf-summary-meta">
                   <span id="posten-kopf-summary-count" class="posten-kopf__count">Keine Posten</span>
                 </span>
@@ -925,9 +1008,9 @@
             <div class="posten-kopf__collapse" id="posten-kopf-body">
               <div class="posten-kopf__body">
                 <div class="card-header card-header--search posten-suche-row">
-                  <input type="search" id="suche" class="search search--full" placeholder="Katalog-Posten suchen…" />
-                  <button type="button" id="katalog-oeffnen-btn" class="btn btn-ghost btn-sm posten-suche-row__btn" aria-label="Gesamten Katalog anzeigen">
-                    Katalog
+                  <input type="search" id="suche" class="search search--full" data-i18n-placeholder="form.catalogSearch" placeholder="Katalog-Posten suchen…" />
+                  <button type="button" id="katalog-oeffnen-btn" class="btn btn-ghost btn-sm posten-suche-row__btn" data-i18n-aria-label="form.showCatalog" aria-label="Gesamten Katalog anzeigen">
+                    <span data-i18n="form.catalogBtn">Katalog</span>
                   </button>
                 </div>
                 <div id="posten-liste" class="posten-liste"></div>
@@ -939,15 +1022,15 @@
             <section class="card summary-card">
               <div class="totals">
                 <div class="total-row">
-                  <span>Gesamt netto</span>
+                  <span data-i18n="form.totalNet">Gesamt netto</span>
                   <span id="summe-netto">0,00 €</span>
                 </div>
                 <div class="total-row">
-                  <span>19 % Umsatzsteuer</span>
+                  <span data-i18n="form.vat">19 % Umsatzsteuer</span>
                   <span id="summe-mwst">0,00 €</span>
                 </div>
                 <div class="total-row total-row--bold">
-                  <span>Gesamtbetrag</span>
+                  <span data-i18n="form.totalGross">Gesamtbetrag</span>
                   <span id="summe-brutto">0,00 €</span>
                 </div>
               </div>
@@ -956,10 +1039,10 @@
             <div id="pdf-footer" class="pdf-footer">
               <div class="pdf-footer__save-row">
                 <button type="button" id="save-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
-                  Speichern
+                  <span data-i18n="pdf.save">Speichern</span>
                 </button>
                 <button type="button" id="save-close-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
-                  Speichern &amp; schließen
+                  <span data-i18n="pdf.saveClose">Speichern &amp; schließen</span>
                 </button>
                 <button type="button" id="pdf-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
                   PDF erstellen
@@ -972,9 +1055,9 @@
                   class="btn btn-primary is-disabled"
                   aria-disabled="true"
                 >
-                  PDF generieren und an Kunden senden
+                  <span data-i18n="pdf.send">PDF generieren und an Kunden senden</span>
                 </button>
-                <button type="button" id="reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true">Zurücksetzen</button>
+                <button type="button" id="reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true"><span data-i18n="common.reset">Zurücksetzen</span></button>
               </div>
               <p id="pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
             </div>
@@ -986,8 +1069,8 @@
         <main class="main">
           <section class="card">
             <div class="card-header">
-              <h2>Gespeicherte Angebote</h2>
-              <input type="search" id="archiv-suche" class="search" placeholder="Angebote suchen (Nr., Kunde, Datum)…" />
+              <h2 data-i18n="form.archivQuotesTitle">Gespeicherte Angebote</h2>
+              <input type="search" id="archiv-suche" class="search" data-i18n-placeholder="form.searchQuotes" placeholder="Angebote suchen (Nr., Kunde, Datum)…" />
             </div>
             <div id="archiv-liste" class="archiv-liste"></div>
           </section>
@@ -997,7 +1080,7 @@
         <main class="main">
           <section class="card pdf-vorlage-card">
             <div class="pdf-vorlage-card__head">
-              <h2>Vorlage · Angebot</h2>
+              <h2 data-i18n="form.templateQuote">Vorlage · Angebot</h2>
               <div
                 class="pdf-layout-tabs"
                 role="tablist"
@@ -1038,15 +1121,15 @@
             </p>
             <div class="pdf-vorlage-workspace">
               <aside class="pdf-vorlage-preview-col">
-                <p class="pdf-vorlage-preview-label">Vorschau · Klassisch</p>
-                <div class="pdf-layout-preview" id="pdf-preview-angebot" aria-label="Angebots-PDF Vorschau"></div>
+                <p class="pdf-vorlage-preview-label" data-i18n="form.previewClassic">Vorschau · Klassisch</p>
+                <div class="pdf-layout-preview" id="pdf-preview-angebot" data-i18n-aria-label="form.previewQuote" aria-label="Angebots-PDF Vorschau"></div>
               </aside>
               <div class="pdf-vorlage-form-col">
                 <form id="pdf-angebot-form" class="pdf-template-form">
                   <div data-pdf-shared-fields></div>
                   <div class="form-actions full settings-actions">
-                    <button type="submit" class="btn btn-primary">Angebots-Vorlage speichern</button>
-                    <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="form.saveQuoteTemplate">Angebots-Vorlage speichern</button>
+                    <button type="button" class="btn btn-ghost pdf-template-reset" data-i18n="form.resetTemplate">Auf Standard zurücksetzen</button>
                     <p class="settings-status hidden pdf-template-status" role="status"></p>
                   </div>
                 </form>
@@ -1060,7 +1143,7 @@
         <main class="main">
           <section class="card pdf-vorlage-card">
             <div class="pdf-vorlage-card__head">
-              <h2>Vorlage · Rechnung</h2>
+              <h2 data-i18n="form.templateInvoice">Vorlage · Rechnung</h2>
               <div
                 class="pdf-layout-tabs"
                 role="tablist"
@@ -1105,15 +1188,15 @@
             </p>
             <div class="pdf-vorlage-workspace">
               <aside class="pdf-vorlage-preview-col">
-                <p class="pdf-vorlage-preview-label">Vorschau · Klassisch</p>
-                <div class="pdf-layout-preview" id="pdf-preview-rechnung" aria-label="Rechnungs-PDF Vorschau"></div>
+                <p class="pdf-vorlage-preview-label" data-i18n="form.previewClassic">Vorschau · Klassisch</p>
+                <div class="pdf-layout-preview" id="pdf-preview-rechnung" data-i18n-aria-label="form.previewInvoice" aria-label="Rechnungs-PDF Vorschau"></div>
               </aside>
               <div class="pdf-vorlage-form-col">
                 <form id="pdf-rechnung-form" class="pdf-template-form">
                   <div data-pdf-shared-fields></div>
                   <div class="form-actions full settings-actions">
-                    <button type="submit" class="btn btn-primary">Rechnungs-Vorlage speichern</button>
-                    <button type="button" class="btn btn-ghost pdf-template-reset">Auf Standard zurücksetzen</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="form.saveInvoiceTemplate">Rechnungs-Vorlage speichern</button>
+                    <button type="button" class="btn btn-ghost pdf-template-reset" data-i18n="form.resetTemplate">Auf Standard zurücksetzen</button>
                     <p class="settings-status hidden pdf-template-status" role="status"></p>
                   </div>
                 </form>
@@ -1256,47 +1339,47 @@
       <div id="view-katalog" class="hidden">
         <main class="main">
           <section id="katalog-form-section" class="card">
-            <h2 id="katalog-form-title">Neuer Katalog-Posten</h2>
-            <p class="settings-lead">
+            <h2 id="katalog-form-title" data-i18n="form.catalogNewItem">Neuer Katalog-Posten</h2>
+            <p class="settings-lead" data-i18n="form.catalogLead">
               Legen Sie Posten an, die Sie in Angeboten und Rechnungen aus dem Katalog auswählen können.
             </p>
             <form id="katalog-form" class="form-grid">
               <label class="full">
-                Bezeichnung
-                <input type="text" id="katalog-form-bezeichnung" required placeholder="z. B. Montagearbeiten" />
+                <span data-i18n="form.designation">Bezeichnung</span>
+                <input type="text" id="katalog-form-bezeichnung" required data-i18n-placeholder="form.designationPlaceholder" placeholder="z. B. Montagearbeiten" />
               </label>
               <label class="full">
-                Beschreibung
-                <textarea id="katalog-form-beschreibung" rows="2" placeholder="Kurze Beschreibung (optional)"></textarea>
+                <span data-i18n="form.description">Beschreibung</span>
+                <textarea id="katalog-form-beschreibung" rows="2" data-i18n-placeholder="form.descriptionPlaceholder" placeholder="Kurze Beschreibung (optional)"></textarea>
               </label>
               <label>
-                Art
+                <span data-i18n="form.itemType">Art</span>
                 <select id="katalog-form-art">
-                  <option value="lohn">Lohn</option>
-                  <option value="material">Material</option>
+                  <option value="lohn" data-i18n="form.typeLabor">Lohn</option>
+                  <option value="material" data-i18n="form.typeMaterial">Material</option>
                 </select>
               </label>
               <label>
-                Preis (Stk.)
+                <span data-i18n="form.priceUnit">Preis (Stk.)</span>
                 <input type="text" id="katalog-form-preis-stk" placeholder="0,00" inputmode="decimal" />
               </label>
               <label>
-                Preis (Std.)
+                <span data-i18n="form.priceHour">Preis (Std.)</span>
                 <input type="text" id="katalog-form-preis-std" placeholder="0,00" inputmode="decimal" />
               </label>
               <div class="form-actions full">
-                <button type="submit" class="btn btn-primary">Speichern</button>
-                <button type="button" id="katalog-form-reset" class="btn btn-ghost hidden">Abbrechen</button>
+                <button type="submit" class="btn btn-primary" data-i18n="common.save">Speichern</button>
+                <button type="button" id="katalog-form-reset" class="btn btn-ghost hidden" data-i18n="common.cancel">Abbrechen</button>
               </div>
             </form>
           </section>
 
           <section class="card">
             <div class="card-header">
-              <h2>Ihre Katalog-Posten</h2>
+              <h2 data-i18n="form.catalogItemsTitle">Ihre Katalog-Posten</h2>
               <div class="katalog-liste-toolbar">
-                <input type="search" id="katalog-suche" class="search" placeholder="Posten suchen…" />
-                <button type="button" id="katalog-neu-btn" class="btn btn-ghost btn-sm">Neuer Posten</button>
+                <input type="search" id="katalog-suche" class="search" data-i18n-placeholder="form.searchCatalogItems" placeholder="Posten suchen…" />
+                <button type="button" id="katalog-neu-btn" class="btn btn-ghost btn-sm" data-i18n="form.newCatalogItem">Neuer Posten</button>
               </div>
             </div>
             <div id="katalog-liste" class="katalog-posten-liste"></div>
@@ -1308,86 +1391,88 @@
         <main class="main">
           <section id="kunden-detail" class="card hidden" aria-labelledby="kunden-detail-title">
             <div class="card-header kunden-detail__header">
-              <h2 id="kunden-detail-title">Kunde</h2>
+              <h2 id="kunden-detail-title" data-i18n="form.customerDetail">Kunde</h2>
               <div class="kunden-detail__header-actions">
-                <button type="button" id="kunden-detail-neu-angebot" class="btn btn-primary btn-sm">
+                <button type="button" id="kunden-detail-neu-angebot" class="btn btn-primary btn-sm" data-i18n="kunden.newOffer">
                   Neues Angebot
                 </button>
-                <button type="button" id="kunden-detail-neu-rechnung" class="btn btn-primary btn-sm">
+                <button type="button" id="kunden-detail-neu-rechnung" class="btn btn-primary btn-sm" data-i18n="kunden.newInvoice">
                   Neue Rechnung
                 </button>
-                <button type="button" id="kunden-detail-edit" class="btn btn-ghost btn-sm">Bearbeiten</button>
-                <button type="button" id="kunden-detail-close" class="btn btn-ghost btn-sm">Zur Liste</button>
+                <button type="button" id="kunden-detail-edit" class="btn btn-ghost btn-sm" data-i18n="common.edit">Bearbeiten</button>
+                <button type="button" id="kunden-detail-close" class="btn btn-ghost btn-sm" data-i18n="kunden.backToList">Zur Liste</button>
               </div>
             </div>
             <div class="kunden-detail__body">
               <dl class="kunden-detail__meta">
                 <div class="kunden-detail__row">
-                  <dt>Kundennummer</dt>
+                  <dt data-i18n="form.customerNumber">Kundennummer</dt>
                   <dd id="kunden-detail-kunden-nr"></dd>
                 </div>
                 <div class="kunden-detail__row">
-                  <dt>Anrede</dt>
+                  <dt data-i18n="form.salutation">Anrede</dt>
                   <dd id="kunden-detail-anrede"></dd>
                 </div>
                 <div class="kunden-detail__row">
-                  <dt>Adresse</dt>
+                  <dt data-i18n="form.address">Adresse</dt>
                   <dd id="kunden-detail-adresse"></dd>
                 </div>
                 <div class="kunden-detail__row">
-                  <dt>Telefon</dt>
+                  <dt data-i18n="form.phone">Telefon</dt>
                   <dd id="kunden-detail-telefon"></dd>
                 </div>
                 <div class="kunden-detail__row">
-                  <dt>E-Mail</dt>
+                  <dt data-i18n="form.email">E-Mail</dt>
                   <dd id="kunden-detail-email"></dd>
                 </div>
               </dl>
               <div id="kunden-detail-notiz-wrap" class="kunden-detail__notiz hidden">
-                <h3 class="kunden-detail__subheading">Notiz</h3>
+                <h3 class="kunden-detail__subheading" data-i18n="form.note">Notiz</h3>
                 <p id="kunden-detail-notiz" class="kunden-detail__notiz-text"></p>
               </div>
               <div id="kunden-detail-objekte" class="kunden-detail__objekte">
                 <div class="kunden-detail__objekte-header">
-                  <h3 class="kunden-detail__subheading">Objekte &amp; Adressen</h3>
+                  <h3 class="kunden-detail__subheading" data-i18n="form.objectsAddresses">Objekte &amp; Adressen</h3>
                 </div>
                 <div id="kunden-detail-objekte-liste" class="kunden-objekte-liste"></div>
                 <form id="kunden-objekt-form" class="form-grid kunden-objekt-form">
                   <label class="full">
-                    Objektname
-                    <input type="text" id="kunden-objekt-name" required placeholder="z. B. WEG Musterstraße 12" />
+                    <span data-i18n="form.objectName">Objektname</span>
+                    <input type="text" id="kunden-objekt-name" required data-i18n-placeholder="form.objectNamePlaceholder" placeholder="z. B. WEG Musterstraße 12" />
                   </label>
                   <div class="adresse-fields full">
-                    <span class="adresse-fields__heading">Adresse</span>
+                    <span class="adresse-fields__heading" data-i18n="form.addressHeading">Adresse</span>
                     <label>
-                      Straße, Hausnummer
+                      <span data-i18n="form.street">Straße, Hausnummer</span>
                       <input
                         type="text"
                         id="kunden-objekt-strasse"
+                        data-i18n-placeholder="form.streetPlaceholder"
                         placeholder="Musterstraße 12"
                         autocomplete="street-address"
                       />
                     </label>
                     <label>
-                      PLZ, Ort
+                      <span data-i18n="form.zipCity">PLZ, Ort</span>
                       <input
                         type="text"
                         id="kunden-objekt-plz-ort"
+                        data-i18n-placeholder="form.zipCityPlaceholder"
                         placeholder="12345 Musterstadt"
                         autocomplete="postal-code"
                       />
                     </label>
                   </div>
                   <label class="full">
-                    Art
+                    <span data-i18n="form.objectType">Art</span>
                     <select id="kunden-objekt-typ">
-                      <option value="einsatz">Einsatzort / Leistungsort</option>
-                      <option value="rechnung">Adresse (alternativ)</option>
+                      <option value="einsatz" data-i18n="form.objectTypeService">Einsatzort / Leistungsort</option>
+                      <option value="rechnung" data-i18n="form.objectTypeBilling">Adresse (alternativ)</option>
                     </select>
                   </label>
                   <div class="form-actions full">
-                    <button type="submit" class="btn btn-primary btn-sm">Objekt speichern</button>
-                    <button type="button" id="kunden-objekt-cancel" class="btn btn-ghost btn-sm hidden">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary btn-sm" data-i18n="form.saveObject">Objekt speichern</button>
+                    <button type="button" id="kunden-objekt-cancel" class="btn btn-ghost btn-sm hidden" data-i18n="common.cancel">Abbrechen</button>
                   </div>
                 </form>
               </div>
@@ -1397,10 +1482,10 @@
 
           <section class="card">
             <div class="card-header">
-              <h2>Kundenliste</h2>
+              <h2 data-i18n="kunden.list">Kundenliste</h2>
               <div class="kunden-liste-toolbar">
-                <input type="search" id="kunden-suche" class="search" placeholder="Kunden suchen…" />
-                <button type="button" id="kunden-neu-btn" class="btn btn-primary btn-sm">Neuer Kunde</button>
+                <input type="search" id="kunden-suche" class="search" data-i18n-placeholder="kunden.search" placeholder="Kunden suchen…" />
+                <button type="button" id="kunden-neu-btn" class="btn btn-primary btn-sm" data-i18n="kunden.newBtn">Neuer Kunde</button>
               </div>
             </div>
             <div id="kunden-liste" class="kunden-liste"></div>
@@ -1410,63 +1495,66 @@
             <h2 id="kunden-form-title">Neuer Kunde</h2>
             <form id="kunden-form" class="form-grid">
               <label>
-                Anrede
+                <span data-i18n="form.salutation">Anrede</span>
                 <select id="kunden-form-anrede">
                   <option value="">—</option>
-                  <option value="Herr">Herr</option>
-                  <option value="Frau">Frau</option>
-                  <option value="Firma">Firma</option>
+                  <option value="Herr" data-i18n="form.salutationMr">Herr</option>
+                  <option value="Frau" data-i18n="form.salutationMs">Frau</option>
+                  <option value="Firma" data-i18n="form.salutationCompany">Firma</option>
                 </select>
               </label>
               <label>
-                Kundennummer
+                <span data-i18n="form.customerNumber">Kundennummer</span>
                 <input
                   type="text"
                   id="kunden-form-kunden-nr"
                   readonly
                   tabindex="-1"
+                  data-i18n-placeholder="form.customerNumberPlaceholder"
                   placeholder="Wird beim Speichern vergeben"
                 />
               </label>
               <label class="full">
-                Firmenname / Name
-                <input type="text" id="kunden-form-name" required placeholder="Firma oder Name" />
+                <span data-i18n="form.nameOrCompany">Firmenname / Name</span>
+                <input type="text" id="kunden-form-name" required data-i18n-placeholder="form.namePlaceholder" placeholder="Firma oder Name" />
               </label>
               <div class="adresse-fields full">
                 <label>
-                  Straße, Hausnummer
+                  <span data-i18n="form.street">Straße, Hausnummer</span>
                   <input
                     type="text"
                     id="kunden-form-strasse"
+                    data-i18n-placeholder="form.streetPlaceholder"
                     placeholder="Musterstraße 12"
                     autocomplete="street-address"
                   />
                 </label>
                 <label>
-                  PLZ, Ort
+                  <span data-i18n="form.zipCity">PLZ, Ort</span>
                   <input
                     type="text"
                     id="kunden-form-plz-ort"
+                    data-i18n-placeholder="form.zipCityPlaceholder"
                     placeholder="12345 Musterstadt"
                     autocomplete="postal-code"
                   />
                 </label>
               </div>
               <label>
-                Telefon
-                <input type="tel" id="kunden-form-telefon" placeholder="z. B. 0170 …" autocomplete="tel" />
+                <span data-i18n="form.phone">Telefon</span>
+                <input type="tel" id="kunden-form-telefon" data-i18n-placeholder="form.phonePlaceholder" placeholder="z. B. 0170 …" autocomplete="tel" />
               </label>
               <label>
-                E-Mail
-                <input type="email" id="kunden-form-email" placeholder="kunde@beispiel.de" autocomplete="email" />
+                <span data-i18n="form.email">E-Mail</span>
+                <input type="email" id="kunden-form-email" data-i18n-placeholder="form.emailPlaceholder" placeholder="kunde@beispiel.de" autocomplete="email" />
               </label>
               <label class="full">
-                Notiz
-                <textarea id="kunden-form-notiz" rows="3" placeholder="z. B. Anfahrt, Schlüssel, Besonderheiten"></textarea>
+                <span data-i18n="form.note">Notiz</span>
+                <textarea id="kunden-form-notiz" rows="3" data-i18n-placeholder="form.notePlaceholder" placeholder="z. B. Anfahrt, Schlüssel, Besonderheiten"></textarea>
               </label>
               <div class="form-actions full">
-                <button type="submit" class="btn btn-primary">Speichern</button>
-                <button type="button" id="kunden-form-reset" class="btn btn-ghost">Abbrechen</button>
+                <button type="submit" class="btn btn-primary" data-i18n="common.save">Speichern</button>
+                <button type="button" id="kunden-form-reset" class="btn btn-ghost" data-i18n="common.cancel">Abbrechen</button>
               </div>
             </form>
           </section>
@@ -1474,14 +1562,14 @@
       </div>
 
       <footer class="app-footer">
-        <nav class="legal-nav" aria-label="Rechtliches">
-          <button type="button" class="legal-nav__link" data-legal-page="impressum">Impressum</button>
+        <nav class="legal-nav" data-i18n-aria-label="legal.nav" aria-label="Rechtliches">
+          <button type="button" class="legal-nav__link" data-legal-page="impressum" data-i18n="legal.imprint">Impressum</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="datenschutz">Datenschutz</button>
+          <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="agb">AGB</button>
+          <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="roadmap">Roadmap</button>
+          <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
         </nav>
       </footer>
 
@@ -1597,18 +1685,20 @@
       <div class="modal-backdrop" data-close-katalog-modal aria-hidden="true"></div>
       <div class="modal-panel card katalog-modal-panel" role="dialog" aria-labelledby="katalog-modal-title">
         <div class="katalog-modal__header card-header">
-          <h2 id="katalog-modal-title">Katalog</h2>
+          <h2 id="katalog-modal-title" data-i18n="form.catalogBtn">Katalog</h2>
           <input
             type="search"
             id="katalog-modal-suche"
             class="search katalog-modal__search"
+            data-i18n-placeholder="form.searchCatalogModal"
             placeholder="Im Katalog suchen…"
+            data-i18n-aria-label="form.searchCatalogModal"
             aria-label="Im Katalog suchen"
           />
         </div>
         <div id="katalog-modal-liste" class="katalog-modal-liste"></div>
         <div class="katalog-modal__footer">
-          <button type="button" class="btn btn-ghost btn-sm" data-close-katalog-modal>Schließen</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-close-katalog-modal data-i18n="common.close">Schließen</button>
         </div>
       </div>
     </div>
@@ -1617,18 +1707,20 @@
       <div class="modal-backdrop" data-close-modal></div>
       <div class="modal-panel card kunden-modal-panel" role="dialog" aria-labelledby="kunden-modal-title">
         <div class="kunden-modal__header card-header">
-          <h2 id="kunden-modal-title">Kunde auswählen</h2>
+          <h2 id="kunden-modal-title" data-i18n="form.selectCustomerModal">Kunde auswählen</h2>
           <input
             type="search"
             id="kunden-picker-suche"
             class="search kunden-modal__search"
+            data-i18n-placeholder="form.searchCustomerModal"
             placeholder="Kunde suchen…"
+            data-i18n-aria-label="form.searchCustomerModal"
             aria-label="Kunde suchen"
           />
         </div>
         <div id="kunden-picker-liste" class="kunden-picker-liste"></div>
         <div class="kunden-modal__footer">
-          <button type="button" class="btn btn-ghost btn-sm" data-close-modal>Schließen</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-close-modal data-i18n="common.close">Schließen</button>
         </div>
       </div>
     </div>

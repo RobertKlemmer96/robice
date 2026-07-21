@@ -13,8 +13,10 @@ import { login, logout, register, refreshSession, getCurrentUser, getCurrentTena
 import { loadAdminUsers } from './adminUsers.js';
 import { initOnboarding, openOnboarding, closeOnboarding } from './onboarding.js';
 import { initKatalogModal } from './katalogModal.js';
-import { initDatePickers } from './datePicker.js';
+import { initDatePickers, refreshDatePickers } from './datePicker.js';
 import { initTheme } from './theme.js';
+import { applyI18n, getBereichMark, initI18n, onLocaleChange, syncBereichMarks, t } from './i18n.js';
+import { initLangSwitcher } from './langSwitcher.js';
 import {
   getAllAngebote,
   getAngebot,
@@ -84,6 +86,7 @@ import {
   createPdfLayoutPreviewMarkup,
   mountPdfTemplateFormSections,
   normalizePdfLayoutVariant,
+  refreshPdfTemplateFormLabels,
   updatePdfTemplatePreview,
 } from './pdfTemplatePreview.js';
 import { PDF_LAYOUT_VARIANTS } from './pdfLayoutVariants.js';
@@ -109,7 +112,7 @@ import {
 } from './postenEditor.js';
 
 const PDF_VORLAGE_VIEWS = ['pdf-vorlage-angebot', 'pdf-vorlage-rechnung'];
-const DOC_KOPF_LABEL = 'Allgemeine Informationen';
+const DOC_KOPF_LABEL = () => t('common.generalInfo');
 
 function isPdfVorlageView(view) {
   return PDF_VORLAGE_VIEWS.includes(view);
@@ -496,10 +499,10 @@ function setKundenDetailContact(el, value, kind) {
   }
 }
 
-const OBJEKT_TYP_LABELS = {
-  einsatz: 'Einsatzort',
-  rechnung: 'Adresse (alternativ)',
-};
+function getObjektTypLabel(typ) {
+  if (typ === 'rechnung') return t('objektType.billing');
+  return t('objektType.service');
+}
 
 function clearObjektMeta(meta) {
   meta.selectedObjektId = null;
@@ -520,7 +523,7 @@ function setBillingSnapshot(meta, adresseLike) {
 function updateEinsatzortHinweis(hinweisEl, meta) {
   if (!hinweisEl) return;
   if (meta.objekt?.typ === 'einsatz' && meta.objekt.name) {
-    hinweisEl.textContent = `Leistungsort: ${meta.objekt.name}`;
+    hinweisEl.textContent = t('common.serviceLocation', { name: meta.objekt.name });
     hinweisEl.classList.remove('hidden');
     return;
   }
@@ -542,7 +545,7 @@ function renderAdresseAuswahlHtml(meta) {
   }
 
   meta.objekteCache.forEach((obj) => {
-    const badge = OBJEKT_TYP_LABELS[obj.typ] || obj.typ;
+    const badge = getObjektTypLabel(obj.typ);
     parts.push(`
       <button type="button" class="adresse-auswahl__item${selected === obj.id ? ' is-active' : ''}" data-adresse-key="${escapeHtml(obj.id)}">
         <span class="adresse-auswahl__label">${escapeHtml(obj.name)}<span class="adresse-auswahl__badge">${escapeHtml(badge)}</span></span>
@@ -716,7 +719,7 @@ function resetKundenObjektForm() {
 
 function renderKundenObjekteHtml(objekte) {
   if (!objekte.length) {
-    return '<p class="empty">Noch keine Objekte. Einsatzorte oder alternative Adressen unten anlegen.</p>';
+    return `<p class="empty">${t('kunden.objectsEmpty')}</p>`;
   }
 
   return objekte
@@ -724,7 +727,7 @@ function renderKundenObjekteHtml(objekte) {
       (o) => `
       <article class="kunden-objekt-item" data-id="${o.id}">
         <div class="kunden-objekt-item__main">
-          <span class="kunden-objekt-item__badge kunden-objekt-item__badge--${o.typ}">${OBJEKT_TYP_LABELS[o.typ] || o.typ}</span>
+          <span class="kunden-objekt-item__badge kunden-objekt-item__badge--${o.typ}">${escapeHtml(getObjektTypLabel(o.typ))}</span>
           <h4>${escapeHtml(o.name)}</h4>
           ${o.adresse || o.strasse || o.plzOrt ? `<p>${formatAdresseHtml(o)}</p>` : ''}
         </div>
@@ -739,7 +742,7 @@ function renderKundenObjekteHtml(objekte) {
 
 async function renderKundenObjekteSection(kundeId) {
   if (!els.kundenDetailObjekteListe || !kundeId) return;
-  els.kundenDetailObjekteListe.innerHTML = '<p class="empty">Lade Objekte…</p>';
+  els.kundenDetailObjekteListe.innerHTML = `<p class="empty">${t('kunden.loadingObjects')}</p>`;
   try {
     const objekte = await listKundenObjekte(kundeId);
     els.kundenDetailObjekteListe.innerHTML = renderKundenObjekteHtml(objekte);
@@ -1064,7 +1067,7 @@ function updateRechnungKundeHinweis() {
 function updateRechnungAngebotRef() {
   if (!els.rechnungAngebotRef) return;
   if (state.rechnung.angebotNr) {
-    els.rechnungAngebotRef.textContent = `Übernommen aus Angebot ${state.rechnung.angebotNr}`;
+    els.rechnungAngebotRef.textContent = t('invoice.fromOffer', { nr: state.rechnung.angebotNr });
     els.rechnungAngebotRef.classList.remove('hidden');
   } else {
     els.rechnungAngebotRef.textContent = '';
@@ -1401,7 +1404,7 @@ function rechnungFormHasChanges() {
 }
 
 function updatePageHeader() {
-  els.pdfBtn.textContent = state.angebot.editingId ? 'PDF aktualisieren' : 'PDF erstellen';
+  els.pdfBtn.textContent = state.angebot.editingId ? t('pdf.update') : t('pdf.create');
   setFooterButtonEnabled(els.resetBtn, angebotFormHasChanges());
   updateAngebotKopfSummary();
 }
@@ -1471,7 +1474,7 @@ function updateAngebotKopfSummary() {
   const plzOrt = els.kundePlzOrt?.value.trim() || '';
   const parts = [name, strasse, plzOrt].filter(Boolean);
   const hasKundeData = parts.length > 0;
-  const summary = hasKundeData ? parts.join(' – ') : DOC_KOPF_LABEL;
+  const summary = hasKundeData ? parts.join(' – ') : DOC_KOPF_LABEL();
   if (els.angebotKopfSummaryKunde) els.angebotKopfSummaryKunde.textContent = summary;
   els.angebotKopfSummaryMeta?.classList.toggle('is-empty', !hasKundeData);
 }
@@ -1482,7 +1485,7 @@ function updateRechnungKopfSummary() {
   const plzOrt = els.rechnungKundePlzOrt?.value.trim() || '';
   const parts = [name, strasse, plzOrt].filter(Boolean);
   const hasKundeData = parts.length > 0;
-  const summary = hasKundeData ? parts.join(' – ') : DOC_KOPF_LABEL;
+  const summary = hasKundeData ? parts.join(' – ') : DOC_KOPF_LABEL();
   if (els.rechnungKopfSummaryKunde) els.rechnungKopfSummaryKunde.textContent = summary;
   els.rechnungKopfSummaryMeta?.classList.toggle('is-empty', !hasKundeData);
 }
@@ -1499,9 +1502,9 @@ function setAngebotKopfCollapsed(collapsed) {
 function updatePostenKopfSummary() {
   const count = angebotPostenEditor.getAusgewaehltePosten().length;
   if (!els.postenKopfSummaryCount) return;
-  if (count === 0) els.postenKopfSummaryCount.textContent = 'Keine Posten';
-  else if (count === 1) els.postenKopfSummaryCount.textContent = '1 Posten';
-  else els.postenKopfSummaryCount.textContent = `${count} Posten`;
+  if (count === 0) els.postenKopfSummaryCount.textContent = t('posten.none');
+  else if (count === 1) els.postenKopfSummaryCount.textContent = t('posten.one');
+  else els.postenKopfSummaryCount.textContent = t('posten.many', { count });
 }
 
 function setPostenKopfCollapsed(collapsed) {
@@ -1517,9 +1520,9 @@ function setRechnungKopfCollapsed(collapsed) {
 function updateRechnungPostenKopfSummary() {
   const count = rechnungPostenEditor.getAusgewaehltePosten().length;
   if (!els.rechnungPostenKopfSummaryCount) return;
-  if (count === 0) els.rechnungPostenKopfSummaryCount.textContent = 'Keine Posten';
-  else if (count === 1) els.rechnungPostenKopfSummaryCount.textContent = '1 Posten';
-  else els.rechnungPostenKopfSummaryCount.textContent = `${count} Posten`;
+  if (count === 0) els.rechnungPostenKopfSummaryCount.textContent = t('posten.none');
+  else if (count === 1) els.rechnungPostenKopfSummaryCount.textContent = t('posten.one');
+  else els.rechnungPostenKopfSummaryCount.textContent = t('posten.many', { count });
 }
 
 function setRechnungPostenKopfCollapsed(collapsed) {
@@ -1624,7 +1627,7 @@ function bindRechnungPostenKopfToggle() {
 }
 
 function updateRechnungPageHeader() {
-  els.rechnungPdfBtn.textContent = state.rechnung.editingId ? 'PDF aktualisieren' : 'PDF erstellen';
+  els.rechnungPdfBtn.textContent = state.rechnung.editingId ? t('pdf.update') : t('pdf.create');
   setFooterButtonEnabled(els.rechnungResetBtn, rechnungFormHasChanges());
   updateRechnungKopfSummary();
 }
@@ -1684,7 +1687,7 @@ function updateProfilSchemaPreviews(tpl = getPdfTemplate()) {
     try {
       preview.textContent = previewFn(schema, new Date(), 1);
     } catch {
-      preview.textContent = 'Ungültiges Schema';
+      preview.textContent = t('form.invalidSchema');
     }
   };
 
@@ -2069,14 +2072,16 @@ function syncBereichSwitcher() {
   if (!bereichSwitcherMark || !bereichSwitcherLabel) return;
 
   if (state.bereich === 'rechnungen') {
-    bereichSwitcherMark.textContent = 'R';
+    bereichSwitcherMark.textContent = getBereichMark('rechnungen');
     bereichSwitcherMark.className = 'app-brand__mark app-brand__mark--rechnungen';
-    bereichSwitcherLabel.textContent = 'Rechnungen';
+    bereichSwitcherLabel.textContent = t('bereich.invoices');
   } else {
-    bereichSwitcherMark.textContent = 'A';
+    bereichSwitcherMark.textContent = getBereichMark('angebote');
     bereichSwitcherMark.className = 'app-brand__mark app-brand__mark--angebote';
-    bereichSwitcherLabel.textContent = 'Angebote';
+    bereichSwitcherLabel.textContent = t('bereich.offers');
   }
+
+  syncBereichMarks();
 
   els.bereichSwitcherMenu?.querySelectorAll('[data-bereich]').forEach((btn) => {
     const alternate = state.bereich === 'rechnungen' ? 'angebote' : 'rechnungen';
@@ -2756,7 +2761,7 @@ function bindPdfLayoutTabs() {
 
 async function renderArchiv() {
   const q = (els.archivSuche?.value || '').trim().toLowerCase();
-  els.archivListe.innerHTML = '<p class="empty">Lade Angebote…</p>';
+  els.archivListe.innerHTML = `<p class="empty">${t('archiv.loadingOffers')}</p>`;
 
   try {
     let angebote = await getAllAngebote();
@@ -2778,7 +2783,7 @@ async function renderArchiv() {
 
     if (angebote.length === 0) {
       els.archivListe.innerHTML = `<p class="empty">${
-        q ? 'Keine Angebote gefunden.' : 'Noch keine Angebote gespeichert. Erstelle dein erstes Angebot!'
+        q ? t('archiv.notFoundOffers') : t('archiv.noOffers')
       }</p>`;
       return;
     }
@@ -2810,13 +2815,13 @@ async function renderArchiv() {
       })
       .join('');
   } catch (err) {
-    els.archivListe.innerHTML = `<p class="empty">Fehler beim Laden: ${err.message}</p>`;
+    els.archivListe.innerHTML = `<p class="empty">${t('archiv.loadError', { message: err.message })}</p>`;
   }
 }
 
 async function renderRechnungArchiv() {
   const q = (els.rechnungArchivSuche?.value || '').trim().toLowerCase();
-  els.rechnungArchivListe.innerHTML = '<p class="empty">Lade Rechnungen…</p>';
+  els.rechnungArchivListe.innerHTML = `<p class="empty">${t('archiv.loadingInvoices')}</p>`;
 
   try {
     let rechnungen = await getAllRechnungen();
@@ -2832,7 +2837,7 @@ async function renderRechnungArchiv() {
 
     if (rechnungen.length === 0) {
       els.rechnungArchivListe.innerHTML = `<p class="empty">${
-        q ? 'Keine Rechnungen gefunden.' : 'Noch keine Rechnungen gespeichert. Erstelle deine erste Rechnung!'
+        q ? t('archiv.notFoundInvoices') : t('archiv.noInvoices')
       }</p>`;
       return;
     }
@@ -2867,7 +2872,7 @@ async function renderRechnungArchiv() {
       })
       .join('');
   } catch (err) {
-    els.rechnungArchivListe.innerHTML = `<p class="empty">Fehler beim Laden: ${err.message}</p>`;
+    els.rechnungArchivListe.innerHTML = `<p class="empty">${t('archiv.loadError', { message: err.message })}</p>`;
   }
 }
 
@@ -2877,9 +2882,9 @@ function resetKundenForm() {
   if (els.kundenFormAnrede) els.kundenFormAnrede.value = '';
   if (els.kundenFormKundenNr) {
     els.kundenFormKundenNr.value = '';
-    els.kundenFormKundenNr.placeholder = 'Wird beim Speichern vergeben';
+    els.kundenFormKundenNr.placeholder = t('form.customerNumberPlaceholder');
   }
-  els.kundenFormTitle.textContent = 'Neuer Kunde';
+  els.kundenFormTitle.textContent = t('kunden.new');
 }
 
 function openKundenForm() {
@@ -2965,14 +2970,14 @@ function loadKundeIntoForm(kunde) {
   }
   if (els.kundenFormKundenNr) {
     els.kundenFormKundenNr.value = kunde.kundenNr || '';
-    els.kundenFormKundenNr.placeholder = kunde.kundenNr ? '' : 'Wird beim Speichern vergeben';
+    els.kundenFormKundenNr.placeholder = kunde.kundenNr ? '' : t('form.customerNumberPlaceholder');
   }
   els.kundenFormName.value = kunde.name;
   setAdresseFieldPair(els.kundenFormStrasse, els.kundenFormPlzOrt, kunde);
   els.kundenFormTelefon.value = kunde.telefon || '';
   els.kundenFormEmail.value = kunde.email || '';
   els.kundenFormNotiz.value = kunde.notiz || '';
-  els.kundenFormTitle.textContent = 'Kunde bearbeiten';
+  els.kundenFormTitle.textContent = t('kunden.edit');
   openKundenForm();
   showView('kunden');
   els.kundenFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2986,7 +2991,7 @@ async function refreshPostenEditors() {
 function resetKatalogForm() {
   state.editingKatalogPostenId = null;
   els.katalogForm?.reset();
-  if (els.katalogFormTitle) els.katalogFormTitle.textContent = 'Neuer Katalog-Posten';
+  if (els.katalogFormTitle) els.katalogFormTitle.textContent = t('form.catalogNewItem');
   els.katalogFormReset?.classList.add('hidden');
 }
 
@@ -3001,7 +3006,7 @@ function fillKatalogForm(posten) {
     posten.preisStk != null && posten.preisStk !== '' ? String(posten.preisStk).replace('.', ',') : '';
   els.katalogFormPreisStd.value =
     posten.preisStd != null && posten.preisStd !== '' ? String(posten.preisStd).replace('.', ',') : '';
-  if (els.katalogFormTitle) els.katalogFormTitle.textContent = 'Katalog-Posten bearbeiten';
+  if (els.katalogFormTitle) els.katalogFormTitle.textContent = t('form.catalogEditItem');
   els.katalogFormReset?.classList.remove('hidden');
   els.katalogFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -3112,7 +3117,7 @@ async function saveKatalogForm(e) {
 async function renderKundenView() {
   const q = state.kundenSuche.trim().toLowerCase();
   const showRechnungen = state.bereich === 'rechnungen';
-  els.kundenListe.innerHTML = '<p class="empty">Lade Kunden…</p>';
+  els.kundenListe.innerHTML = `<p class="empty">${t('kunden.loading')}</p>`;
 
   try {
     const [kunden, angebote, rechnungen] = await Promise.all([
@@ -3130,7 +3135,7 @@ async function renderKundenView() {
     if (filtered.length === 0) {
       state.expandedKundeDokumenteId = null;
       els.kundenListe.innerHTML = `<p class="empty">${
-        q ? 'Keine Kunden gefunden.' : 'Noch keine Kunden angelegt.'
+        q ? t('kunden.notFound') : t('kunden.none')
       }</p>`;
       return;
     }
@@ -3165,9 +3170,9 @@ async function renderKundenView() {
               ${kontakt ? `<p class="kunden-info__kontakt">${escapeHtml(kontakt)}</p>` : ''}
             </div>
             <div class="kunden-actions">
-              <button type="button" class="btn btn-primary btn-sm" data-action="show-kunde-detail" data-id="${k.id}">Öffnen</button>
-              <button type="button" class="btn btn-ghost btn-sm" data-action="edit-kunde" data-id="${k.id}">Bearbeiten</button>
-              <button type="button" class="btn btn-danger btn-sm" data-action="delete-kunde" data-id="${k.id}">Löschen</button>
+              <button type="button" class="btn btn-primary btn-sm" data-action="show-kunde-detail" data-id="${k.id}">${escapeHtml(t('common.open'))}</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="edit-kunde" data-id="${k.id}">${escapeHtml(t('common.edit'))}</button>
+              <button type="button" class="btn btn-danger btn-sm" data-action="delete-kunde" data-id="${k.id}">${escapeHtml(t('common.delete'))}</button>
             </div>
           </div>
           <div class="kunden-item__dokumente">
@@ -3652,7 +3657,7 @@ function setAuthTab(mode) {
   });
   els.loginForm.classList.toggle('hidden', !isLogin);
   els.registerForm.classList.toggle('hidden', isLogin);
-  els.authTitle.textContent = isLogin ? 'Anmelden' : 'Registrieren';
+  els.authTitle.textContent = isLogin ? t('auth.login') : t('auth.register');
   els.loginError.classList.add('hidden');
   els.registerError.classList.add('hidden');
   if (!isLogin) updateRegisterPlanNote();
@@ -4255,8 +4260,74 @@ function bindAuthEvents() {
   });
 }
 
+async function refreshLocaleUi() {
+  applyI18n();
+  syncBereichSwitcher();
+  updatePageHeader();
+  updateRechnungPageHeader();
+  updateAngebotKopfSummary();
+  updateRechnungKopfSummary();
+  updatePostenKopfSummary();
+  updateRechnungPostenKopfSummary();
+
+  if (els.authTitle && els.loginScreen && !els.loginScreen.classList.contains('hidden')) {
+    const isLogin = els.loginForm && !els.loginForm.classList.contains('hidden');
+    els.authTitle.textContent = isLogin ? t('auth.login') : t('auth.register');
+  }
+
+  if (state.editingKundeId) {
+    els.kundenFormTitle.textContent = t('kunden.edit');
+  } else if (!els.kundenFormSection?.classList.contains('hidden')) {
+    els.kundenFormTitle.textContent = t('kunden.new');
+  }
+
+  if (els.kundenFormKundenNr && !els.kundenFormKundenNr.value.trim()) {
+    els.kundenFormKundenNr.placeholder = t('form.customerNumberPlaceholder');
+  }
+
+  if (els.katalogFormTitle) {
+    els.katalogFormTitle.textContent = state.editingKatalogPostenId
+      ? t('form.catalogEditItem')
+      : t('form.catalogNewItem');
+  }
+
+  refreshPostenEditors();
+  refreshDatePickers();
+  refreshPdfTemplateFormLabels();
+  if (els.pdfAngebotForm && els.pdfPreviewAngebot?.dataset.previewType) {
+    updatePdfTemplatePreview(
+      els.pdfAngebotForm,
+      els.pdfPreviewAngebot,
+      'angebot',
+      getPdfLayoutVariant('angebot')
+    );
+  }
+  if (els.pdfRechnungForm && els.pdfPreviewRechnung?.dataset.previewType) {
+    updatePdfTemplatePreview(
+      els.pdfRechnungForm,
+      els.pdfPreviewRechnung,
+      'rechnung',
+      getPdfLayoutVariant('rechnung')
+    );
+  }
+
+  if (els.app?.classList.contains('hidden')) return;
+
+  if (state.view === 'archiv') await renderArchiv();
+  else if (state.view === 'rechnung-archiv') await renderRechnungArchiv();
+  else if (state.view === 'kunden') await renderKundenView();
+  else if (state.view === 'katalog') await renderKatalogView();
+  else if (state.detailKundeId) await refreshKundenDetail();
+}
+
 async function bootstrap() {
   initTheme();
+  initI18n();
+  initLangSwitcher();
+  onLocaleChange(() => {
+    void refreshLocaleUi();
+  });
+  syncBereichMarks();
   initLegal();
   initLanding();
   initDatePickers();

@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 export const KUNDE_ANREDE_VALUES = ['', 'Herr', 'Frau', 'Firma'];
 
 export function normalizeKundeAnrede(value) {
@@ -7,12 +9,18 @@ export function normalizeKundeAnrede(value) {
 
 export function formatKundeAnredeLabel(anrede) {
   const normalized = normalizeKundeAnrede(anrede);
-  return normalized || '—';
+  if (!normalized) return '—';
+  if (normalized === 'Herr') return t('form.salutationMr');
+  if (normalized === 'Frau') return t('form.salutationMs');
+  if (normalized === 'Firma') return t('form.salutationCompany');
+  return normalized;
 }
 
 export function formatKundeDisplayName(kunde) {
   const name = String(kunde?.name || '').trim();
   const anrede = normalizeKundeAnrede(kunde?.anrede);
   if (!anrede || anrede === 'Firma') return name;
-  return name ? `${anrede} ${name}` : anrede;
+  const label = formatKundeAnredeLabel(anrede);
+  if (label === '—') return name;
+  return name ? `${label} ${name}` : label;
 }

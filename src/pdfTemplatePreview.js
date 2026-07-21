@@ -1,4 +1,5 @@
 import { previewAngebotsnummer, previewRechnungsnummer } from './dokumentnummer.js';
+import { applyI18n, getLocale, t } from './i18n.js';
 import { berechneSummenAusPosten, formatEuro } from './pdf.js';
 import { getPdfTemplate } from './pdfTemplate.js';
 import {
@@ -21,6 +22,11 @@ const SAMPLE_POSTEN = [
 
 function samplePreviewTotals() {
   return berechneSummenAusPosten(SAMPLE_POSTEN);
+}
+
+function formatPreviewDate(date) {
+  const locale = getLocale() === 'en' ? 'en-US' : 'de-DE';
+  return date.toLocaleDateString(locale);
 }
 
 function readFormValue(form, name, fallback = '') {
@@ -132,29 +138,29 @@ export function updatePdfTemplatePreview(form, previewRoot, type, variant = 1) {
     '[data-preview-part="firma-kontakt"]',
     [firmaTelefon && `Tel: ${firmaTelefon}`, firmaEmail && firmaEmail, firmaUst && `USt-IdNr.: ${firmaUst}`]
       .filter(Boolean)
-      .join(' · ') || 'Kontaktdaten'
+      .join(' · ') || t('pdfPreview.contact')
   );
 
   setText(previewRoot, '[data-preview-part="doc-titel"]', titel || (isAngebot ? 'ANGEBOT' : 'RECHNUNG'));
   setText(
     previewRoot,
     '[data-preview-part="kunde-label"]',
-    isAngebot ? 'Angebot für:' : 'Rechnung an:'
+    isAngebot ? t('pdfPreview.quoteFor') : t('pdfPreview.invoiceTo')
   );
-  setText(previewRoot, '[data-preview-part="einleitung"]', einleitung || 'Einleitungstext');
-  setText(previewRoot, '[data-preview-part="fuss1"]', fuss1 || 'Fußzeile 1');
-  setText(previewRoot, '[data-preview-part="fuss2"]', fuss2 || 'Fußzeile 2');
+  setText(previewRoot, '[data-preview-part="einleitung"]', einleitung || t('pdfPreview.intro'));
+  setText(previewRoot, '[data-preview-part="fuss1"]', fuss1 || t('pdfPreview.footer1'));
+  setText(previewRoot, '[data-preview-part="fuss2"]', fuss2 || t('pdfPreview.footer2'));
 
   for (let index = 1; index <= 3; index += 1) {
     setText(
       previewRoot,
       `[data-preview-part="fuss-col${index}-header"]`,
-      readFormValue(form, `fuss-spalte${index}-ueberschrift`, `Spalte ${index}`)
+      readFormValue(form, `fuss-spalte${index}-ueberschrift`, t('pdfPreview.column', { n: index }))
     );
     setText(
       previewRoot,
       `[data-preview-part="fuss-col${index}-text"]`,
-      readFormValue(form, `fuss-spalte${index}-text`, 'Text')
+      readFormValue(form, `fuss-spalte${index}-text`, t('pdfPreview.text'))
     );
   }
 
@@ -163,20 +169,32 @@ export function updatePdfTemplatePreview(form, previewRoot, type, variant = 1) {
     const nr = schema
       ? previewAngebotsnummer(schema, new Date(), 1)
       : 'ANG-20260719-001';
-    setText(previewRoot, '[data-preview-part="meta-1"]', `Angebotsnr.: ${nr}`);
-    setText(previewRoot, '[data-preview-part="meta-2"]', `Angebotsdatum: ${new Date().toLocaleDateString('de-DE')}`);
-    setText(previewRoot, '[data-preview-part="meta-3"]', 'Gültig bis: 31.08.2026');
+    setText(previewRoot, '[data-preview-part="meta-1"]', `${t('form.quoteNumber')}: ${nr}`);
+    setText(
+      previewRoot,
+      '[data-preview-part="meta-2"]',
+      `${t('form.quoteDate')}: ${formatPreviewDate(new Date())}`
+    );
+    setText(previewRoot, '[data-preview-part="meta-3"]', t('pdfPreview.validUntilSample'));
     setVisible(previewRoot, '[data-preview-part="meta-4"]', false);
   } else {
     const schema = getPdfTemplate().rechnung?.nummerSchema;
     const nr = schema
       ? previewRechnungsnummer(schema, new Date(), 1)
       : 'RE-20260719-001';
-    setText(previewRoot, '[data-preview-part="meta-1"]', `Rechnungsnr.: ${nr}`);
-    setText(previewRoot, '[data-preview-part="meta-2"]', `Rechnungsdatum: ${new Date().toLocaleDateString('de-DE')}`);
-    setText(previewRoot, '[data-preview-part="meta-3"]', 'Fällig am: 02.08.2026');
+    setText(previewRoot, '[data-preview-part="meta-1"]', `${t('form.invoiceNumber')}: ${nr}`);
+    setText(
+      previewRoot,
+      '[data-preview-part="meta-2"]',
+      `${t('form.invoiceDate')}: ${formatPreviewDate(new Date())}`
+    );
+    setText(previewRoot, '[data-preview-part="meta-3"]', t('pdfPreview.dueSample'));
     setVisible(previewRoot, '[data-preview-part="meta-4"]', true);
-    setText(previewRoot, '[data-preview-part="meta-4"]', 'Bezug Angebot: ANG-20260719-001');
+    setText(
+      previewRoot,
+      '[data-preview-part="meta-4"]',
+      t('pdfPreview.refQuote', { nr: 'ANG-20260719-001' })
+    );
   }
 
   setText(previewRoot, '[data-preview-part="kunde-name"]', SAMPLE_KUNDE.name);
@@ -297,9 +315,16 @@ export function bindPdfTemplatePreview(form, previewRoot, type, getVariant = () 
 export function mountPdfTemplateFormSections(container, type) {
   if (!container || container.dataset.mounted === type) return;
   container.innerHTML = getPdfTemplateFormSectionsHtml(type);
+  applyI18n(container);
   container.dataset.mounted = type;
   const form = container.closest('form');
   if (form) delete form.dataset.sectionsEnhanced;
+}
+
+export function refreshPdfTemplateFormLabels(root = document) {
+  root.querySelectorAll('[data-pdf-shared-fields]').forEach((container) => {
+    if (container.dataset.mounted) applyI18n(container);
+  });
 }
 
 /** @deprecated Use mountPdfTemplateFormSections */
@@ -310,120 +335,117 @@ export function mountSharedPdfTemplateFields(container) {
 export function getPdfTemplateFormSectionsHtml(type) {
   const isAngebot = type === 'angebot';
   const dokumentkopfFields = isAngebot
-    ? `<label class="full">Dokumenttitel<input type="text" name="text-titel" placeholder="ANGEBOT" /></label>`
-    : `<label class="full">Dokumenttitel<input type="text" name="rechnung-text-titel" autocomplete="off" /></label>
+    ? `<label class="full"><span data-i18n="pdfTpl.docTitle">Dokumenttitel</span><input type="text" name="text-titel" placeholder="ANGEBOT" /></label>`
+    : `<label class="full"><span data-i18n="pdfTpl.docTitle">Dokumenttitel</span><input type="text" name="rechnung-text-titel" autocomplete="off" /></label>
       <label>
-        Zahlungsziel (Tage)
+        <span data-i18n="pdfTpl.paymentTermsDays">Zahlungsziel (Tage)</span>
         <input type="number" name="rechnung-zahlungsziel-tage" min="0" max="365" step="1" />
       </label>`;
   const einleitungField = isAngebot
-    ? `<label class="full">Einleitung<textarea name="text-einleitung" rows="2"></textarea></label>`
-    : `<label class="full">Einleitung<textarea name="rechnung-text-einleitung" rows="2"></textarea></label>`;
+    ? `<label class="full"><span data-i18n="pdfTpl.introField">Einleitung</span><textarea name="text-einleitung" rows="2"></textarea></label>`
+    : `<label class="full"><span data-i18n="pdfTpl.introField">Einleitung</span><textarea name="rechnung-text-einleitung" rows="2"></textarea></label>`;
   const fussTextFields = isAngebot
-    ? `<label class="full">Abschlusstext 1<textarea name="text-fuss1" rows="2"></textarea></label>
-      <label class="full">Abschlusstext 2<textarea name="text-fuss2" rows="2"></textarea></label>`
-    : `<label class="full">Abschlusstext 1<textarea name="rechnung-text-fuss1" rows="2"></textarea></label>
-      <label class="full">Abschlusstext 2<textarea name="rechnung-text-fuss2" rows="2"></textarea></label>`;
+    ? `<label class="full"><span data-i18n="pdfTpl.closing1">Abschlusstext 1</span><textarea name="text-fuss1" rows="2"></textarea></label>
+      <label class="full"><span data-i18n="pdfTpl.closing2">Abschlusstext 2</span><textarea name="text-fuss2" rows="2"></textarea></label>`
+    : `<label class="full"><span data-i18n="pdfTpl.closing1">Abschlusstext 1</span><textarea name="rechnung-text-fuss1" rows="2"></textarea></label>
+      <label class="full"><span data-i18n="pdfTpl.closing2">Abschlusstext 2</span><textarea name="rechnung-text-fuss2" rows="2"></textarea></label>`;
+
+  const colField = (index) => `
+        <div class="fuss-spalte-form">
+          <label><span data-i18n="pdfTpl.colHeader" data-i18n-params='{"n":${index}}'>Überschrift Spalte ${index}</span><input type="text" name="fuss-spalte${index}-ueberschrift" /></label>
+          <label class="full"><span data-i18n="pdfTpl.colText" data-i18n-params='{"n":${index}}'>Text Spalte ${index}</span><textarea name="fuss-spalte${index}-text" rows="3"></textarea></label>
+        </div>`;
 
   return `
     <fieldset class="form-section" data-preview-region="briefkopf">
-      <legend>Briefkopf</legend>
+      <legend data-i18n="pdfTpl.letterhead">Briefkopf</legend>
       <div class="form-grid">
         <div class="full image-upload-block">
-          <span class="image-upload-label">Logo (links oben im Briefkopf)</span>
+          <span class="image-upload-label" data-i18n="pdfTpl.logoLabel">Logo (links oben im Briefkopf)</span>
           <div class="image-upload-row">
             <input type="file" class="pdf-logo-file-input" accept="image/png,image/jpeg,image/webp" />
-            <button type="button" class="btn btn-ghost btn-sm" data-clear-image="logo">Entfernen</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-clear-image="logo" data-i18n="pdfTpl.remove">Entfernen</button>
           </div>
-          <p class="image-upload-hint">PNG, JPG oder WebP · max. 2&nbsp;MB</p>
+          <p class="image-upload-hint" data-i18n="pdfTpl.imageHint">PNG, JPG oder WebP · max. 2&nbsp;MB</p>
           <div class="image-preview is-empty" data-preview="logo"></div>
           <div class="form-grid form-grid--compact">
-            <label>Breite (mm)<input type="number" name="layout-logoBreiteMm" min="10" max="80" step="1" /></label>
-            <label>Höhe (mm)<input type="number" name="layout-logoHoeheMm" min="8" max="40" step="1" /></label>
+            <label><span data-i18n="pdfTpl.widthMm">Breite (mm)</span><input type="number" name="layout-logoBreiteMm" min="10" max="80" step="1" /></label>
+            <label><span data-i18n="pdfTpl.heightMm">Höhe (mm)</span><input type="number" name="layout-logoHoeheMm" min="8" max="40" step="1" /></label>
           </div>
         </div>
         <div class="full image-upload-block">
           <label class="checkbox-label">
             <input type="checkbox" name="layout-headerAktiv" />
-            Header-Banner oben (volle Breite)
+            <span data-i18n="pdfTpl.headerBanner">Header-Banner oben (volle Breite)</span>
           </label>
           <div class="image-upload-row">
             <input type="file" class="pdf-header-file-input" accept="image/png,image/jpeg,image/webp" />
-            <button type="button" class="btn btn-ghost btn-sm" data-clear-image="header">Entfernen</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-clear-image="header" data-i18n="pdfTpl.remove">Entfernen</button>
           </div>
-          <p class="image-upload-hint">PNG, JPG oder WebP · max. 2&nbsp;MB</p>
+          <p class="image-upload-hint" data-i18n="pdfTpl.imageHint">PNG, JPG oder WebP · max. 2&nbsp;MB</p>
           <div class="image-preview is-empty" data-preview="header"></div>
-          <label>Banner-Höhe (mm)<input type="number" name="layout-headerHoeheMm" min="10" max="50" step="1" /></label>
+          <label><span data-i18n="pdfTpl.bannerHeightMm">Banner-Höhe (mm)</span><input type="number" name="layout-headerHoeheMm" min="10" max="50" step="1" /></label>
         </div>
-        <label class="full">Firmenname<input type="text" name="firma-name" autocomplete="organization" /></label>
-        <label class="full">Straße<input type="text" name="firma-strasse" /></label>
-        <label>PLZ &amp; Ort<input type="text" name="firma-plzOrt" /></label>
-        <label>Telefon<input type="text" name="firma-telefon" /></label>
-        <label>E-Mail<input type="email" name="firma-email" autocomplete="email" /></label>
-        <label>Webseite<input type="text" name="firma-web" /></label>
-        <label class="full">USt-IdNr.<input type="text" name="firma-ustId" /></label>
-        <label class="full">IBAN (ZUGFeRD)<input type="text" name="firma-iban" autocomplete="off" placeholder="DE89 3704 0044 0532 0130 00" /></label>
-        <label>BIC<input type="text" name="firma-bic" autocomplete="off" placeholder="COBADEFFXXX" /></label>
-        <label>Bank<input type="text" name="firma-bankName" autocomplete="organization" /></label>
-        <label class="color-field full">Gedämpfter Text (Briefkopf)
+        <label class="full"><span data-i18n="pdfTpl.companyName">Firmenname</span><input type="text" name="firma-name" autocomplete="organization" /></label>
+        <label class="full"><span data-i18n="pdfTpl.street">Straße</span><input type="text" name="firma-strasse" /></label>
+        <label><span data-i18n="pdfTpl.zipCity">PLZ &amp; Ort</span><input type="text" name="firma-plzOrt" /></label>
+        <label><span data-i18n="pdfTpl.phone">Telefon</span><input type="text" name="firma-telefon" /></label>
+        <label><span data-i18n="pdfTpl.email">E-Mail</span><input type="email" name="firma-email" autocomplete="email" /></label>
+        <label><span data-i18n="pdfTpl.website">Webseite</span><input type="text" name="firma-web" /></label>
+        <label class="full"><span data-i18n="pdfTpl.vatId">USt-IdNr.</span><input type="text" name="firma-ustId" /></label>
+        <label class="full"><span data-i18n="pdfTpl.iban">IBAN (ZUGFeRD)</span><input type="text" name="firma-iban" autocomplete="off" placeholder="DE89 3704 0044 0532 0130 00" /></label>
+        <label><span data-i18n="pdfTpl.bic">BIC</span><input type="text" name="firma-bic" autocomplete="off" placeholder="COBADEFFXXX" /></label>
+        <label><span data-i18n="pdfTpl.bank">Bank</span><input type="text" name="firma-bankName" autocomplete="organization" /></label>
+        <label class="color-field full"><span data-i18n="pdfTpl.mutedText">Gedämpfter Text (Briefkopf)</span>
           <span class="color-field-row"><input type="color" name="farbe-textMuted" /><input type="text" class="color-hex" data-sync-color="farbe-textMuted" /></span>
         </label>
-        <label class="color-field full">Trennlinie
+        <label class="color-field full"><span data-i18n="pdfTpl.divider">Trennlinie</span>
           <span class="color-field-row"><input type="color" name="farbe-trennlinie" /><input type="text" class="color-hex" data-sync-color="farbe-trennlinie" /></span>
         </label>
       </div>
     </fieldset>
     <fieldset class="form-section" data-preview-region="meta">
-      <legend>Dokumentenkopf</legend>
+      <legend data-i18n="pdfTpl.docHeader">Dokumentenkopf</legend>
       <div class="form-grid">
         ${dokumentkopfFields}
       </div>
     </fieldset>
     <fieldset class="form-section" data-preview-region="text">
-      <legend>Einleitung</legend>
+      <legend data-i18n="pdfTpl.introSection">Einleitung</legend>
       <div class="form-grid">
         ${einleitungField}
       </div>
     </fieldset>
     <fieldset class="form-section" data-preview-region="table">
-      <legend>Tabelle</legend>
+      <legend data-i18n="pdfTpl.tableSection">Tabelle</legend>
       <div class="form-grid form-grid--colors">
-        <label class="color-field full">Primärfarbe (Tabellenkopf)
+        <label class="color-field full"><span data-i18n="pdfTpl.primaryColor">Primärfarbe (Tabellenkopf)</span>
           <span class="color-field-row">
-            <input type="color" name="farbe-primaer" aria-label="Primärfarbe wählen" />
+            <input type="color" name="farbe-primaer" data-i18n-aria-label="pdfTpl.choosePrimaryColor" aria-label="Primärfarbe wählen" />
             <span class="color-value-field">
-              <span class="color-value-field__label">HEX</span>
-              <input type="text" class="color-hex" data-sync-color="farbe-primaer" placeholder="#1e3a5f" aria-label="Hex-Farbcode" />
+              <span class="color-value-field__label" data-i18n="pdfTpl.hex">HEX</span>
+              <input type="text" class="color-hex" data-sync-color="farbe-primaer" placeholder="#1e3a5f" data-i18n-aria-label="pdfTpl.hexCode" aria-label="Hex-Farbcode" />
             </span>
             <span class="color-value-field">
-              <span class="color-value-field__label">RGB</span>
-              <input type="text" class="color-rgb" data-sync-color-rgb="farbe-primaer" placeholder="30, 58, 95" aria-label="RGB-Farbwerte" />
+              <span class="color-value-field__label" data-i18n="pdfTpl.rgb">RGB</span>
+              <input type="text" class="color-rgb" data-sync-color-rgb="farbe-primaer" placeholder="30, 58, 95" data-i18n-aria-label="pdfTpl.rgbValues" aria-label="RGB-Farbwerte" />
             </span>
           </span>
         </label>
       </div>
     </fieldset>
     <fieldset class="form-section" data-preview-region="fuss">
-      <legend>Fußbereich</legend>
+      <legend data-i18n="pdfTpl.footerSection">Fußbereich</legend>
       <div class="form-grid">
         ${fussTextFields}
-        <label class="color-field full">Fußzeilen-Farbe
+        <label class="color-field full"><span data-i18n="pdfTpl.footerColor">Fußzeilen-Farbe</span>
           <span class="color-field-row"><input type="color" name="farbe-fusszeile" /><input type="text" class="color-hex" data-sync-color="farbe-fusszeile" /></span>
         </label>
       </div>
       <div class="form-grid form-grid--fuss-spalten">
-        <div class="fuss-spalte-form">
-          <label>Überschrift Spalte 1<input type="text" name="fuss-spalte1-ueberschrift" /></label>
-          <label class="full">Text Spalte 1<textarea name="fuss-spalte1-text" rows="3"></textarea></label>
-        </div>
-        <div class="fuss-spalte-form">
-          <label>Überschrift Spalte 2<input type="text" name="fuss-spalte2-ueberschrift" /></label>
-          <label class="full">Text Spalte 2<textarea name="fuss-spalte2-text" rows="3"></textarea></label>
-        </div>
-        <div class="fuss-spalte-form">
-          <label>Überschrift Spalte 3<input type="text" name="fuss-spalte3-ueberschrift" /></label>
-          <label class="full">Text Spalte 3<textarea name="fuss-spalte3-text" rows="3"></textarea></label>
-        </div>
+        ${colField(1)}
+        ${colField(2)}
+        ${colField(3)}
       </div>
     </fieldset>
   `;

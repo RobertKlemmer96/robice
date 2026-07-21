@@ -1,4 +1,6 @@
-const MONTHS = [
+import { getLocale, t } from './i18n.js';
+
+const MONTHS_DE = [
   'Januar',
   'Februar',
   'März',
@@ -13,7 +15,31 @@ const MONTHS = [
   'Dezember',
 ];
 
-const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const MONTHS_EN = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const WEEKDAYS_DE = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const WEEKDAYS_EN = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+function getMonths() {
+  return getLocale() === 'en' ? MONTHS_EN : MONTHS_DE;
+}
+
+function getWeekdays() {
+  return getLocale() === 'en' ? WEEKDAYS_EN : WEEKDAYS_DE;
+}
 
 function pad2(n) {
   return String(n).padStart(2, '0');
@@ -64,7 +90,7 @@ function enhanceDateInput(input) {
 
   const valueEl = document.createElement('span');
   valueEl.className = 'date-picker__value';
-  valueEl.textContent = formatDisplay(input.value) || 'Datum wählen';
+  valueEl.textContent = formatDisplay(input.value) || t('datePicker.choose');
 
   const icon = document.createElement('span');
   icon.className = 'date-picker__icon';
@@ -87,7 +113,7 @@ function enhanceDateInput(input) {
   prevBtn.type = 'button';
   prevBtn.className = 'date-picker__nav';
   prevBtn.dataset.action = 'prev-month';
-  prevBtn.setAttribute('aria-label', 'Vorheriger Monat');
+  prevBtn.setAttribute('aria-label', t('datePicker.prevMonth'));
   prevBtn.textContent = '‹';
 
   const title = document.createElement('span');
@@ -97,14 +123,14 @@ function enhanceDateInput(input) {
   nextBtn.type = 'button';
   nextBtn.className = 'date-picker__nav';
   nextBtn.dataset.action = 'next-month';
-  nextBtn.setAttribute('aria-label', 'Nächster Monat');
+  nextBtn.setAttribute('aria-label', t('datePicker.nextMonth'));
   nextBtn.textContent = '›';
 
   header.append(prevBtn, title, nextBtn);
 
   const weekdays = document.createElement('div');
   weekdays.className = 'date-picker__weekdays';
-  weekdays.innerHTML = WEEKDAYS.map((d) => `<span>${d}</span>`).join('');
+  weekdays.innerHTML = getWeekdays().map((d) => `<span>${d}</span>`).join('');
 
   const days = document.createElement('div');
   days.className = 'date-picker__days';
@@ -124,7 +150,7 @@ function enhanceDateInput(input) {
 
   const syncDisplay = () => {
     const formatted = formatDisplay(input.value);
-    valueEl.textContent = formatted || 'Datum wählen';
+    valueEl.textContent = formatted || t('datePicker.choose');
     valueEl.classList.toggle('is-placeholder', !formatted);
   };
 
@@ -208,7 +234,7 @@ function enhanceDateInput(input) {
   };
 
   const renderCalendar = () => {
-    title.textContent = `${MONTHS[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+    title.textContent = `${getMonths()[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
 
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -297,7 +323,21 @@ function enhanceDateInput(input) {
     },
   });
 
+  wrapper.__refreshDatePickerLocale = () => {
+    prevBtn.setAttribute('aria-label', t('datePicker.prevMonth'));
+    nextBtn.setAttribute('aria-label', t('datePicker.nextMonth'));
+    weekdays.innerHTML = getWeekdays().map((d) => `<span>${d}</span>`).join('');
+    syncDisplay();
+    if (!popover.hidden) renderCalendar();
+  };
+
   syncDisplay();
+}
+
+export function refreshDatePickers() {
+  document.querySelectorAll('.date-picker').forEach((wrapper) => {
+    wrapper.__refreshDatePickerLocale?.();
+  });
 }
 
 export function initDatePickers(root = document) {
