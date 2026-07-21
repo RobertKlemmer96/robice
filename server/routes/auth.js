@@ -24,9 +24,9 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
 
   router.post('/register', async (req, res) => {
     try {
-      const { tenantName, email, password, plan } = req.body || {};
-      if (!tenantName?.trim() || !email?.trim() || !password) {
-        res.status(400).json({ error: 'Firma, E-Mail und Passwort sind erforderlich.' });
+      const { email, password, plan } = req.body || {};
+      if (!email?.trim() || !password) {
+        res.status(400).json({ error: 'E-Mail und Passwort sind erforderlich.' });
         return;
       }
       if (String(password).length < 8) {
@@ -45,7 +45,7 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
 
       const passwordHash = await hashPassword(password);
       const { tenantId, userId, email: registeredEmail } = createTenantWithOwner({
-        tenantName,
+        tenantName: '',
         email,
         passwordHash,
         plan: normalizeRegistrationPlan(plan),
@@ -55,7 +55,7 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
         ...PDF_TEMPLATE_DEFAULT,
         firma: {
           ...PDF_TEMPLATE_DEFAULT.firma,
-          name: tenantName.trim(),
+          name: '',
           email: registeredEmail,
         },
       });

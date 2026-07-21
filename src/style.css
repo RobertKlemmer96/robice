@@ -4206,10 +4206,6 @@ textarea:focus,
   margin: 0;
 }
 
-.pdf-vorlage-card__lead {
-  margin-top: 0;
-}
-
 .pdf-layout-tabs {
   display: inline-flex;
   flex-shrink: 0;
@@ -4278,15 +4274,6 @@ textarea:focus,
 .pdf-vorlage-preview-col .pdf-layout-preview {
   max-width: min(100%, 380px);
   margin-inline: auto;
-}
-
-.pdf-vorlage-preview-label {
-  margin: 0 0 10px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .pdf-layout-preview {
@@ -6037,11 +6024,6 @@ textarea:focus,
 
   .pdf-vorlage-preview-col .pdf-layout-preview {
     max-width: 100%;
-  }
-
-  .pdf-vorlage-card .settings-lead,
-  .pdf-vorlage-card__lead {
-    display: none;
   }
 
   .pdf-vorlage-card__head {

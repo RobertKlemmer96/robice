@@ -407,10 +407,6 @@
           </form>
           <form id="register-form" class="login-form hidden">
             <label>
-              <span data-i18n="auth.companyName">Firmenname</span>
-              <input type="text" id="register-tenant" autocomplete="organization" required />
-            </label>
-            <label>
               <span data-i18n="auth.email">E-Mail</span>
               <input type="email" id="register-email" autocomplete="email" required />
             </label>
@@ -1168,13 +1164,9 @@
                 </button>
               </div>
             </div>
-            <p class="settings-lead pdf-vorlage-card__lead">
-              Logo links, Dokumentdaten rechts — der Standard für Angebote und Rechnungen.
-            </p>
             <div class="pdf-vorlage-workspace">
               <aside class="pdf-vorlage-preview-col">
-                <p class="pdf-vorlage-preview-label" data-i18n="form.previewClassic">Vorschau · Klassisch</p>
-                <div class="pdf-layout-preview" id="pdf-preview-angebot" data-i18n-aria-label="form.previewQuote" aria-label="Angebots-PDF Vorschau"></div>
+                <div class="pdf-layout-preview" id="pdf-preview-angebot" data-i18n-aria-label="form.previewQuote" aria-label="Angebots-PDF"></div>
               </aside>
               <div class="pdf-vorlage-form-col">
                 <form id="pdf-angebot-form" class="pdf-template-form">
@@ -1231,17 +1223,13 @@
                 </button>
               </div>
             </div>
-            <p class="settings-lead pdf-vorlage-card__lead">
-              Logo links, Dokumentdaten rechts — der Standard für Angebote und Rechnungen.
-            </p>
             <p class="settings-note pdf-vorlage-card__zugferd-hint">
               Rechnungs-PDFs werden als ZUGFeRD/Factur-X (Profil EN&nbsp;16931) mit eingebetteter
               <code>factur-x.xml</code> erzeugt. IBAN und USt-IdNr. im Briefkopf sind Pflichtfelder.
             </p>
             <div class="pdf-vorlage-workspace">
               <aside class="pdf-vorlage-preview-col">
-                <p class="pdf-vorlage-preview-label" data-i18n="form.previewClassic">Vorschau · Klassisch</p>
-                <div class="pdf-layout-preview" id="pdf-preview-rechnung" data-i18n-aria-label="form.previewInvoice" aria-label="Rechnungs-PDF Vorschau"></div>
+                <div class="pdf-layout-preview" id="pdf-preview-rechnung" data-i18n-aria-label="form.previewInvoice" aria-label="Rechnungs-PDF"></div>
               </aside>
               <div class="pdf-vorlage-form-col">
                 <form id="pdf-rechnung-form" class="pdf-template-form">

@@ -76,10 +76,10 @@ export async function login(email, password) {
   return true;
 }
 
-export async function register(tenantName, email, password, plan = 'free') {
+export async function register(email, password, plan = 'free') {
   cachedSession = await apiFetch(`${API_BASE}/register`, {
     method: 'POST',
-    body: JSON.stringify({ tenantName, email, password, plan }),
+    body: JSON.stringify({ email, password, plan }),
   });
   return true;
 }

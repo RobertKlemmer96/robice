@@ -215,7 +215,6 @@ const els = {
   loginUser: document.getElementById('login-user'),
   loginPass: document.getElementById('login-pass'),
   loginError: document.getElementById('login-error'),
-  registerTenant: document.getElementById('register-tenant'),
   registerEmail: document.getElementById('register-email'),
   registerPass: document.getElementById('register-pass'),
   registerError: document.getElementById('register-error'),
@@ -2694,18 +2693,6 @@ function syncPdfLayoutTabs(scope) {
     const meta = PDF_LAYOUT_VARIANTS[layout];
     if (meta) btn.textContent = meta.label;
   });
-
-  const variantMeta = PDF_LAYOUT_VARIANTS[activeLayout];
-  const lead = root.querySelector('.pdf-vorlage-card__lead');
-  if (lead && variantMeta) {
-    lead.classList.remove('hidden');
-    lead.textContent = variantMeta.hint;
-  }
-
-  const previewLabel = root.querySelector('.pdf-vorlage-preview-label');
-  if (previewLabel && variantMeta) {
-    previewLabel.textContent = `Vorschau · ${variantMeta.label}`;
-  }
 }
 
 function setPdfLayoutTab(scope, layout) {
@@ -4252,7 +4239,6 @@ function bindAuthEvents() {
     els.registerError.classList.add('hidden');
     try {
       await register(
-        els.registerTenant.value,
         els.registerEmail.value,
         els.registerPass.value,
         pendingRegistrationPlan
