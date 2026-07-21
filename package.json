@@ -11,15 +11,18 @@
     "build": "vite build",
     "start": "node server.js",
     "preview": "npm run build && cross-env NODE_ENV=production node server.js",
-    "db:backup": "node scripts/backup-db.js"
+    "db:backup": "node scripts/backup-db.js",
+    "smtp:setup": "node scripts/setup-smtp-dev.js"
   },
   "dependencies": {
     "@stackforge-eu/factur-x": "^1.2.0",
     "bcryptjs": "^2.4.3",
+    "dotenv": "^17.4.2",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "jspdf": "^2.5.2",
-    "jspdf-autotable": "^3.8.4"
+    "jspdf-autotable": "^3.8.4",
+    "nodemailer": "^9.0.3"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

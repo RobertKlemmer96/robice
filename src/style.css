@@ -3225,6 +3225,109 @@ h1 {
   grid-column: 1 / -1;
 }
 
+/* Kompaktere Allgemeine Informationen (Angebot/Rechnung) */
+.angebot-kopf {
+  --kopf-field-height: 36px;
+}
+
+.angebot-kopf__bar {
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+.angebot-kopf__body {
+  padding: 0 14px 12px;
+}
+
+.angebot-kopf__split {
+  gap: 0 14px;
+  grid-template-columns: minmax(132px, 168px) 1px minmax(0, 1fr);
+}
+
+.angebot-kopf__col {
+  gap: 8px;
+}
+
+.angebot-kopf label {
+  gap: 3px;
+  font-size: 0.78rem;
+}
+
+.angebot-kopf .date-picker {
+  width: 100%;
+}
+
+.angebot-kopf input:not(.date-picker__native),
+.angebot-kopf select,
+.angebot-kopf .date-picker__trigger,
+.angebot-kopf .input-row .btn {
+  box-sizing: border-box;
+  min-height: var(--kopf-field-height);
+  height: var(--kopf-field-height);
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+}
+
+.angebot-kopf .date-picker__trigger {
+  gap: 8px;
+}
+
+.angebot-kopf .date-picker__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.angebot-kopf .input-row {
+  gap: 6px;
+  align-items: stretch;
+}
+
+.angebot-kopf .input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.angebot-kopf .input-row .btn {
+  font-size: 0.78rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.angebot-kopf .field-label-row {
+  gap: 6px;
+  min-height: 1.1em;
+}
+
+.angebot-kopf .field-hint {
+  font-size: 0.7rem;
+}
+
+.angebot-kopf .adresse-fields {
+  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+}
+
+.angebot-kopf .adresse-fields > .adresse-auswahl,
+.angebot-kopf .adresse-fields > .adresse-auswahl__active,
+.angebot-kopf .adresse-fields > .field-hint,
+.angebot-kopf .adresse-fields > p {
+  grid-column: 1 / -1;
+}
+
+.angebot-kopf .adresse-auswahl {
+  gap: 4px;
+}
+
+.angebot-kopf__col--meta > .field-hint {
+  margin: 0;
+}
+
 .adresse-auswahl {
   display: flex;
   flex-direction: column;
@@ -4740,7 +4843,7 @@ textarea:focus,
 
 .pdf-footer__save-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -4753,6 +4856,17 @@ textarea:focus,
   width: 100%;
   padding: 16px 20px;
   font-size: 1rem;
+}
+
+.pdf-footer__mail-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.pdf-footer__mail-hint--dev {
+  color: #c9a227;
 }
 
 .pdf-footer .btn-ghost {
@@ -5553,6 +5667,10 @@ textarea:focus,
 
   .adresse-fields {
     gap: 8px;
+  }
+
+  .angebot-kopf .adresse-fields {
+    grid-template-columns: 1fr;
   }
 
   .form-section {

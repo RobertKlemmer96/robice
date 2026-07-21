@@ -589,7 +589,7 @@ export function createPostenEditor(editorState, els) {
     if (els.summeBrutto) els.summeBrutto.textContent = formatEuro(brutto);
 
     const kannSpeichern = posten.length > 0 && (els.canSave?.() ?? true);
-    const actionBtns = [els.pdfBtn, els.saveBtn, els.saveCloseBtn].filter(Boolean);
+    const actionBtns = [els.pdfBtn, els.pdfSendBtn, els.saveBtn, els.saveCloseBtn].filter(Boolean);
     actionBtns.forEach((btn) => {
       btn.disabled = !kannSpeichern;
       btn.setAttribute('aria-disabled', String(!kannSpeichern));

@@ -643,6 +643,12 @@ export function downloadPdf(angebot, postenDetails) {
 
 }
 
+export function getAngebotPdfAttachment(angebot, postenDetails) {
+  const doc = buildPdfDoc(angebot, postenDetails);
+  const filename = `Angebot_${angebot.angebotNr.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`;
+  return { filename, content: doc.output('arraybuffer') };
+}
+
 
 
 export function openPdfPreview(angebot, postenDetails) {
@@ -953,8 +959,13 @@ function downloadBlob(blob, dateiname) {
 }
 
 export async function downloadRechnungPdf(rechnung, postenDetails) {
+  const { filename, content } = await getRechnungPdfAttachment(rechnung, postenDetails);
+  downloadBlob(new Blob([content], { type: 'application/pdf' }), filename);
+}
+
+export async function getRechnungPdfAttachment(rechnung, postenDetails) {
   const doc = buildRechnungPdfDoc(rechnung, postenDetails);
-  const dateiname = `Rechnung_${rechnung.rechnungNr.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`;
+  const filename = `Rechnung_${rechnung.rechnungNr.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`;
 
   try {
     const blob = await exportRechnungZugferdPdf(
@@ -962,10 +973,10 @@ export async function downloadRechnungPdf(rechnung, postenDetails) {
       postenDetails,
       doc.output('arraybuffer')
     );
-    downloadBlob(blob, dateiname);
+    return { filename, content: await blob.arrayBuffer() };
   } catch (err) {
     console.warn('ZUGFeRD-Export nicht verfügbar, Fallback auf Standard-PDF:', err);
-    doc.save(dateiname);
+    return { filename, content: doc.output('arraybuffer') };
   }
 }
 

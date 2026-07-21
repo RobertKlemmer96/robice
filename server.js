@@ -15,6 +15,7 @@ import * as angeboteRepo from './server/repositories/angebote.js';
 import * as rechnungenRepo from './server/repositories/rechnungen.js';
 import * as katalogPostenRepo from './server/repositories/katalogPosten.js';
 import { createRechnungenExportRouter } from './server/routes/rechnungenExport.js';
+import { createDocumentsMailRouter } from './server/routes/documentsMail.js';
 import {
   getPdfTemplate,
   savePdfTemplate,
@@ -48,6 +49,7 @@ app.use(attachSessionUser);
 
 app.use('/api/auth', createAuthRouter({ sessionCookieName: SESSION_COOKIE }));
 app.use('/api/admin', createAdminRouter());
+app.use('/api/documents', createDocumentsMailRouter());
 
 const kundenRouter = express.Router();
 kundenRouter.use(createKundenObjekteRouter());

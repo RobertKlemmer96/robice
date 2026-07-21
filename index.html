@@ -338,11 +338,11 @@
           <form id="login-form" class="login-form">
             <label>
               E-Mail oder Benutzername
-              <input type="text" id="login-user" autocomplete="username" required />
+              <input type="text" id="login-user" autocomplete="username" value="admin" required />
             </label>
             <label>
               Passwort
-              <input type="password" id="login-pass" autocomplete="current-password" required />
+              <input type="password" id="login-pass" autocomplete="current-password" value="admin" required />
             </label>
             <p id="login-error" class="login-error hidden">Anmeldung fehlgeschlagen.</p>
             <button type="submit" class="btn btn-primary btn-full">Einloggen</button>
@@ -655,6 +655,15 @@
                         <button type="button" id="rechnung-kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
                       </div>
                     </label>
+                    <label>
+                      E-Mail
+                      <input
+                        type="email"
+                        id="rechnung-kunde-email"
+                        placeholder="kunde@beispiel.de"
+                        autocomplete="email"
+                      />
+                    </label>
                     <div class="adresse-fields">
                       <div id="rechnung-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
                       <p id="rechnung-einsatzort-hinweis" class="adresse-auswahl__active hidden"></p>
@@ -757,9 +766,25 @@
                 >
                   Speichern &amp; schließen
                 </button>
+                <button
+                  type="button"
+                  id="rechnung-pdf-btn"
+                  class="btn btn-ghost is-disabled"
+                  aria-disabled="true"
+                >
+                  PDF erstellen
+                </button>
               </div>
+              <button
+                type="button"
+                id="rechnung-pdf-send-btn"
+                class="btn btn-primary is-disabled"
+                aria-disabled="true"
+              >
+                PDF generieren und an Kunden senden
+              </button>
+              <p id="rechnung-pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
               <button type="button" id="rechnung-reset-btn" class="btn btn-ghost hidden">Neu starten</button>
-              <button type="button" id="rechnung-pdf-btn" class="btn btn-primary is-disabled" aria-disabled="true">PDF erstellen</button>
             </div>
           </div>
         </main>
@@ -832,6 +857,15 @@
                         <input type="text" id="kunde-name" placeholder="Freiname oder Kunde wählen" />
                         <button type="button" id="kunde-auswahl-btn" class="btn btn-ghost">Kunde auswählen</button>
                       </div>
+                    </label>
+                    <label>
+                      E-Mail
+                      <input
+                        type="email"
+                        id="kunde-email"
+                        placeholder="kunde@beispiel.de"
+                        autocomplete="email"
+                      />
                     </label>
                     <div class="adresse-fields">
                       <div id="kunde-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" aria-label="Gespeicherte Adressen"></div>
@@ -925,9 +959,20 @@
                 <button type="button" id="save-close-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
                   Speichern &amp; schließen
                 </button>
+                <button type="button" id="pdf-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
+                  PDF erstellen
+                </button>
               </div>
+              <button
+                type="button"
+                id="pdf-send-btn"
+                class="btn btn-primary is-disabled"
+                aria-disabled="true"
+              >
+                PDF generieren und an Kunden senden
+              </button>
+              <p id="pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
               <button type="button" id="reset-btn" class="btn btn-ghost hidden">Neu starten</button>
-              <button type="button" id="pdf-btn" class="btn btn-primary is-disabled" aria-disabled="true">PDF erstellen</button>
             </div>
           </div>
         </main>

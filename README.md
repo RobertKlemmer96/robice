@@ -14,6 +14,19 @@ npm run dev
 
 Optional: `.env` aus `.env.example` anlegen.
 
+### E-Mail-Versand (PDF an Kunden)
+
+**Lokal testen:**
+
+```bash
+npm run smtp:setup   # schreibt Test-SMTP (Ethereal) in .env
+npm run dev          # danach neu starten
+```
+
+E-Mails landen nicht beim Kunden — nach dem Versand erscheint eine **Dev-Vorschau-URL** in der Erfolgsmeldung.
+
+**Produktion (z. B. Render):** SMTP-Zugangsdaten als Umgebungsvariablen setzen (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`). Kostenloser Einstieg z. B. mit [Brevo](https://www.brevo.com): SMTP-Server `smtp-relay.brevo.com`, Port `587`, Passwort = erzeugter SMTP-Key.
+
 ## Anmeldung
 
 - **Neu:** Tab „Registrieren“ → Firmenname, E-Mail, Passwort (min. 8 Zeichen) → eigener Mandant mit getrennten Daten.

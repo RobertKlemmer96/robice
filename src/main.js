@@ -59,7 +59,10 @@ import {
   openPdfPreview,
   downloadRechnungPdf,
   openRechnungPdfPreview,
+  getAngebotPdfAttachment,
+  getRechnungPdfAttachment,
 } from './pdf.js';
+import { fetchMailStatus, sendDocumentPdf } from './documentMail.js';
 import {
   loadPdfTemplate,
   savePdfTemplate,
@@ -270,6 +273,8 @@ const els = {
   pdfFooter: document.getElementById('pdf-footer'),
   angebotStickyFooter: document.getElementById('angebot-sticky-footer'),
   pdfBtn: document.getElementById('pdf-btn'),
+  pdfSendBtn: document.getElementById('pdf-send-btn'),
+  pdfSendHint: document.getElementById('pdf-send-hint'),
   postenListe: document.getElementById('posten-liste'),
   zusammenfassung: document.getElementById('zusammenfassung'),
   summeNetto: document.getElementById('summe-netto'),
@@ -281,6 +286,7 @@ const els = {
   kundeHinweis: document.getElementById('kunde-hinweis'),
   kundeStrasse: document.getElementById('kunde-strasse'),
   kundePlzOrt: document.getElementById('kunde-plz-ort'),
+  kundeEmail: document.getElementById('kunde-email'),
   kundeAdresseAuswahl: document.getElementById('kunde-adresse-auswahl'),
   kundeEinsatzortHinweis: document.getElementById('kunde-einsatzort-hinweis'),
   kundenModal: document.getElementById('kunden-modal'),
@@ -351,6 +357,8 @@ const els = {
   rechnungSaveCloseBtn: document.getElementById('rechnung-save-close-btn'),
   rechnungStickyFooter: document.getElementById('rechnung-sticky-footer'),
   rechnungPdfBtn: document.getElementById('rechnung-pdf-btn'),
+  rechnungPdfSendBtn: document.getElementById('rechnung-pdf-send-btn'),
+  rechnungPdfSendHint: document.getElementById('rechnung-pdf-send-hint'),
   rechnungKopf: document.getElementById('rechnung-kopf'),
   rechnungKopfToggle: document.getElementById('rechnung-kopf-toggle'),
   rechnungKopfSummaryMeta: document.getElementById('rechnung-kopf-summary-meta'),
@@ -369,6 +377,7 @@ const els = {
   rechnungKundeHinweis: document.getElementById('rechnung-kunde-hinweis'),
   rechnungKundeStrasse: document.getElementById('rechnung-kunde-strasse'),
   rechnungKundePlzOrt: document.getElementById('rechnung-kunde-plz-ort'),
+  rechnungKundeEmail: document.getElementById('rechnung-kunde-email'),
   rechnungAdresseAuswahl: document.getElementById('rechnung-adresse-auswahl'),
   rechnungEinsatzortHinweis: document.getElementById('rechnung-einsatzort-hinweis'),
   rechnungNr: document.getElementById('rechnung-nr'),
@@ -392,6 +401,7 @@ const angebotPostenEditor = createPostenEditor(angebotPostenState, {
   summeMwst: els.summeMwst,
   summeBrutto: els.summeBrutto,
   pdfBtn: els.pdfBtn,
+  pdfSendBtn: els.pdfSendBtn,
   saveBtn: els.saveBtn,
   saveCloseBtn: els.saveCloseBtn,
   canSave: () => isAngebotKopfComplete(),
@@ -405,6 +415,7 @@ const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
   summeMwst: els.rechnungSummeMwst,
   summeBrutto: els.rechnungSummeBrutto,
   pdfBtn: els.rechnungPdfBtn,
+  pdfSendBtn: els.rechnungPdfSendBtn,
   saveBtn: els.rechnungSaveBtn,
   saveCloseBtn: els.rechnungSaveCloseBtn,
   canSave: () => isRechnungKopfComplete(),
@@ -662,7 +673,7 @@ function handleAdresseAuswahlClick(meta, adresseFields, pickerEl, hinweisEl, eve
   syncAdresseAuswahlActive(pickerEl, meta);
 }
 
-function buildKundePayload(name, adresseData, meta) {
+function buildKundePayload(name, adresseData, meta, email = '') {
   const addr = normalizeAdresse(adresseData);
   const kunde = {
     name,
@@ -670,6 +681,8 @@ function buildKundePayload(name, adresseData, meta) {
     plzOrt: addr.plzOrt,
     adresse: addr.adresse,
   };
+  const trimmedEmail = String(email || adresseData?.email || '').trim();
+  if (trimmedEmail) kunde.email = trimmedEmail;
   const anrede = normalizeKundeAnrede(meta.kundeAnrede);
   if (anrede) kunde.anrede = anrede;
   if (meta.kundeKundenNr) kunde.kundenNr = meta.kundeKundenNr;
@@ -732,11 +745,18 @@ async function renderKundenObjekteSection(kundeId) {
 async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
   const trimmedName = (name || '').trim();
   const addr = normalizeAdresse(adresseData);
+  const email = String(adresseData?.email || '').trim();
 
   if (!trimmedName) {
     return {
       kundeId: null,
-      kunde: { name: '', strasse: addr.strasse, plzOrt: addr.plzOrt, adresse: addr.adresse },
+      kunde: {
+        name: '',
+        email,
+        strasse: addr.strasse,
+        plzOrt: addr.plzOrt,
+        adresse: addr.adresse,
+      },
     };
   }
 
@@ -744,6 +764,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
   const kunden = await getAllKunden();
   const kundeSnapshot = {
     name: trimmedName,
+    email,
     strasse: addr.strasse,
     plzOrt: addr.plzOrt,
     adresse: addr.adresse,
@@ -759,6 +780,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
     const prev = normalizeAdresse(kunde);
     const changed =
       next.name !== kunde.name ||
+      (next.email || '') !== (kunde.email || '') ||
       prev.strasse !== next.strasse ||
       prev.plzOrt !== next.plzOrt;
     if (changed) await saveKunde(next);
@@ -770,6 +792,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
     if (selectedKunde) {
       const updated = await syncKunde(selectedKunde, {
         name: trimmedName,
+        email,
         strasse: addr.strasse || normalizeAdresse(selectedKunde).strasse,
         plzOrt: addr.plzOrt || normalizeAdresse(selectedKunde).plzOrt,
       });
@@ -779,6 +802,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
         kunde: {
           anrede: normalizeKundeAnrede(updated.anrede),
           kundenNr: updated.kundenNr || '',
+          email: updated.email || '',
           name: updated.name,
           strasse: normalized.strasse,
           plzOrt: normalized.plzOrt,
@@ -792,6 +816,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
   if (byName) {
     const prev = normalizeAdresse(byName);
     const updated = await syncKunde(byName, {
+      email,
       strasse: addr.strasse || prev.strasse,
       plzOrt: addr.plzOrt || prev.plzOrt,
     });
@@ -801,6 +826,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
       kunde: {
         anrede: normalizeKundeAnrede(updated.anrede),
         kundenNr: updated.kundenNr || '',
+        email: updated.email || '',
         name: updated.name,
         strasse: normalized.strasse,
         plzOrt: normalized.plzOrt,
@@ -815,6 +841,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
     kundenNr,
     anrede: '',
     name: trimmedName,
+    email,
     strasse: addr.strasse,
     plzOrt: addr.plzOrt,
     adresse: addr.adresse,
@@ -989,7 +1016,8 @@ async function getFormAngebot() {
     kunde: buildKundePayload(
       els.kundeName.value.trim(),
       readAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt),
-      state.angebot
+      state.angebot,
+      els.kundeEmail?.value.trim()
     ),
     posten: angebotPostenEditor.getPostenForSave(),
   };
@@ -1010,7 +1038,8 @@ async function getFormRechnung() {
     kunde: buildKundePayload(
       els.rechnungKundeName.value.trim(),
       readAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt),
-      state.rechnung
+      state.rechnung,
+      els.rechnungKundeEmail?.value.trim()
     ),
     posten: rechnungPostenEditor.getPostenForSave(),
     angebotId: state.rechnung.angebotId || undefined,
@@ -1044,6 +1073,7 @@ async function setupAngebotKundeAdressen(kunde) {
   state.angebot.kundeKundenNr = kunde.kundenNr || '';
   setBillingSnapshot(state.angebot, addr);
   els.kundeName.value = kunde.name;
+  if (els.kundeEmail) els.kundeEmail.value = kunde.email || '';
   setAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt, addr);
   await refreshAdresseAuswahl(
     kunde.id,
@@ -1063,6 +1093,7 @@ async function setupRechnungKundeAdressen(kunde) {
   state.rechnung.kundeKundenNr = kunde.kundenNr || '';
   setBillingSnapshot(state.rechnung, addr);
   els.rechnungKundeName.value = kunde.name;
+  if (els.rechnungKundeEmail) els.rechnungKundeEmail.value = kunde.email || '';
   setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, addr);
   await refreshAdresseAuswahl(
     kunde.id,
@@ -1139,6 +1170,7 @@ async function resetForm() {
   angebotPostenEditor.clearPostenState();
   clearKundeAuswahl();
   els.kundeName.value = '';
+  if (els.kundeEmail) els.kundeEmail.value = '';
   clearAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt);
   els.angebotNr.value = await generiereAngebotsnummer();
 
@@ -1157,6 +1189,7 @@ async function resetRechnungForm() {
   setRechnungKopfCollapsed(isMobileLayout());
   rechnungPostenEditor.clearPostenState();
   els.rechnungKundeName.value = '';
+  if (els.rechnungKundeEmail) els.rechnungKundeEmail.value = '';
   clearAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt);
   await refreshAdresseAuswahl(
     null,
@@ -1189,6 +1222,7 @@ async function loadAngebotIntoForm(angebot) {
   angebotPostenEditor.loadPostenFromDocument(angebot.posten);
 
   els.kundeName.value = angebot.kunde.name;
+  if (els.kundeEmail) els.kundeEmail.value = angebot.kunde.email || '';
   setAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt, angebot.kunde);
   els.angebotNr.value = angebot.angebotNr;
   els.angebotDatum.value =
@@ -1237,6 +1271,7 @@ async function loadRechnungIntoForm(rechnung) {
   rechnungPostenEditor.loadPostenFromDocument(rechnung.posten);
 
   els.rechnungKundeName.value = rechnung.kunde.name;
+  if (els.rechnungKundeEmail) els.rechnungKundeEmail.value = rechnung.kunde.email || '';
   setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, rechnung.kunde);
   els.rechnungNr.value = rechnung.rechnungNr;
   els.rechnungDatum.value = rechnung.rechnungsdatum || rechnung.erstelltAm?.split('T')[0] || '';
@@ -1288,6 +1323,7 @@ async function loadAngebotAsRechnungEntwurf(angebot) {
   rechnungPostenEditor.loadPostenFromDocument(angebot.posten);
 
   els.rechnungKundeName.value = angebot.kunde.name;
+  if (els.rechnungKundeEmail) els.rechnungKundeEmail.value = angebot.kunde.email || '';
   setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, angebot.kunde);
   if (angebot.kundeId) {
     const stamm = await getKunde(angebot.kundeId);
@@ -3306,17 +3342,131 @@ async function persistRechnungFromForm() {
 }
 
 function setAngebotFooterBusy(busy) {
-  [els.saveBtn, els.saveCloseBtn, els.pdfBtn, els.resetBtn].forEach((btn) => {
+  [els.saveBtn, els.saveCloseBtn, els.pdfBtn, els.pdfSendBtn, els.resetBtn].forEach((btn) => {
     if (btn) btn.disabled = busy;
   });
 }
 
 function setRechnungFooterBusy(busy) {
-  [els.rechnungSaveBtn, els.rechnungSaveCloseBtn, els.rechnungPdfBtn, els.rechnungResetBtn].forEach(
+  [els.rechnungSaveBtn, els.rechnungSaveCloseBtn, els.rechnungPdfBtn, els.rechnungPdfSendBtn, els.rechnungResetBtn].forEach(
     (btn) => {
       if (btn) btn.disabled = busy;
     }
   );
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+async function resolveDocumentKundeEmail(selectedKundeId, formEmailEl) {
+  const fromForm = (formEmailEl?.value || '').trim();
+  if (fromForm) return fromForm;
+  if (!selectedKundeId) return '';
+  const kunde = await getKunde(selectedKundeId);
+  return (kunde?.email || '').trim();
+}
+
+function getPersistIncompleteMessage(kind) {
+  const isAngebot = kind === 'angebot';
+  const postenEditor = isAngebot ? angebotPostenEditor : rechnungPostenEditor;
+  const kopfComplete = isAngebot ? isAngebotKopfComplete() : isRechnungKopfComplete();
+
+  if (postenEditor.getAusgewaehltePosten().length === 0) {
+    return 'Bitte mindestens einen Posten hinzufügen.';
+  }
+  if (!kopfComplete) {
+    return 'Bitte alle Pflichtfelder unter „Allgemeine Informationen“ ausfüllen.';
+  }
+  return 'Das Dokument konnte nicht gespeichert werden.';
+}
+
+async function ensureDocumentMailReady(selectedKundeId, formEmailEl) {
+  const kundeEmail = await resolveDocumentKundeEmail(selectedKundeId, formEmailEl);
+  if (!kundeEmail) {
+    throw new Error('Bitte eine Kunden-E-Mail im Formular eintragen oder im Kundenstamm hinterlegen.');
+  }
+
+  const userEmail = getSession()?.user?.email?.trim();
+  if (!userEmail) {
+    throw new Error('Ihre Profil-E-Mail konnte nicht ermittelt werden.');
+  }
+
+  return kundeEmail;
+}
+
+async function sendAngebotPdfByMail(angebot, posten) {
+  const kundeEmail = await ensureDocumentMailReady(state.angebot.selectedKundeId, els.kundeEmail);
+
+  const tpl = getPdfTemplate();
+  const firmaName = tpl.firma?.name || 'Ihr Unternehmen';
+  const { filename, content } = getAngebotPdfAttachment(angebot, posten);
+
+  const sendResult = await sendDocumentPdf({
+    type: 'angebot',
+    to: kundeEmail,
+    subject: `Angebot ${angebot.angebotNr} – ${firmaName}`,
+    text: `Guten Tag,\n\nanbei erhalten Sie unser Angebot ${angebot.angebotNr}.\n\nMit freundlichen Grüßen\n${firmaName}`,
+    filename,
+    pdfBase64: arrayBufferToBase64(content),
+  });
+
+  return { kundeEmail, sendResult };
+}
+
+function formatDocumentSendSuccess(kind, kundeEmail, sendResult) {
+  const docLabel = kind === 'rechnung' ? 'Rechnung' : 'Angebot';
+
+  if (sendResult?.previewUrl) {
+    window.open(sendResult.previewUrl, '_blank', 'noopener,noreferrer');
+    return `${docLabel} im Test-Modus erstellt — keine echte E-Mail im Postfach.\n\nVorschau im neuen Tab geöffnet.\nGeplanter Empfänger: ${kundeEmail}`;
+  }
+
+  return `${docLabel} wurde an ${kundeEmail} gesendet. Eine Kopie geht an ${getSession()?.user?.email}.`;
+}
+
+async function refreshMailSendHints() {
+  const hintEls = [els.pdfSendHint, els.rechnungPdfSendHint].filter(Boolean);
+  if (!hintEls.length) return;
+
+  try {
+    const status = await fetchMailStatus();
+    const hint = status?.hint || '';
+    hintEls.forEach((el) => {
+      el.textContent = hint;
+      el.classList.toggle('hidden', !hint);
+      el.classList.toggle('pdf-footer__mail-hint--dev', Boolean(status?.devMode));
+    });
+  } catch {
+    hintEls.forEach((el) => el.classList.add('hidden'));
+  }
+}
+
+async function sendRechnungPdfByMail(rechnung, posten) {
+  const kundeEmail = await ensureDocumentMailReady(
+    state.rechnung.selectedKundeId,
+    els.rechnungKundeEmail
+  );
+
+  const tpl = getPdfTemplate();
+  const firmaName = tpl.firma?.name || 'Ihr Unternehmen';
+  const { filename, content } = await getRechnungPdfAttachment(rechnung, posten);
+
+  const sendResult = await sendDocumentPdf({
+    type: 'rechnung',
+    to: kundeEmail,
+    subject: `Rechnung ${rechnung.rechnungNr} – ${firmaName}`,
+    text: `Guten Tag,\n\nanbei erhalten Sie unsere Rechnung ${rechnung.rechnungNr}.\n\nMit freundlichen Grüßen\n${firmaName}`,
+    filename,
+    pdfBase64: arrayBufferToBase64(content),
+  });
+
+  return { kundeEmail, sendResult };
 }
 
 async function speichernAngebot() {
@@ -3352,6 +3502,24 @@ async function speichernUndPdf() {
     downloadPdf(result.angebot, result.posten);
   } catch (err) {
     alert(`Speichern fehlgeschlagen: ${err.message}`);
+  } finally {
+    angebotPostenEditor.render();
+  }
+}
+
+async function speichernUndPdfAnKundenSenden() {
+  setAngebotFooterBusy(true);
+  try {
+    await ensureDocumentMailReady(state.angebot.selectedKundeId, els.kundeEmail);
+    const result = await persistAngebotFromForm();
+    if (!result) {
+      alert(getPersistIncompleteMessage('angebot'));
+      return;
+    }
+    const { kundeEmail, sendResult } = await sendAngebotPdfByMail(result.angebot, result.posten);
+    alert(formatDocumentSendSuccess('angebot', kundeEmail, sendResult));
+  } catch (err) {
+    alert(`Versand fehlgeschlagen: ${err.message}`);
   } finally {
     angebotPostenEditor.render();
   }
@@ -3395,6 +3563,24 @@ async function speichernUndRechnungPdf() {
   }
 }
 
+async function speichernUndRechnungPdfAnKundenSenden() {
+  setRechnungFooterBusy(true);
+  try {
+    await ensureDocumentMailReady(state.rechnung.selectedKundeId, els.rechnungKundeEmail);
+    const result = await persistRechnungFromForm();
+    if (!result) {
+      alert(getPersistIncompleteMessage('rechnung'));
+      return;
+    }
+    const { kundeEmail, sendResult } = await sendRechnungPdfByMail(result.rechnung, result.posten);
+    alert(formatDocumentSendSuccess('rechnung', kundeEmail, sendResult));
+  } catch (err) {
+    alert(`Versand fehlgeschlagen: ${err.message}`);
+  } finally {
+    rechnungPostenEditor.render();
+  }
+}
+
 let appFlowGeneration = 0;
 
 function invalidateAppFlow() {
@@ -3433,7 +3619,8 @@ function showLogin(mode = 'login') {
   els.loginScreen.classList.remove('hidden');
   els.app.classList.add('hidden');
   setAuthTab(mode);
-  els.loginPass.value = '';
+  els.loginUser.value = 'admin';
+  els.loginPass.value = 'admin';
 }
 
 async function restoreLoginView() {
@@ -3477,6 +3664,8 @@ async function showApp() {
 
   if (!isActiveAppFlow(flowId)) return;
   await restoreLoginView();
+  if (!isActiveAppFlow(flowId)) return;
+  await refreshMailSendHints();
   if (!isActiveAppFlow(flowId)) return;
 
   if (needsOnboarding()) {
@@ -3577,10 +3766,12 @@ function bindAppEvents() {
   els.saveBtn?.addEventListener('click', () => speichernAngebot());
   els.saveCloseBtn?.addEventListener('click', () => speichernAngebotUndSchliessen());
   els.pdfBtn.addEventListener('click', () => speichernUndPdf());
+  els.pdfSendBtn?.addEventListener('click', () => speichernUndPdfAnKundenSenden());
   els.rechnungResetBtn?.addEventListener('click', () => resetRechnungForm());
   els.rechnungSaveBtn?.addEventListener('click', () => speichernRechnung());
   els.rechnungSaveCloseBtn?.addEventListener('click', () => speichernRechnungUndSchliessen());
   els.rechnungPdfBtn?.addEventListener('click', () => speichernUndRechnungPdf());
+  els.rechnungPdfSendBtn?.addEventListener('click', () => speichernUndRechnungPdfAnKundenSenden());
 
   els.kundeAuswahlBtn.addEventListener('click', () => openKundenModal('angebot'));
   els.kundeName.addEventListener('input', clearKundeAuswahl);
