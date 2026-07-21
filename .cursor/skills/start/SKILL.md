@@ -2,7 +2,7 @@
 name: start
 description: >-
   Starts or stops the webapp dev stack when the user sends /start or /stop (or
-  asks to start/stop the site, Klemdesk, localhost). Runs Vite on 5173 and
+  asks to start/stop the site, KlemDesk, localhost). Runs Vite on 5173 and
   Express API on 3001 via npm run dev.
 disable-model-invocation: false
 ---

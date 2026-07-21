@@ -1,6 +1,6 @@
-# Kunden-Bereich – Roadmap (Handwerker)
+# Kunden-Bereich – Roadmap (Dienstleistung)
 
-Zielgruppe: kleine Handwerksbetriebe. Fokus: Angebot → Rechnung, ohne Voll-CRM.
+Zielgruppe: kleine Dienstleistungsunternehmen. Fokus: Angebot → Rechnung, ohne Voll-CRM.
 
 ## Ist-Stand (Basis)
 
@@ -58,7 +58,7 @@ Zielgruppe: kleine Handwerksbetriebe. Fokus: Angebot → Rechnung, ohne Voll-CRM
 ## Phase 6 – Integration (optional)
 
 - CSV-Import bestehender Kunden
-- Kommunikation: Maps-Link zur Baustelle
+- Kommunikation: Maps-Link zum Einsatzort
 - Mehrere Benutzer: „Zuletzt bearbeitet von …“
 
 ---

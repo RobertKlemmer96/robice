@@ -275,7 +275,7 @@ function renderRoadmap() {
 
   return `
     <h1>Roadmap</h1>
-    <p class="legal-lead">Geplante Entwicklung von ${escapeHtml(c.productName)} — fokussiert auf Handwerk und Dienstleistung, ohne Voll-CRM.</p>
+    <p class="legal-lead">Geplante Entwicklung von ${escapeHtml(c.productName)} — fokussiert auf Dienstleistung, ohne Voll-CRM.</p>
 
     <section class="legal-section roadmap-section">
       <ol class="roadmap-timeline" aria-label="Produkt-Roadmap">

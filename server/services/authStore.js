@@ -111,7 +111,7 @@ export function ensureSystemAdmin(passwordHash) {
     runTransaction((dbConn) => {
       dbConn.prepare(
         'INSERT INTO tenants (id, name, plan, created_at, onboarding_completed) VALUES (?, ?, ?, ?, ?)'
-      ).run(tenantId, 'Klemdesk Admin', 'admin', now, 0);
+      ).run(tenantId, 'KlemDesk Admin', 'admin', now, 0);
       dbConn.prepare(
         'INSERT INTO users (id, tenant_id, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)'
       ).run(userId, tenantId, email, passwordHash, 'admin', now);

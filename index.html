@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Klemdesk – Angebote &amp; Rechnungen</title>
+    <title>KlemDesk – Angebote &amp; Rechnungen</title>
     <script>
       (function () {
         var theme = localStorage.getItem('angebot_theme') || 'dark';
@@ -18,7 +18,7 @@
         <div class="landing-alpha-banner__inner">
           <strong>Alpha-Vorschau</strong>
           <span>
-            Klemdesk befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können
+            KlemDesk befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können
             sich noch ändern.
           </span>
         </div>
@@ -28,7 +28,7 @@
           <div class="landing-brand">
             <span class="landing-brand__mark" aria-hidden="true">Kd</span>
             <span class="landing-brand__text">
-              <strong class="landing-brand__name">Klemdesk</strong>
+              <strong class="landing-brand__name">KlemDesk</strong>
               <span class="landing-brand__tag">Angebote &amp; Rechnungen</span>
             </span>
           </div>
@@ -174,13 +174,13 @@
 
         <section class="landing-hero">
           <div class="landing-hero__content">
-            <p class="landing-eyebrow">Kostenlos · Sofort startklar · Für Handwerk &amp; Dienstleistung</p>
+            <p class="landing-eyebrow">Kostenlos · Sofort startklar · Für Dienstleistung</p>
             <h1 class="landing-hero__title">
               Angebote und Rechnungen erstellen —<br />
               <span class="landing-hero__accent">professionell als PDF</span>
             </h1>
             <p class="landing-hero__lead">
-              Klemdesk bündelt Kunden, Katalog und Dokumente in einer Oberfläche.
+              KlemDesk bündelt Kunden, Katalog und Dokumente in einer Oberfläche.
               Registrieren, einloggen und in wenigen Minuten das erste Angebot versenden.
             </p>
             <div class="landing-hero__actions">
@@ -302,7 +302,7 @@
         <section class="landing-cta">
           <div class="landing-cta__card">
             <h2>Bereit für das erste Angebot?</h2>
-            <p>Registrierung dauert unter einer Minute. Klemdesk ist aktuell kostenlos nutzbar.</p>
+            <p>Registrierung dauert unter einer Minute. KlemDesk ist aktuell kostenlos nutzbar.</p>
             <div class="landing-cta__actions">
               <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free">Kostenlos registrieren</button>
               <button type="button" class="btn btn-ghost" data-landing-action="login">Anmelden</button>
@@ -521,8 +521,8 @@
               </li>
               <li class="app-nav__group app-nav__group--direct" data-nav-group="pdf-vorlage">
                 <button type="button" class="app-nav__trigger" data-nav-view="pdf-vorlage">
-                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">PDF-Vorlage</span>
-                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">PDF</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop">Vorlage</span>
+                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile">Vorlage</span>
                 </button>
               </li>
               <li class="app-nav__group app-nav__group--direct is-admin-only hidden" data-nav-group="admin">
@@ -631,7 +631,7 @@
                   <div class="angebot-kopf__col angebot-kopf__col--meta">
                     <label>
                       Rechnungsnummer
-                      <input type="text" id="rechnung-nr" />
+                      <input type="text" id="rechnung-nr" readonly tabindex="-1" aria-readonly="true" />
                     </label>
                     <label>
                       Rechnungsdatum
@@ -775,16 +775,18 @@
                   PDF erstellen
                 </button>
               </div>
-              <button
-                type="button"
-                id="rechnung-pdf-send-btn"
-                class="btn btn-primary is-disabled"
-                aria-disabled="true"
-              >
-                PDF generieren und an Kunden senden
-              </button>
+              <div class="pdf-footer__action-row">
+                <button
+                  type="button"
+                  id="rechnung-pdf-send-btn"
+                  class="btn btn-primary is-disabled"
+                  aria-disabled="true"
+                >
+                  PDF generieren und an Kunden senden
+                </button>
+                <button type="button" id="rechnung-reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true">Zurücksetzen</button>
+              </div>
               <p id="rechnung-pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
-              <button type="button" id="rechnung-reset-btn" class="btn btn-ghost hidden">Neu starten</button>
             </div>
           </div>
         </main>
@@ -835,7 +837,7 @@
                   <div class="angebot-kopf__col angebot-kopf__col--meta">
                     <label>
                       Angebotsnummer
-                      <input type="text" id="angebot-nr" />
+                      <input type="text" id="angebot-nr" readonly tabindex="-1" aria-readonly="true" />
                     </label>
                     <label>
                       Angebotsdatum
@@ -963,16 +965,18 @@
                   PDF erstellen
                 </button>
               </div>
-              <button
-                type="button"
-                id="pdf-send-btn"
-                class="btn btn-primary is-disabled"
-                aria-disabled="true"
-              >
-                PDF generieren und an Kunden senden
-              </button>
+              <div class="pdf-footer__action-row">
+                <button
+                  type="button"
+                  id="pdf-send-btn"
+                  class="btn btn-primary is-disabled"
+                  aria-disabled="true"
+                >
+                  PDF generieren und an Kunden senden
+                </button>
+                <button type="button" id="reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true">Zurücksetzen</button>
+              </div>
               <p id="pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
-              <button type="button" id="reset-btn" class="btn btn-ghost hidden">Neu starten</button>
             </div>
           </div>
         </main>
@@ -993,7 +997,7 @@
         <main class="main">
           <section class="card pdf-vorlage-card">
             <div class="pdf-vorlage-card__head">
-              <h2>PDF-Vorlage · Angebot</h2>
+              <h2>Vorlage · Angebot</h2>
               <div
                 class="pdf-layout-tabs"
                 role="tablist"
@@ -1056,7 +1060,7 @@
         <main class="main">
           <section class="card pdf-vorlage-card">
             <div class="pdf-vorlage-card__head">
-              <h2>PDF-Vorlage · Rechnung</h2>
+              <h2>Vorlage · Rechnung</h2>
               <div
                 class="pdf-layout-tabs"
                 role="tablist"
@@ -1243,7 +1247,7 @@
         <main class="main">
           <section class="card">
             <h2>Administration</h2>
-            <p class="settings-lead">Alle registrierten Nutzer und Mandanten auf Klemdesk.</p>
+            <p class="settings-lead">Alle registrierten Nutzer und Mandanten auf KlemDesk.</p>
             <div id="admin-user-list" class="admin-user-list" aria-live="polite"></div>
           </section>
         </main>
@@ -1302,71 +1306,6 @@
 
       <div id="view-kunden" class="hidden">
         <main class="main">
-          <section id="kunden-form-section" class="card">
-            <h2 id="kunden-form-title">Neuer Kunde</h2>
-            <form id="kunden-form" class="form-grid">
-              <label>
-                Anrede
-                <select id="kunden-form-anrede">
-                  <option value="">—</option>
-                  <option value="Herr">Herr</option>
-                  <option value="Frau">Frau</option>
-                  <option value="Firma">Firma</option>
-                </select>
-              </label>
-              <label>
-                Kundennummer
-                <input
-                  type="text"
-                  id="kunden-form-kunden-nr"
-                  readonly
-                  tabindex="-1"
-                  placeholder="Wird beim Speichern vergeben"
-                />
-              </label>
-              <label class="full">
-                Firmenname / Name
-                <input type="text" id="kunden-form-name" required placeholder="Firma oder Name" />
-              </label>
-              <div class="adresse-fields full">
-                <label>
-                  Straße, Hausnummer
-                  <input
-                    type="text"
-                    id="kunden-form-strasse"
-                    placeholder="Musterstraße 12"
-                    autocomplete="street-address"
-                  />
-                </label>
-                <label>
-                  PLZ, Ort
-                  <input
-                    type="text"
-                    id="kunden-form-plz-ort"
-                    placeholder="12345 Musterstadt"
-                    autocomplete="postal-code"
-                  />
-                </label>
-              </div>
-              <label>
-                Telefon
-                <input type="tel" id="kunden-form-telefon" placeholder="z. B. 0170 …" autocomplete="tel" />
-              </label>
-              <label>
-                E-Mail
-                <input type="email" id="kunden-form-email" placeholder="kunde@beispiel.de" autocomplete="email" />
-              </label>
-              <label class="full">
-                Notiz
-                <textarea id="kunden-form-notiz" rows="3" placeholder="z. B. Anfahrt, Schlüssel, Besonderheiten"></textarea>
-              </label>
-              <div class="form-actions full">
-                <button type="submit" class="btn btn-primary">Speichern</button>
-                <button type="button" id="kunden-form-reset" class="btn btn-ghost hidden">Abbrechen</button>
-              </div>
-            </form>
-          </section>
-
           <section id="kunden-detail" class="card hidden" aria-labelledby="kunden-detail-title">
             <div class="card-header kunden-detail__header">
               <h2 id="kunden-detail-title">Kunde</h2>
@@ -1442,7 +1381,7 @@
                   <label class="full">
                     Art
                     <select id="kunden-objekt-typ">
-                      <option value="einsatz">Einsatzort / Baustelle</option>
+                      <option value="einsatz">Einsatzort / Leistungsort</option>
                       <option value="rechnung">Adresse (alternativ)</option>
                     </select>
                   </label>
@@ -1461,10 +1400,75 @@
               <h2>Kundenliste</h2>
               <div class="kunden-liste-toolbar">
                 <input type="search" id="kunden-suche" class="search" placeholder="Kunden suchen…" />
-                <button type="button" id="kunden-neu-btn" class="btn btn-ghost btn-sm">Neuer Kunde</button>
+                <button type="button" id="kunden-neu-btn" class="btn btn-primary btn-sm">Neuer Kunde</button>
               </div>
             </div>
             <div id="kunden-liste" class="kunden-liste"></div>
+          </section>
+
+          <section id="kunden-form-section" class="card hidden">
+            <h2 id="kunden-form-title">Neuer Kunde</h2>
+            <form id="kunden-form" class="form-grid">
+              <label>
+                Anrede
+                <select id="kunden-form-anrede">
+                  <option value="">—</option>
+                  <option value="Herr">Herr</option>
+                  <option value="Frau">Frau</option>
+                  <option value="Firma">Firma</option>
+                </select>
+              </label>
+              <label>
+                Kundennummer
+                <input
+                  type="text"
+                  id="kunden-form-kunden-nr"
+                  readonly
+                  tabindex="-1"
+                  placeholder="Wird beim Speichern vergeben"
+                />
+              </label>
+              <label class="full">
+                Firmenname / Name
+                <input type="text" id="kunden-form-name" required placeholder="Firma oder Name" />
+              </label>
+              <div class="adresse-fields full">
+                <label>
+                  Straße, Hausnummer
+                  <input
+                    type="text"
+                    id="kunden-form-strasse"
+                    placeholder="Musterstraße 12"
+                    autocomplete="street-address"
+                  />
+                </label>
+                <label>
+                  PLZ, Ort
+                  <input
+                    type="text"
+                    id="kunden-form-plz-ort"
+                    placeholder="12345 Musterstadt"
+                    autocomplete="postal-code"
+                  />
+                </label>
+              </div>
+              <label>
+                Telefon
+                <input type="tel" id="kunden-form-telefon" placeholder="z. B. 0170 …" autocomplete="tel" />
+              </label>
+              <label>
+                E-Mail
+                <input type="email" id="kunden-form-email" placeholder="kunde@beispiel.de" autocomplete="email" />
+              </label>
+              <label class="full">
+                Notiz
+                <textarea id="kunden-form-notiz" rows="3" placeholder="z. B. Anfahrt, Schlüssel, Besonderheiten"></textarea>
+              </label>
+              <div class="form-actions full">
+                <button type="submit" class="btn btn-primary">Speichern</button>
+                <button type="button" id="kunden-form-reset" class="btn btn-ghost">Abbrechen</button>
+              </div>
+            </form>
           </section>
         </main>
       </div>
@@ -1484,7 +1488,7 @@
       <div id="onboarding-screen" class="onboarding-screen hidden" aria-hidden="true">
         <div class="onboarding-shell card">
           <header class="onboarding-header">
-            <p class="onboarding-eyebrow">Willkommen bei Klemdesk</p>
+            <p class="onboarding-eyebrow">Willkommen bei KlemDesk</p>
             <h1 class="onboarding-title">Kurz einrichten</h1>
             <p class="onboarding-lead">Damit Ihre PDFs, Nummern und Layout von Anfang an passen.</p>
           </header>
@@ -1572,7 +1576,7 @@
               <h2>PDF-Layout</h2>
               <p class="settings-lead">
                 Wählen Sie das Erscheinungsbild für Angebote und Rechnungen. Sie können es später in den
-                PDF-Vorlagen anpassen.
+                Vorlagen anpassen.
               </p>
               <form id="onboarding-layout-form">
                 <div id="onboarding-layout-options" class="onboarding-layout-options" role="radiogroup" aria-label="PDF-Layout"></div>

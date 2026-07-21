@@ -3,7 +3,7 @@
  * Keine Rechtsberatung; Texte ggf. von Fachanwalt prüfen lassen.
  */
 export const LEGAL_CONFIG = {
-  productName: 'Klemdesk',
+  productName: 'KlemDesk',
   companyName: 'Robert Klemmer',
   legalForm: '',
   street: 'Hamberger Straße 42',

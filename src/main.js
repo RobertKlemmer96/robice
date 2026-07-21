@@ -405,7 +405,10 @@ const angebotPostenEditor = createPostenEditor(angebotPostenState, {
   saveBtn: els.saveBtn,
   saveCloseBtn: els.saveCloseBtn,
   canSave: () => isAngebotKopfComplete(),
-  onUpdate: () => updatePostenKopfSummary(),
+  onUpdate: () => {
+    updatePostenKopfSummary();
+    updatePageHeader();
+  },
 });
 
 const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
@@ -419,7 +422,10 @@ const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
   saveBtn: els.rechnungSaveBtn,
   saveCloseBtn: els.rechnungSaveCloseBtn,
   canSave: () => isRechnungKopfComplete(),
-  onUpdate: () => updateRechnungPostenKopfSummary(),
+  onUpdate: () => {
+    updateRechnungPostenKopfSummary();
+    updateRechnungPageHeader();
+  },
 });
 
 async function generiereAngebotsnummer() {
@@ -710,7 +716,7 @@ function resetKundenObjektForm() {
 
 function renderKundenObjekteHtml(objekte) {
   if (!objekte.length) {
-    return '<p class="empty">Noch keine Objekte. Baustellen oder alternative Adressen unten anlegen.</p>';
+    return '<p class="empty">Noch keine Objekte. Einsatzorte oder alternative Adressen unten anlegen.</p>';
   }
 
   return objekte
@@ -1148,6 +1154,7 @@ function clearKundeAuswahl() {
     angebotAdresseFields()
   );
   updateKundeHinweis();
+  updatePageHeader();
 }
 
 function clearRechnungKundeAuswahl() {
@@ -1161,7 +1168,7 @@ function clearRechnungKundeAuswahl() {
     rechnungAdresseFields()
   );
   updateRechnungKundeHinweis();
-  updateRechnungKopfSummary();
+  updateRechnungPageHeader();
 }
 
 async function resetForm() {
@@ -1363,14 +1370,39 @@ async function loadAngebotAsRechnungEntwurf(angebot) {
   rechnungPostenEditor.render();
 }
 
+function setFooterButtonEnabled(btn, enabled) {
+  if (!btn) return;
+  btn.disabled = !enabled;
+  btn.setAttribute('aria-disabled', String(!enabled));
+  btn.classList.toggle('is-disabled', !enabled);
+}
+
+function angebotFormHasChanges() {
+  if (state.angebot.editingId) return true;
+  if (angebotPostenEditor.getAusgewaehltePosten().length > 0) return true;
+  if (state.angebot.selectedKundeId) return true;
+  if (els.kundeName?.value.trim()) return true;
+  if (els.kundeEmail?.value.trim()) return true;
+  if (els.kundeStrasse?.value.trim()) return true;
+  if (els.kundePlzOrt?.value.trim()) return true;
+  return false;
+}
+
+function rechnungFormHasChanges() {
+  if (state.rechnung.editingId) return true;
+  if (state.rechnung.angebotId) return true;
+  if (rechnungPostenEditor.getAusgewaehltePosten().length > 0) return true;
+  if (state.rechnung.selectedKundeId) return true;
+  if (els.rechnungKundeName?.value.trim()) return true;
+  if (els.rechnungKundeEmail?.value.trim()) return true;
+  if (els.rechnungKundeStrasse?.value.trim()) return true;
+  if (els.rechnungKundePlzOrt?.value.trim()) return true;
+  return false;
+}
+
 function updatePageHeader() {
-  if (state.angebot.editingId) {
-    els.pdfBtn.textContent = 'PDF aktualisieren';
-    els.resetBtn.classList.remove('hidden');
-  } else {
-    els.pdfBtn.textContent = 'PDF erstellen';
-    els.resetBtn.classList.add('hidden');
-  }
+  els.pdfBtn.textContent = state.angebot.editingId ? 'PDF aktualisieren' : 'PDF erstellen';
+  setFooterButtonEnabled(els.resetBtn, angebotFormHasChanges());
   updateAngebotKopfSummary();
 }
 
@@ -1397,14 +1429,21 @@ function isRechnungKopfComplete() {
 }
 
 function bindFormPdfValidation() {
-  const refreshAngebotPdf = () => angebotPostenEditor.refreshSummary();
-  const refreshRechnungPdf = () => rechnungPostenEditor.refreshSummary();
+  const refreshAngebotPdf = () => {
+    angebotPostenEditor.refreshSummary();
+    updatePageHeader();
+  };
+  const refreshRechnungPdf = () => {
+    rechnungPostenEditor.refreshSummary();
+    updateRechnungPageHeader();
+  };
 
   [
     els.angebotNr,
     els.angebotDatum,
     els.gueltigBis,
     els.kundeName,
+    els.kundeEmail,
     els.kundeStrasse,
     els.kundePlzOrt,
   ].forEach((el) => {
@@ -1417,6 +1456,7 @@ function bindFormPdfValidation() {
     els.rechnungDatum,
     els.rechnungFaellig,
     els.rechnungKundeName,
+    els.rechnungKundeEmail,
     els.rechnungKundeStrasse,
     els.rechnungKundePlzOrt,
   ].forEach((el) => {
@@ -1584,13 +1624,8 @@ function bindRechnungPostenKopfToggle() {
 }
 
 function updateRechnungPageHeader() {
-  if (state.rechnung.editingId) {
-    els.rechnungPdfBtn.textContent = 'PDF aktualisieren';
-    els.rechnungResetBtn.classList.remove('hidden');
-  } else {
-    els.rechnungPdfBtn.textContent = 'PDF erstellen';
-    els.rechnungResetBtn.classList.add('hidden');
-  }
+  els.rechnungPdfBtn.textContent = state.rechnung.editingId ? 'PDF aktualisieren' : 'PDF erstellen';
+  setFooterButtonEnabled(els.rechnungResetBtn, rechnungFormHasChanges());
   updateRechnungKopfSummary();
 }
 
@@ -2163,7 +2198,7 @@ function bindMainNav() {
       link?.classList.contains('app-nav__trigger') && link.dataset.navView;
     if (link?.dataset.navView && (inMenu || directTrigger)) {
       if (link.dataset.navView === 'kunden' && !state.editingKundeId) {
-        resetKundenForm();
+        closeKundenForm();
       }
       showView(link.dataset.navView);
       closeMobileNav();
@@ -2543,7 +2578,7 @@ async function handlePdfTemplateSubmit(e, type) {
 }
 
 async function handlePdfTemplateReset(form, type) {
-  if (!confirm('PDF-Vorlage auf Standardwerte zurücksetzen? Gespeicherte Bilder gehen verloren.')) {
+  if (!confirm('Vorlage auf Standardwerte zurücksetzen? Gespeicherte Bilder gehen verloren.')) {
     return;
   }
   const current = getPdfTemplate();
@@ -2845,21 +2880,27 @@ function resetKundenForm() {
     els.kundenFormKundenNr.placeholder = 'Wird beim Speichern vergeben';
   }
   els.kundenFormTitle.textContent = 'Neuer Kunde';
-  els.kundenFormReset.classList.add('hidden');
+}
+
+function openKundenForm() {
+  els.kundenFormSection?.classList.remove('hidden');
+}
+
+function closeKundenForm() {
+  resetKundenForm();
+  els.kundenFormSection?.classList.add('hidden');
 }
 
 function closeKundenDetail() {
   state.detailKundeId = null;
   resetKundenObjektForm();
-  resetKundenForm();
   els.kundenDetail?.classList.add('hidden');
-  els.kundenFormSection?.classList.remove('hidden');
 }
 
 async function openKundenDetail(kundeId) {
+  closeKundenForm();
   state.detailKundeId = kundeId;
   resetKundenObjektForm();
-  els.kundenFormSection?.classList.add('hidden');
   els.kundenDetail?.classList.remove('hidden');
   await refreshKundenDetail();
 }
@@ -2914,7 +2955,10 @@ async function refreshKundenDetail() {
 }
 
 function loadKundeIntoForm(kunde) {
-  closeKundenDetail();
+  if (state.detailKundeId) {
+    state.detailKundeId = null;
+    els.kundenDetail?.classList.add('hidden');
+  }
   state.editingKundeId = kunde.id;
   if (els.kundenFormAnrede) {
     els.kundenFormAnrede.value = normalizeKundeAnrede(kunde.anrede);
@@ -2929,8 +2973,9 @@ function loadKundeIntoForm(kunde) {
   els.kundenFormEmail.value = kunde.email || '';
   els.kundenFormNotiz.value = kunde.notiz || '';
   els.kundenFormTitle.textContent = 'Kunde bearbeiten';
-  els.kundenFormReset.classList.remove('hidden');
+  openKundenForm();
   showView('kunden');
+  els.kundenFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function refreshPostenEditors() {
@@ -3245,7 +3290,7 @@ async function saveKundenForm(e) {
     state.kundenSuche = '';
     els.kundenSuche.value = '';
     const wasDetail = state.detailKundeId === kunde.id;
-    resetKundenForm();
+    closeKundenForm();
     await renderKundenView();
     if (wasDetail) {
       await openKundenDetail(kunde.id);
@@ -3342,13 +3387,13 @@ async function persistRechnungFromForm() {
 }
 
 function setAngebotFooterBusy(busy) {
-  [els.saveBtn, els.saveCloseBtn, els.pdfBtn, els.pdfSendBtn, els.resetBtn].forEach((btn) => {
+  [els.saveBtn, els.saveCloseBtn, els.pdfBtn, els.pdfSendBtn].forEach((btn) => {
     if (btn) btn.disabled = busy;
   });
 }
 
 function setRechnungFooterBusy(busy) {
-  [els.rechnungSaveBtn, els.rechnungSaveCloseBtn, els.rechnungPdfBtn, els.rechnungPdfSendBtn, els.rechnungResetBtn].forEach(
+  [els.rechnungSaveBtn, els.rechnungSaveCloseBtn, els.rechnungPdfBtn, els.rechnungPdfSendBtn].forEach(
     (btn) => {
       if (btn) btn.disabled = busy;
     }
@@ -3811,7 +3856,7 @@ function bindAppEvents() {
   els.rechnungKundePlzOrt?.addEventListener('input', onRechnungAdresseInput);
 
   els.kundenForm?.addEventListener('submit', saveKundenForm);
-  els.kundenFormReset?.addEventListener('click', resetKundenForm);
+  els.kundenFormReset?.addEventListener('click', closeKundenForm);
 
   els.katalogForm?.addEventListener('submit', saveKatalogForm);
   els.katalogFormReset?.addEventListener('click', resetKatalogForm);
@@ -3855,10 +3900,11 @@ function bindAppEvents() {
     if (state.detailKundeId) {
       state.detailKundeId = null;
       els.kundenDetail?.classList.add('hidden');
-      els.kundenFormSection?.classList.remove('hidden');
     }
     resetKundenForm();
+    openKundenForm();
     els.kundenFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    els.kundenFormName?.focus();
   });
 
   els.kundenDetailClose?.addEventListener('click', closeKundenDetail);
@@ -4037,7 +4083,7 @@ function bindAppEvents() {
       } else if (action === 'delete-kunde') {
         if (confirm(`Kunde „${kunde.name}" wirklich löschen?`)) {
           await deleteKunde(id);
-          if (state.editingKundeId === id) resetKundenForm();
+          if (state.editingKundeId === id) closeKundenForm();
           if (state.detailKundeId === id) closeKundenDetail();
           if (state.expandedKundeDokumenteId === id) state.expandedKundeDokumenteId = null;
           renderKundenView();

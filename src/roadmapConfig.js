@@ -1,5 +1,5 @@
 /**
- * Produkt-Roadmap für Klemdesk — bei Meilenstein-Updates anpassen.
+ * Produkt-Roadmap für KlemDesk — bei Meilenstein-Updates anpassen.
  */
 export const ROADMAP = {
   lastUpdated: '20.07.2026',
