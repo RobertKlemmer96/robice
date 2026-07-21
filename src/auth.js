@@ -34,8 +34,17 @@ export function isAdmin() {
   return cachedSession?.user?.role === 'admin';
 }
 
+export function isImpersonating() {
+  return Boolean(cachedSession?.impersonation?.tenantId);
+}
+
+export function getImpersonation() {
+  return cachedSession?.impersonation ?? null;
+}
+
 export function needsOnboarding() {
   if (!cachedSession) return false;
+  if (cachedSession.user?.role === 'admin') return false;
   return !cachedSession.tenant?.onboardingCompleted;
 }
 

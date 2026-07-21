@@ -33,7 +33,7 @@ export function initLangSwitcher() {
       toggleLangMenu(wrap);
     });
 
-    menu?.querySelectorAll('[data-locale]').forEach((btn) => {
+    wrap.querySelectorAll('[data-locale]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const { locale } = btn.dataset;

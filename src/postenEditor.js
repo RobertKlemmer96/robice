@@ -1,5 +1,10 @@
 import { getDefaultEinheit, getPostenPreis, normalizePostenArt } from './data.js';
-import { findKatalogPosten, getKatalogPosten } from './katalogPosten.js';
+import {
+  createKatalogPostenId,
+  findKatalogPosten,
+  getKatalogPosten,
+  saveKatalogPosten,
+} from './katalogPosten.js';
 import { t } from './i18n.js';
 import {
   formatEuro,
@@ -175,6 +180,17 @@ export function createPostenEditor(editorState, els) {
     });
   }
 
+  function renderPostenKatalogButton(id) {
+    return `<button
+      type="button"
+      class="btn btn-ghost btn-sm posten-katalog-save-btn"
+      data-action="save-to-katalog"
+      data-id="${id}"
+      title="${t('posten.saveToCatalogTitle')}"
+      aria-label="${t('posten.saveToCatalogTitle')}"
+    >${t('posten.saveToCatalog')}</button>`;
+  }
+
   function renderPostenInfo(modus, { id, bezeichnung }) {
     if (modus === 'katalog') {
       return `
@@ -198,6 +214,7 @@ export function createPostenEditor(editorState, els) {
         data-id="${id}"
       />
       <span class="posten-info-add-zone" title="${t('posten.addOneTitle')}"></span>
+      ${renderPostenKatalogButton(id)}
     </div>
   `;
   }
@@ -605,6 +622,110 @@ export function createPostenEditor(editorState, els) {
     els.onUpdate?.();
   }
 
+  function syncFreiPostenFromItem(id) {
+    const item = els.postenListe?.querySelector(`.posten-item[data-id="${id}"]`);
+    if (!item || !editorState.freiePosten.has(id)) return;
+
+    const data = { ...editorState.freiePosten.get(id) };
+    const bezeichnungEl = item.querySelector('[data-action="frei-bezeichnung"]');
+    const preisEl = item.querySelector('[data-action="frei-preis"]');
+    const einheitEl = item.querySelector('[data-action="einheit"]');
+    const artEl = item.querySelector('[data-action="art"]');
+
+    if (bezeichnungEl) data.bezeichnung = bezeichnungEl.value;
+    if (preisEl) {
+      const parsed = parsePreisInput(preisEl.value);
+      data.preis = Number.isNaN(parsed) ? 0 : Math.max(0, parsed);
+    }
+    if (einheitEl) data.einheit = einheitEl.value;
+    if (artEl) data.art = normalizePostenArt(artEl.value);
+
+    editorState.freiePosten.set(id, data);
+    return data;
+  }
+
+  function readPostenForKatalog(id) {
+    if (id === ENTWURF_ID) {
+      const item = els.postenListe?.querySelector('.posten-item--entwurf');
+      if (item) syncEntwurfFromItem(item);
+      const parsedPreis = parsePreisInput(editorState.entwurf.preis);
+      return {
+        bezeichnung: editorState.entwurf.bezeichnung.trim(),
+        beschreibung: '',
+        preis: Number.isNaN(parsedPreis) ? NaN : Math.max(0, parsedPreis),
+        einheit: editorState.entwurf.einheit,
+        art: normalizePostenArt(editorState.entwurf.art),
+      };
+    }
+
+    if (editorState.freiePosten.has(id)) {
+      const data = syncFreiPostenFromItem(id) || editorState.freiePosten.get(id);
+      const preis =
+        typeof data.preis === 'number' ? data.preis : parsePreisInput(String(data.preis ?? ''));
+      return {
+        bezeichnung: String(data.bezeichnung || '').trim(),
+        beschreibung: String(data.beschreibung || '').trim(),
+        preis: Number.isNaN(preis) ? NaN : Math.max(0, preis),
+        einheit: data.einheit || 'Std.',
+        art: normalizePostenArt(data.art),
+      };
+    }
+
+    return null;
+  }
+
+  async function savePostenToKatalog(id) {
+    const data = readPostenForKatalog(id);
+    if (!data) return;
+
+    if (!data.bezeichnung || Number.isNaN(data.preis)) {
+      alert(t('posten.saveToCatalogMissing'));
+      return;
+    }
+
+    const exists = getKatalogPosten().some(
+      (p) => p.bezeichnung.trim().toLowerCase() === data.bezeichnung.toLowerCase()
+    );
+    if (exists) {
+      alert(t('posten.saveToCatalogExists'));
+      return;
+    }
+
+    const jetzt = new Date().toISOString();
+    const posten = {
+      id: createKatalogPostenId(),
+      bezeichnung: data.bezeichnung,
+      beschreibung: data.beschreibung,
+      art: data.art,
+      preisStk: data.preis,
+      preisStd: data.preis,
+      erstelltAm: jetzt,
+      aktualisiertAm: jetzt,
+    };
+
+    const btn = els.postenListe?.querySelector(
+      `[data-action="save-to-katalog"][data-id="${id}"]`
+    );
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('is-disabled');
+    }
+
+    try {
+      await saveKatalogPosten(posten);
+      alert(t('posten.saveToCatalogSuccess'));
+      els.onKatalogSaved?.();
+      renderPostenListe();
+    } catch (err) {
+      alert(t('posten.saveToCatalogFailed', { message: err.message }));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('is-disabled');
+      }
+    }
+  }
+
   function applyPreisInputFormat(input) {
     if (!input?.matches('.posten-preis-input')) return;
     const formatted = formatPreisInputDisplay(input.value);
@@ -687,7 +808,15 @@ export function createPostenEditor(editorState, els) {
     });
 
     els.postenListe.addEventListener('click', (e) => {
-      if (e.target.closest('input, select')) return;
+      const katalogBtn = e.target.closest('[data-action="save-to-katalog"]');
+      if (katalogBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        savePostenToKatalog(katalogBtn.dataset.id);
+        return;
+      }
+
+      if (e.target.closest('input, select, button')) return;
       const info = e.target.closest('.posten-info');
       if (!info) return;
       const item = info.closest('.posten-item');

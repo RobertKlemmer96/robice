@@ -141,12 +141,76 @@ export function listAllUsersWithTenants() {
         t.id AS tenant_id,
         t.name AS tenant_name,
         t.plan AS tenant_plan,
-        t.created_at AS tenant_created_at
+        t.created_at AS tenant_created_at,
+        t.onboarding_completed AS tenant_onboarding_completed
       FROM users u
       JOIN tenants t ON t.id = u.tenant_id
       ORDER BY u.created_at DESC`
     )
     .all();
+}
+
+export function listAllUsersWithStats() {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT
+        u.id,
+        u.email,
+        u.role,
+        u.created_at AS user_created_at,
+        t.id AS tenant_id,
+        t.name AS tenant_name,
+        t.plan AS tenant_plan,
+        t.created_at AS tenant_created_at,
+        t.onboarding_completed AS tenant_onboarding_completed,
+        (SELECT COUNT(*) FROM kunden k WHERE k.tenant_id = t.id) AS kunden_count,
+        (SELECT COUNT(*) FROM angebote a WHERE a.tenant_id = t.id) AS angebote_count,
+        (SELECT COUNT(*) FROM rechnungen r WHERE r.tenant_id = t.id) AS rechnungen_count,
+        (SELECT COUNT(*) FROM katalog_posten kp WHERE kp.tenant_id = t.id) AS katalog_count,
+        (
+          SELECT MAX(ts) FROM (
+            SELECT aktualisiert_am AS ts FROM angebote WHERE tenant_id = t.id
+            UNION ALL
+            SELECT aktualisiert_am AS ts FROM rechnungen WHERE tenant_id = t.id
+            UNION ALL
+            SELECT aktualisiert_am AS ts FROM kunden WHERE tenant_id = t.id
+          )
+        ) AS last_activity_at
+      FROM users u
+      JOIN tenants t ON t.id = u.tenant_id
+      ORDER BY u.created_at DESC`
+    )
+    .all();
+}
+
+export function getAdminOverviewStats() {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT
+        (SELECT COUNT(*) FROM users) AS users,
+        (SELECT COUNT(*) FROM tenants WHERE plan != 'admin') AS tenants,
+        (SELECT COUNT(*) FROM angebote) AS angebote,
+        (SELECT COUNT(*) FROM rechnungen) AS rechnungen,
+        (SELECT COUNT(*) FROM kunden) AS kunden,
+        (SELECT COUNT(*) FROM katalog_posten) AS katalog_posten`
+    )
+    .get();
+  return row;
+}
+
+export function getTenantOwnerEmail(tenantId) {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT email FROM users
+       WHERE tenant_id = ? AND role = 'owner'
+       ORDER BY created_at ASC
+       LIMIT 1`
+    )
+    .get(tenantId);
+  return row?.email || null;
 }
 
 export function getTenantById(tenantId) {

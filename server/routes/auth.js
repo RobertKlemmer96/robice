@@ -18,6 +18,7 @@ import {
 import { config } from '../config.js';
 import { savePdfTemplate } from '../repositories/pdfTemplate.js';
 import { PDF_TEMPLATE_DEFAULT } from '../defaults/pdfTemplate.js';
+import { buildSessionPayload, resolveSessionUser } from '../middleware/auth.js';
 
 export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
   const router = express.Router();
@@ -114,20 +115,12 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
   });
 
   router.get('/me', (req, res) => {
-    if (!req.session?.userId) {
+    const payload = buildSessionPayload(req.session);
+    if (!payload) {
       res.status(401).json({ error: 'Nicht angemeldet.' });
       return;
     }
-    const user = findUserById(req.session.userId);
-    if (!user) {
-      res.status(401).json({ error: 'Nicht angemeldet.' });
-      return;
-    }
-    const tenant = getTenantById(user.tenant_id);
-    res.json({
-      user: { id: user.id, email: user.email, role: user.role },
-      tenant: tenantToJson(tenant),
-    });
+    res.json(payload);
   });
 
   router.patch('/onboarding', (req, res) => {
@@ -142,6 +135,10 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
     try {
       if (!req.session?.tenantId || !req.session?.userId) {
         res.status(401).json({ error: 'Nicht angemeldet.' });
+        return;
+      }
+      if (req.session.impersonatedTenantId) {
+        res.status(403).json({ error: 'Kontolöschung ist im Admin-Modus nicht möglich.' });
         return;
       }
 
@@ -210,7 +207,8 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
 
   router.patch('/tenant', (req, res) => {
     try {
-      if (!req.session?.tenantId) {
+      const resolved = resolveSessionUser(req.session);
+      if (!resolved) {
         res.status(401).json({ error: 'Nicht angemeldet.' });
         return;
       }
@@ -218,13 +216,14 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
       const { name, completeOnboarding } = req.body || {};
       const shouldCompleteOnboarding =
         completeOnboarding === true || req.body?.completed === true;
+      const tenantId = resolved.effectiveTenantId;
 
       if (shouldCompleteOnboarding) {
-        completeTenantOnboarding(req.session.tenantId);
+        completeTenantOnboarding(tenantId);
       }
 
       if (name?.trim()) {
-        updateTenantName(req.session.tenantId, name);
+        updateTenantName(tenantId, name);
       }
 
       if (!shouldCompleteOnboarding && !name?.trim()) {
@@ -232,7 +231,7 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
         return;
       }
 
-      const tenant = getTenantById(req.session.tenantId);
+      const tenant = getTenantById(tenantId);
       res.json({
         tenant: tenantToJson(tenant),
       });
@@ -247,7 +246,8 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
 
 function completeOnboardingHandler(req, res) {
   try {
-    if (!req.session?.tenantId) {
+    const resolved = resolveSessionUser(req.session);
+    if (!resolved) {
       res.status(401).json({ error: 'Nicht angemeldet.' });
       return;
     }
@@ -255,8 +255,8 @@ function completeOnboardingHandler(req, res) {
       res.status(400).json({ error: 'Ungültige Anfrage.' });
       return;
     }
-    completeTenantOnboarding(req.session.tenantId);
-    const tenant = getTenantById(req.session.tenantId);
+    completeTenantOnboarding(resolved.effectiveTenantId);
+    const tenant = getTenantById(resolved.effectiveTenantId);
     res.json({ tenant: tenantToJson(tenant) });
   } catch (err) {
     console.error('onboarding:', err);

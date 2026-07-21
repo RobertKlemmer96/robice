@@ -436,10 +436,10 @@
     </div>
 
     <div id="app" class="app hidden">
-      <header class="app-header">
-        <div class="app-header__inner">
-          <div class="app-header__brand-mobile" aria-hidden="true">KlemDesk</div>
-          <div class="bereich-switcher" id="bereich-switcher-wrap">
+      <div class="app-shell">
+        <aside class="app-sidebar" id="app-sidebar">
+          <div class="app-sidebar__head">
+            <div class="bereich-switcher" id="bereich-switcher-wrap">
             <button
               type="button"
               class="app-brand"
@@ -498,28 +498,16 @@
                 </span>
               </button>
             </div>
+            </div>
           </div>
 
-          <button
-            type="button"
-            class="app-nav-toggle"
-            id="nav-mobile-toggle"
-            aria-expanded="false"
-            aria-controls="main-nav"
-            data-i18n-aria-label="header.menuOpen"
-          >
-            <span class="app-nav-toggle__bar" aria-hidden="true"></span>
-            <span class="app-nav-toggle__bar" aria-hidden="true"></span>
-            <span class="app-nav-toggle__bar" aria-hidden="true"></span>
-          </button>
-
-          <nav class="app-nav" id="main-nav" data-i18n-aria-label="nav.main" aria-label="Hauptnavigation">
+          <nav class="app-nav app-sidebar__nav" id="main-nav" data-i18n-aria-label="nav.main" aria-label="Hauptnavigation">
             <ul class="app-nav__list">
-              <li class="app-nav__group" data-nav-group="angebote">
+              <li class="app-nav__group is-open" data-nav-group="angebote">
                 <button
                   type="button"
                   class="app-nav__trigger"
-                  aria-expanded="false"
+                  aria-expanded="true"
                   aria-haspopup="true"
                   data-nav-trigger
                 >
@@ -541,11 +529,11 @@
                   </button>
                 </div>
               </li>
-              <li class="app-nav__group is-bereich-hidden" data-nav-group="rechnungen">
+              <li class="app-nav__group is-bereich-hidden is-open" data-nav-group="rechnungen">
                 <button
                   type="button"
                   class="app-nav__trigger"
-                  aria-expanded="false"
+                  aria-expanded="true"
                   aria-haspopup="true"
                   data-nav-trigger
                 >
@@ -567,11 +555,11 @@
                   </button>
                 </div>
               </li>
-              <li class="app-nav__group" data-nav-group="stammdaten">
+              <li class="app-nav__group is-open" data-nav-group="stammdaten">
                 <button
                   type="button"
                   class="app-nav__trigger"
-                  aria-expanded="false"
+                  aria-expanded="true"
                   aria-haspopup="true"
                   data-nav-trigger
                 >
@@ -593,11 +581,11 @@
                   </button>
                 </div>
               </li>
-              <li class="app-nav__group" data-nav-group="einstellungen">
+              <li class="app-nav__group is-open" data-nav-group="einstellungen">
                 <button
                   type="button"
                   class="app-nav__trigger"
-                  aria-expanded="false"
+                  aria-expanded="true"
                   aria-haspopup="true"
                   data-nav-trigger
                 >
@@ -612,50 +600,20 @@
                     <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.template">Vorlage</span>
                     <span class="app-nav__link-desc" data-i18n="nav.templateDesc">PDF-Vorlage anpassen</span>
                   </button>
-                  <button type="button" class="app-nav__link is-admin-only hidden" role="menuitem" data-nav-view="admin">
-                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.admin">Admin</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.admin">Admin</span>
-                    <span class="app-nav__link-desc" data-i18n="nav.adminDesc">Nutzer verwalten</span>
-                  </button>
                 </div>
               </li>
             </ul>
           </nav>
 
-          <div class="app-toolbar">
-            <div class="app-header__profile-group">
-              <div class="lang-switcher" id="lang-switcher-wrap">
-                <button
-                  type="button"
-                  class="lang-switcher__trigger app-header__action-btn app-header__action-btn--lang"
-                  id="lang-switcher"
-                  aria-haspopup="menu"
-                  aria-expanded="false"
-                  aria-controls="lang-switcher-menu"
-                  data-i18n-aria-label="lang.choose"
-                  data-i18n-title="lang.choose"
-                >
-                  <span class="lang-switcher__flag" aria-hidden="true"></span>
-                </button>
-                <div class="lang-switcher__menu hidden" id="lang-switcher-menu" role="menu" data-i18n-aria-label="lang.menu">
-                  <button type="button" class="lang-switcher__option is-active" role="menuitemradio" data-locale="de" aria-checked="true">
-                    <span class="lang-switcher__option-flag" data-flag-locale="de" aria-hidden="true"></span>
-                    <span>Deutsch</span>
-                  </button>
-                  <button type="button" class="lang-switcher__option" role="menuitemradio" data-locale="en" aria-checked="false">
-                    <span class="lang-switcher__option-flag" data-flag-locale="en" aria-hidden="true"></span>
-                    <span>English</span>
-                  </button>
-                </div>
-              </div>
+          <div class="app-sidebar__footer">
             <button
               type="button"
               id="profile-btn"
-              class="btn btn-ghost app-header__action-btn app-header__action-btn--profile profile-btn"
+              class="app-sidebar__action profile-btn"
               data-i18n-aria-label="header.profile"
               data-i18n-title="header.profile"
             >
-              <svg class="profile-btn__icon app-header__action-icon app-header__action-icon--desktop" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <svg class="app-sidebar__action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
                 <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.75" />
                 <path
                   d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"
@@ -665,17 +623,42 @@
                   stroke-linecap="round"
                 />
               </svg>
-              <span class="app-header__action-label app-header__action-label--mobile" data-i18n="header.profile">Profil</span>
+              <span data-i18n="header.profile">Profil</span>
             </button>
-            </div>
+            <button
+              type="button"
+              id="admin-btn"
+              class="app-sidebar__action is-admin-only hidden"
+              data-i18n-aria-label="nav.adminDesc"
+              data-i18n-title="nav.adminDesc"
+            >
+              <svg class="app-sidebar__action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path
+                  d="M12 3l7 4v6c0 4.4-2.9 8.4-7 9-4.1-.6-7-4.6-7-9V7l7-4z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M9 12l2 2 4-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span data-i18n="nav.admin">Admin</span>
+            </button>
             <button
               type="button"
               id="logout-btn"
-              class="btn btn-ghost app-header__action-btn app-header__action-btn--logout"
+              class="app-sidebar__action app-sidebar__action--logout"
               data-i18n-aria-label="header.logout"
               data-i18n-title="header.logout"
             >
-              <svg class="app-header__action-icon app-header__action-icon--desktop" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="app-sidebar__action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
                 <path
                   d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
                   fill="none"
@@ -685,35 +668,37 @@
                   stroke-linejoin="round"
                 />
               </svg>
-              <span class="app-header__action-label app-header__action-label--mobile" data-i18n="header.logout">Abmelden</span>
+              <span data-i18n="header.logout">Abmelden</span>
             </button>
           </div>
-        </div>
+        </aside>
 
-        <div class="app-bereich-segment" role="tablist" data-i18n-aria-label="bereich.choose" aria-label="Bereich wählen">
+        <div class="app-body">
+          <div id="admin-impersonation-banner" class="admin-impersonation-banner hidden" role="status" aria-live="polite">
+            <div class="admin-impersonation-banner__text">
+              <strong>Admin-Modus:</strong>
+              <span id="admin-impersonation-label">Sie sehen einen Nutzer-Account.</span>
+            </div>
+            <div class="admin-impersonation-banner__actions">
+              <button type="button" class="btn btn-ghost btn-sm" id="admin-impersonation-archiv-btn">Angebote</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="admin-impersonation-rechnungen-btn">Rechnungen</button>
+              <button type="button" class="btn btn-primary btn-sm" id="admin-impersonation-stop-btn">Zurück zum Admin</button>
+            </div>
+          </div>
           <button
             type="button"
-            class="app-bereich-segment__btn is-active"
-            data-bereich="angebote"
-            role="tab"
-            aria-selected="true"
-            data-i18n="bereich.offers"
+            class="app-nav-toggle app-nav-toggle--mobile-fab"
+            id="nav-mobile-toggle"
+            aria-expanded="false"
+            aria-controls="app-sidebar"
+            data-i18n-aria-label="header.menuOpen"
           >
-            Angebote
+            <span class="app-nav-toggle__bar" aria-hidden="true"></span>
+            <span class="app-nav-toggle__bar" aria-hidden="true"></span>
+            <span class="app-nav-toggle__bar" aria-hidden="true"></span>
           </button>
-          <button
-            type="button"
-            class="app-bereich-segment__btn"
-            data-bereich="rechnungen"
-            role="tab"
-            aria-selected="false"
-            data-i18n="bereich.invoices"
-          >
-            Rechnungen
-          </button>
-        </div>
-      </header>
 
+          <div class="app-content">
       <div id="view-rechnung-neu" class="hidden">
         <main class="main">
           <section class="card angebot-kopf" id="rechnung-kopf">
@@ -761,16 +746,28 @@
                   </div>
                   <div class="angebot-kopf__divider" aria-hidden="true"></div>
                   <div class="angebot-kopf__col angebot-kopf__col--kunde">
-                    <label>
-                      <span class="field-label-row">
-                        <span data-i18n="form.customer">Kunde</span>
-                        <span id="rechnung-kunde-hinweis" class="field-hint hidden" data-i18n="form.customerFromRecord">Vom Kunden übernommen</span>
-                      </span>
-                      <div class="input-row">
+                    <div class="angebot-kopf__kunde-row">
+                      <label class="angebot-kopf__kunde-name">
+                        <span class="field-label-row">
+                          <span data-i18n="form.customer">Kunde</span>
+                          <span id="rechnung-kunde-hinweis" class="field-hint hidden" data-i18n="form.customerFromRecord">Vom Kunden übernommen</span>
+                        </span>
                         <input type="text" id="rechnung-kunde-name" data-i18n-placeholder="form.customerPlaceholder" placeholder="Freiname oder Kunde wählen" />
+                      </label>
+                      <div class="angebot-kopf__kunde-actions">
                         <button type="button" id="rechnung-kunde-auswahl-btn" class="btn btn-ghost" data-i18n="form.selectCustomer">Kunde auswählen</button>
+                        <button
+                          type="button"
+                          id="rechnung-kunde-save-btn"
+                          class="btn btn-ghost is-disabled"
+                          disabled
+                          aria-disabled="true"
+                          data-i18n="form.saveCustomer"
+                        >
+                          Kunde speichern
+                        </button>
                       </div>
-                    </label>
+                    </div>
                     <div class="angebot-kopf__contact">
                       <label>
                         <span data-i18n="form.email">E-Mail</span>
@@ -974,16 +971,28 @@
                   </div>
                   <div class="angebot-kopf__divider" aria-hidden="true"></div>
                   <div class="angebot-kopf__col angebot-kopf__col--kunde">
-                    <label>
-                      <span class="field-label-row">
-                        <span data-i18n="form.customer">Kunde</span>
-                        <span id="kunde-hinweis" class="field-hint hidden" data-i18n="form.customerFromRecord">Vom Kunden übernommen</span>
-                      </span>
-                      <div class="input-row">
+                    <div class="angebot-kopf__kunde-row">
+                      <label class="angebot-kopf__kunde-name">
+                        <span class="field-label-row">
+                          <span data-i18n="form.customer">Kunde</span>
+                          <span id="kunde-hinweis" class="field-hint hidden" data-i18n="form.customerFromRecord">Vom Kunden übernommen</span>
+                        </span>
                         <input type="text" id="kunde-name" data-i18n-placeholder="form.customerPlaceholder" placeholder="Freiname oder Kunde wählen" />
+                      </label>
+                      <div class="angebot-kopf__kunde-actions">
                         <button type="button" id="kunde-auswahl-btn" class="btn btn-ghost" data-i18n="form.selectCustomer">Kunde auswählen</button>
+                        <button
+                          type="button"
+                          id="kunde-save-btn"
+                          class="btn btn-ghost is-disabled"
+                          disabled
+                          aria-disabled="true"
+                          data-i18n="form.saveCustomer"
+                        >
+                          Kunde speichern
+                        </button>
                       </div>
-                    </label>
+                    </div>
                     <div class="angebot-kopf__contact">
                       <label>
                         <span data-i18n="form.email">E-Mail</span>
@@ -1269,6 +1278,38 @@
                   </button>
                 </div>
               </div>
+              <div class="profil-field full">
+                <span class="profil-field__label" data-i18n="lang.menu">Sprache</span>
+                <div class="lang-switcher lang-switcher--inline" id="lang-switcher-wrap">
+                  <div
+                    class="lang-switcher__inline-options"
+                    role="radiogroup"
+                    data-i18n-aria-label="lang.menu"
+                    aria-label="Sprache"
+                  >
+                    <button
+                      type="button"
+                      class="lang-switcher__option lang-switcher__option--inline is-active"
+                      role="radio"
+                      data-locale="de"
+                      aria-checked="true"
+                    >
+                      <span class="lang-switcher__option-flag" data-flag-locale="de" aria-hidden="true"></span>
+                      <span>Deutsch</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="lang-switcher__option lang-switcher__option--inline"
+                      role="radio"
+                      data-locale="en"
+                      aria-checked="false"
+                    >
+                      <span class="lang-switcher__option-flag" data-flag-locale="en" aria-hidden="true"></span>
+                      <span>English</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div class="form-actions full">
                 <button type="submit" class="btn btn-primary">Speichern</button>
               </div>
@@ -1370,7 +1411,8 @@
         <main class="main">
           <section class="card">
             <h2>Administration</h2>
-            <p class="settings-lead">Alle registrierten Nutzer und Mandanten auf KlemDesk.</p>
+            <p class="settings-lead">Übersicht aller Nutzer, Mandanten und Dokumente auf KlemDesk.</p>
+            <div id="admin-overview" class="admin-overview" aria-live="polite"></div>
             <div id="admin-user-list" class="admin-user-list" aria-live="polite"></div>
           </section>
         </main>
@@ -1574,6 +1616,11 @@
           <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
         </nav>
       </footer>
+          </div>
+        </div>
+      </div>
+
+      <div class="app-sidebar-backdrop hidden" id="app-sidebar-backdrop" aria-hidden="true"></div>
 
       <div id="onboarding-screen" class="onboarding-screen hidden" aria-hidden="true">
         <div class="onboarding-shell card">

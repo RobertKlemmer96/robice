@@ -9,8 +9,13 @@ import {
 } from './adresse.js';
 import { formatPlanLabel, normalizeRegistrationPlan, PLAN_LABELS, PLAN_PRICES, PLAN_TAGLINES, REGISTRATION_PLANS } from './plans.js';
 import { formatPostenArt, normalizePostenArt } from './data.js';
-import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
-import { loadAdminUsers } from './adminUsers.js';
+import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isImpersonating, getImpersonation, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
+import {
+  loadAdminUsers,
+  loadAdminTenantDocuments,
+  startAdminImpersonation,
+  stopAdminImpersonation,
+} from './adminUsers.js';
 import { initOnboarding, openOnboarding, closeOnboarding } from './onboarding.js';
 import { initKatalogModal } from './katalogModal.js';
 import { initDatePickers, refreshDatePickers } from './datePicker.js';
@@ -222,7 +227,10 @@ const els = {
   authTitle: document.getElementById('auth-title'),
   logoutBtn: document.getElementById('logout-btn'),
   profileBtn: document.getElementById('profile-btn'),
+  adminBtn: document.getElementById('admin-btn'),
   mainNav: document.getElementById('main-nav'),
+  appSidebar: document.getElementById('app-sidebar'),
+  appSidebarBackdrop: document.getElementById('app-sidebar-backdrop'),
   navMobileToggle: document.getElementById('nav-mobile-toggle'),
   bereichSwitcher: document.getElementById('bereich-switcher'),
   bereichSwitcherWrap: document.getElementById('bereich-switcher-wrap'),
@@ -241,7 +249,13 @@ const els = {
   pdfPreviewRechnung: document.getElementById('pdf-preview-rechnung'),
   viewProfil: document.getElementById('view-profil'),
   viewAdmin: document.getElementById('view-admin'),
+  adminOverview: document.getElementById('admin-overview'),
   adminUserList: document.getElementById('admin-user-list'),
+  adminImpersonationBanner: document.getElementById('admin-impersonation-banner'),
+  adminImpersonationLabel: document.getElementById('admin-impersonation-label'),
+  adminImpersonationStopBtn: document.getElementById('admin-impersonation-stop-btn'),
+  adminImpersonationArchivBtn: document.getElementById('admin-impersonation-archiv-btn'),
+  adminImpersonationRechnungenBtn: document.getElementById('admin-impersonation-rechnungen-btn'),
   profilAccountForm: document.getElementById('profil-account-form'),
   profilTenantName: document.getElementById('profil-tenant-name'),
   profilEmail: document.getElementById('profil-email'),
@@ -282,6 +296,7 @@ const els = {
   suche: document.getElementById('suche'),
   kundeName: document.getElementById('kunde-name'),
   kundeAuswahlBtn: document.getElementById('kunde-auswahl-btn'),
+  kundeSaveBtn: document.getElementById('kunde-save-btn'),
   kundeHinweis: document.getElementById('kunde-hinweis'),
   kundeStrasse: document.getElementById('kunde-strasse'),
   kundePlzOrt: document.getElementById('kunde-plz-ort'),
@@ -366,6 +381,7 @@ const els = {
   rechnungSuche: document.getElementById('rechnung-suche'),
   rechnungKundeName: document.getElementById('rechnung-kunde-name'),
   rechnungKundeAuswahlBtn: document.getElementById('rechnung-kunde-auswahl-btn'),
+  rechnungKundeSaveBtn: document.getElementById('rechnung-kunde-save-btn'),
   rechnungKundeHinweis: document.getElementById('rechnung-kunde-hinweis'),
   rechnungKundeStrasse: document.getElementById('rechnung-kunde-strasse'),
   rechnungKundePlzOrt: document.getElementById('rechnung-kunde-plz-ort'),
@@ -401,6 +417,7 @@ const angebotPostenEditor = createPostenEditor(angebotPostenState, {
   previewBtn: els.previewBtn,
   saveBtn: els.saveBtn,
   canSave: () => isAngebotKopfComplete(),
+  onKatalogSaved: refreshPostenEditors,
   onUpdate: () => {
     updatePostenKopfSummary();
     updatePageHeader();
@@ -417,6 +434,7 @@ const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
   previewBtn: els.rechnungPreviewBtn,
   saveBtn: els.rechnungSaveBtn,
   canSave: () => isRechnungKopfComplete(),
+  onKatalogSaved: refreshPostenEditors,
   onUpdate: () => {
     updateRechnungPostenKopfSummary();
     updateRechnungPageHeader();
@@ -433,6 +451,46 @@ async function generiereRechnungsnummer() {
 
 function normalizeKundeName(name) {
   return (name || '').trim().toLowerCase();
+}
+
+function normalizeKundeEmail(email) {
+  return (email || '').trim().toLowerCase();
+}
+
+function findKundeByNameAndEmail(kunden, name, email) {
+  const normName = normalizeKundeName(name);
+  const normEmail = normalizeKundeEmail(email);
+  if (!normName || !normEmail) return null;
+  return (
+    kunden.find(
+      (k) => normalizeKundeName(k.name) === normName && normalizeKundeEmail(k.email) === normEmail
+    ) || null
+  );
+}
+
+function setKundeSaveButtonEnabled(btn, enabled) {
+  if (!btn) return;
+  btn.disabled = !enabled;
+  btn.setAttribute('aria-disabled', String(!enabled));
+  btn.classList.toggle('is-disabled', !enabled);
+}
+
+function isDocumentKundeEmailValid(email) {
+  return (email || '').trim().includes('@');
+}
+
+function updateKundeSaveButtonState(scope = 'angebot') {
+  const isRechnung = scope === 'rechnung';
+  const nameEl = isRechnung ? els.rechnungKundeName : els.kundeName;
+  const emailEl = isRechnung ? els.rechnungKundeEmail : els.kundeEmail;
+  const saveBtn = isRechnung ? els.rechnungKundeSaveBtn : els.kundeSaveBtn;
+  const canSave = !!(nameEl?.value.trim() && isDocumentKundeEmailValid(emailEl?.value));
+  setKundeSaveButtonEnabled(saveBtn, canSave);
+}
+
+function updateAllKundeSaveButtonStates() {
+  updateKundeSaveButtonState('angebot');
+  updateKundeSaveButtonState('rechnung');
 }
 
 function escapeHtml(text) {
@@ -1058,6 +1116,7 @@ async function setupAngebotKundeAdressen(kunde) {
   );
   selectAdresseOption(state.angebot, 'billing', angebotAdresseFields(), els.kundeEinsatzortHinweis);
   syncAdresseAuswahlActive(els.kundeAdresseAuswahl, state.angebot);
+  updateKundeSaveButtonState('angebot');
 }
 
 async function setupRechnungKundeAdressen(kunde) {
@@ -1079,6 +1138,7 @@ async function setupRechnungKundeAdressen(kunde) {
   );
   selectAdresseOption(state.rechnung, 'billing', rechnungAdresseFields(), els.rechnungEinsatzortHinweis);
   syncAdresseAuswahlActive(els.rechnungAdresseAuswahl, state.rechnung);
+  updateKundeSaveButtonState('rechnung');
 }
 
 function applyPickerKunde(kunde) {
@@ -1094,6 +1154,77 @@ function applyPickerKunde(kunde) {
     });
   }
   closeKundenModal();
+}
+
+async function saveDocumentKundeFromForm(scope) {
+  const isRechnung = scope === 'rechnung';
+  const nameEl = isRechnung ? els.rechnungKundeName : els.kundeName;
+  const emailEl = isRechnung ? els.rechnungKundeEmail : els.kundeEmail;
+  const telefonEl = isRechnung ? els.rechnungKundeTelefon : els.kundeTelefon;
+  const strasseEl = isRechnung ? els.rechnungKundeStrasse : els.kundeStrasse;
+  const plzOrtEl = isRechnung ? els.rechnungKundePlzOrt : els.kundePlzOrt;
+  const saveBtn = isRechnung ? els.rechnungKundeSaveBtn : els.kundeSaveBtn;
+
+  const name = nameEl?.value.trim() || '';
+  const email = emailEl?.value.trim() || '';
+  if (!name || !isDocumentKundeEmailValid(email)) return;
+
+  setKundeSaveButtonEnabled(saveBtn, false);
+
+  try {
+    const kunden = await getAllKunden();
+    const existing = findKundeByNameAndEmail(kunden, name, email);
+    if (existing) {
+      alert(t('form.customerExists'));
+      if (isRechnung) {
+        await setupRechnungKundeAdressen(existing);
+        updateRechnungKundeHinweis();
+        updateRechnungKopfSummary();
+        updateRechnungPageHeader();
+      } else {
+        await setupAngebotKundeAdressen(existing);
+        updateKundeHinweis();
+        updateAngebotKopfSummary();
+        updatePageHeader();
+      }
+      return;
+    }
+
+    const jetzt = new Date().toISOString();
+    const formAdresse = readAdresseFieldPair(strasseEl, plzOrtEl);
+    const kundenNr = await generiereKundennummer(getAllKunden);
+    const neu = {
+      id: createKundeId(),
+      kundenNr,
+      anrede: '',
+      name,
+      email,
+      telefon: telefonEl?.value.trim() || '',
+      strasse: formAdresse.strasse,
+      plzOrt: formAdresse.plzOrt,
+      adresse: formAdresse.adresse,
+      erstelltAm: jetzt,
+      aktualisiertAm: jetzt,
+    };
+
+    await saveKunde(neu);
+
+    if (isRechnung) {
+      await setupRechnungKundeAdressen(neu);
+      updateRechnungKundeHinweis();
+      updateRechnungKopfSummary();
+      updateRechnungPageHeader();
+    } else {
+      await setupAngebotKundeAdressen(neu);
+      updateKundeHinweis();
+      updateAngebotKopfSummary();
+      updatePageHeader();
+    }
+  } catch (err) {
+    alert(`Speichern fehlgeschlagen: ${err.message}`);
+  } finally {
+    updateKundeSaveButtonState(scope);
+  }
 }
 
 async function startNeuesAngebotForKunde(kunde) {
@@ -1124,6 +1255,7 @@ function clearKundeAuswahl() {
   );
   updateKundeHinweis();
   updatePageHeader();
+  updateKundeSaveButtonState('angebot');
 }
 
 function clearRechnungKundeAuswahl() {
@@ -1138,6 +1270,7 @@ function clearRechnungKundeAuswahl() {
   );
   updateRechnungKundeHinweis();
   updateRechnungPageHeader();
+  updateKundeSaveButtonState('rechnung');
 }
 
 async function resetForm() {
@@ -1159,6 +1292,7 @@ async function resetForm() {
 
   updatePageHeader();
   angebotPostenEditor.render();
+  updateKundeSaveButtonState('angebot');
 }
 
 async function resetRechnungForm() {
@@ -1188,6 +1322,7 @@ async function resetRechnungForm() {
   updateRechnungKopfSummary();
   updateRechnungPostenKopfSummary();
   rechnungPostenEditor.render();
+  updateKundeSaveButtonState('rechnung');
 }
 
 async function loadAngebotIntoForm(angebot) {
@@ -1407,10 +1542,12 @@ function bindFormPdfValidation() {
   const refreshAngebotPdf = () => {
     angebotPostenEditor.refreshSummary();
     updatePageHeader();
+    updateKundeSaveButtonState('angebot');
   };
   const refreshRechnungPdf = () => {
     rechnungPostenEditor.refreshSummary();
     updateRechnungPageHeader();
+    updateKundeSaveButtonState('rechnung');
   };
 
   [
@@ -1690,7 +1827,7 @@ async function renderProfilView() {
 
 function syncProfilPlanAccess() {
   const plan = getSession()?.tenant?.plan;
-  const hideChange = plan === 'admin';
+  const hideChange = plan === 'admin' || isImpersonating();
   els.profilPlanChangeBtn?.classList.toggle('hidden', hideChange);
 }
 
@@ -1761,7 +1898,7 @@ function closeProfilPlanModal() {
 function syncProfilNummernAccess() {
   els.profilDeleteAccountBtn?.classList.toggle(
     'hidden',
-    getSession()?.tenant?.plan === 'admin'
+    getSession()?.tenant?.plan === 'admin' || isImpersonating()
   );
 }
 
@@ -1816,18 +1953,185 @@ function formatUserRole(role) {
   return role || '—';
 }
 
+function formatAdminPlan(plan) {
+  return formatPlanLabel(plan);
+}
+
+function formatAdminYesNo(value) {
+  return value ? 'Ja' : 'Nein';
+}
+
+function renderAdminOverview(overview) {
+  if (!els.adminOverview) return;
+  if (!overview) {
+    els.adminOverview.innerHTML = '';
+    return;
+  }
+
+  const cards = [
+    { label: 'Nutzer', value: overview.users },
+    { label: 'Mandanten', value: overview.tenants },
+    { label: 'Angebote', value: overview.angebote },
+    { label: 'Rechnungen', value: overview.rechnungen },
+    { label: 'Kunden', value: overview.kunden },
+    { label: 'Katalog-Posten', value: overview.katalogPosten },
+  ];
+
+  els.adminOverview.innerHTML = `
+    <div class="admin-overview__grid">
+      ${cards
+        .map(
+          (card) => `
+        <article class="admin-overview__card">
+          <p class="admin-overview__label">${escapeHtml(card.label)}</p>
+          <p class="admin-overview__value">${escapeHtml(String(card.value ?? 0))}</p>
+        </article>`
+        )
+        .join('')}
+    </div>
+  `;
+}
+
+function renderAdminDocumentList(title, documents, emptyText) {
+  if (!documents?.length) {
+    return `
+      <div class="admin-user-detail__section">
+        <h4>${escapeHtml(title)}</h4>
+        <p class="admin-user-detail__empty">${escapeHtml(emptyText)}</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="admin-user-detail__section">
+      <h4>${escapeHtml(title)}</h4>
+      <ul class="admin-user-detail__docs">
+        ${documents
+          .map(
+            (doc) => `
+          <li>
+            <span class="admin-user-detail__doc-nr">${escapeHtml(doc.number || '—')}</span>
+            <span class="admin-user-detail__doc-meta">
+              ${escapeHtml(doc.customer || 'Ohne Kunde')}
+              · ${escapeHtml(formatDatum(doc.date))}
+            </span>
+          </li>`
+          )
+          .join('')}
+      </ul>
+    </div>
+  `;
+}
+
+async function loadAdminUserDetail(tenantId, container) {
+  if (!container) return;
+  container.innerHTML = '<p class="admin-user-detail__loading">Lade Dokumente…</p>';
+  try {
+    const data = await loadAdminTenantDocuments(tenantId);
+    container.innerHTML = `
+      <div class="admin-user-detail">
+        <p class="admin-user-detail__lead">
+          ${escapeHtml(data.tenant?.name || 'Mandant')}
+          · ${escapeHtml(formatAdminPlan(data.tenant?.plan))}
+          · ${escapeHtml(data.tenant?.ownerEmail || '—')}
+        </p>
+        ${renderAdminDocumentList(
+          `Angebote (${data.totals?.angebote ?? 0})`,
+          data.angebote,
+          'Noch keine Angebote.'
+        )}
+        ${renderAdminDocumentList(
+          `Rechnungen (${data.totals?.rechnungen ?? 0})`,
+          data.rechnungen,
+          'Noch keine Rechnungen.'
+        )}
+        <div class="admin-user-detail__actions">
+          <button type="button" class="btn btn-primary btn-sm" data-admin-open-tenant="${escapeHtml(tenantId)}">
+            Account öffnen
+          </button>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<p class="admin-user-detail__empty">Fehler: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function openAdminTenant(tenantId, targetView = 'archiv') {
+  if (!tenantId || !isAdmin()) return;
+  try {
+    await startAdminImpersonation(tenantId);
+    await refreshSession();
+    await reloadAfterTenantSwitch();
+    if (targetView === 'rechnung-archiv') {
+      state.bereich = 'rechnungen';
+      syncBereichSwitcher();
+      syncBereichNav();
+      showView('rechnung-archiv');
+    } else {
+      state.bereich = 'angebote';
+      syncBereichSwitcher();
+      syncBereichNav();
+      showView('archiv');
+    }
+  } catch (err) {
+    alert(err.message || 'Account konnte nicht geöffnet werden.');
+  }
+}
+
+async function stopAdminImpersonationFlow() {
+  if (!isImpersonating()) return;
+  try {
+    await stopAdminImpersonation();
+    await refreshSession();
+    await reloadAfterTenantSwitch();
+    showView('admin');
+  } catch (err) {
+    alert(err.message || 'Admin-Modus konnte nicht beendet werden.');
+  }
+}
+
+async function reloadAfterTenantSwitch() {
+  await loadPdfTemplate();
+  await loadKatalogPosten();
+  await resetForm();
+  await resetRechnungForm();
+  syncProfileButton();
+  syncImpersonationBanner();
+  if (state.view === 'archiv') await renderArchiv();
+  else if (state.view === 'rechnung-archiv') await renderRechnungArchiv();
+  else if (state.view === 'kunden') await renderKundenView();
+  else if (state.view === 'katalog') await renderKatalogView();
+  else if (state.view === 'admin') await renderAdminView();
+  else if (state.view === 'profil') await renderProfilView();
+}
+
+function syncImpersonationBanner() {
+  const impersonation = getImpersonation();
+  const active = Boolean(impersonation?.tenantId);
+  els.adminImpersonationBanner?.classList.toggle('hidden', !active);
+  if (!active || !els.adminImpersonationLabel) return;
+
+  const tenantName = impersonation.tenantName || 'Unbekannt';
+  const ownerEmail = impersonation.ownerEmail || '—';
+  els.adminImpersonationLabel.textContent = `Sie sehen ${tenantName} (${ownerEmail}).`;
+}
+
 async function renderAdminView() {
   if (!els.adminUserList) return;
   if (!isAdmin()) {
+    els.adminOverview && (els.adminOverview.innerHTML = '');
     els.adminUserList.innerHTML = '<p class="empty">Keine Berechtigung.</p>';
     return;
   }
 
   els.adminUserList.innerHTML = '<p class="empty">Lade Nutzer…</p>';
+  renderAdminOverview(null);
 
   try {
     const data = await loadAdminUsers();
     const users = data?.users || [];
+    renderAdminOverview(data?.overview);
 
     if (users.length === 0) {
       els.adminUserList.innerHTML = '<p class="empty">Noch keine registrierten Nutzer.</p>';
@@ -1844,21 +2148,54 @@ async function renderAdminView() {
               <th scope="col">Firma</th>
               <th scope="col">Rolle</th>
               <th scope="col">Tarif</th>
+              <th scope="col">Onboarding</th>
+              <th scope="col">Kunden</th>
+              <th scope="col">Angebote</th>
+              <th scope="col">Rechnungen</th>
+              <th scope="col">Katalog</th>
+              <th scope="col">Letzte Aktivität</th>
               <th scope="col">Registriert</th>
+              <th scope="col">Aktionen</th>
             </tr>
           </thead>
           <tbody>
             ${users
-              .map(
-                (user) => `
-              <tr>
+              .map((user) => {
+                const stats = user.tenant?.stats || {};
+                const isSystemAdmin = user.tenant?.plan === 'admin';
+                return `
+              <tr data-admin-user-row="${escapeHtml(user.tenant?.id || '')}">
                 <td>${escapeHtml(user.email)}</td>
                 <td>${escapeHtml(user.tenant?.name || '—')}</td>
                 <td><span class="admin-user-role admin-user-role--${escapeHtml(user.role || 'owner')}">${escapeHtml(formatUserRole(user.role))}</span></td>
-                <td>${escapeHtml(user.tenant?.plan || '—')}</td>
+                <td>${escapeHtml(formatAdminPlan(user.tenant?.plan))}</td>
+                <td>${escapeHtml(formatAdminYesNo(user.tenant?.onboardingCompleted))}</td>
+                <td>${escapeHtml(String(stats.kunden ?? 0))}</td>
+                <td>${escapeHtml(String(stats.angebote ?? 0))}</td>
+                <td>${escapeHtml(String(stats.rechnungen ?? 0))}</td>
+                <td>${escapeHtml(String(stats.katalog ?? 0))}</td>
+                <td>${escapeHtml(formatAdminDate(stats.lastActivityAt))}</td>
                 <td>${escapeHtml(formatAdminDate(user.createdAt))}</td>
-              </tr>`
-              )
+                <td class="admin-user-table__actions">
+                  ${
+                    isSystemAdmin
+                      ? '<span class="admin-user-table__muted">—</span>'
+                      : `
+                    <button type="button" class="btn btn-ghost btn-sm" data-admin-toggle-detail="${escapeHtml(user.tenant?.id || '')}">
+                      Details
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" data-admin-open-tenant="${escapeHtml(user.tenant?.id || '')}">
+                      Öffnen
+                    </button>`
+                  }
+                </td>
+              </tr>
+              <tr class="admin-user-detail-row hidden" data-admin-detail-row="${escapeHtml(user.tenant?.id || '')}">
+                <td colspan="12">
+                  <div class="admin-user-detail-host" data-admin-detail-host="${escapeHtml(user.tenant?.id || '')}"></div>
+                </td>
+              </tr>`;
+              })
               .join('')}
           </tbody>
         </table>
@@ -1873,11 +2210,16 @@ function syncProfileButton(view = state.view) {
   if (!els.profileBtn) return;
   const tenant = getCurrentTenant();
   const user = getCurrentUser();
+  const impersonation = getImpersonation();
   const labelParts = [user, tenant?.name].filter(Boolean);
+  if (impersonation?.tenantName) {
+    labelParts.push(`Admin: ${impersonation.tenantName}`);
+  }
   const label = labelParts.length ? `Profil (${labelParts.join(' · ')})` : 'Profil';
   els.profileBtn.setAttribute('aria-label', label);
   els.profileBtn.title = label;
   els.profileBtn.classList.toggle('is-current', view === 'profil');
+  els.adminBtn?.classList.toggle('is-current', view === 'admin');
 }
 
 function syncAdminNav() {
@@ -1896,28 +2238,20 @@ const NAV_VIEW_GROUPS = {
   'pdf-vorlage': 'einstellungen',
   'pdf-vorlage-angebot': 'einstellungen',
   'pdf-vorlage-rechnung': 'einstellungen',
-  admin: 'einstellungen',
 };
 
-function closeNavMenus() {
-  document.querySelectorAll('.app-nav__group.is-open').forEach((group) => {
-    group.classList.remove('is-open');
-    const trigger = group.querySelector('[data-nav-trigger]');
-    if (trigger) trigger.setAttribute('aria-expanded', 'false');
-  });
-}
-
 function closeMobileNav() {
-  if (!els.mainNav || !els.navMobileToggle) return;
-  els.mainNav.classList.remove('is-mobile-open');
+  if (!els.appSidebar || !els.navMobileToggle) return;
+  els.appSidebar.classList.remove('is-mobile-open');
+  els.appSidebarBackdrop?.classList.add('hidden');
+  els.appSidebarBackdrop?.setAttribute('aria-hidden', 'true');
   els.navMobileToggle.setAttribute('aria-expanded', 'false');
   els.navMobileToggle.setAttribute('aria-label', 'Menü öffnen');
-  closeNavMenus();
 }
 
 function resolveNavBarView(view) {
   const resolved = resolvePdfVorlageView(view);
-  if (resolved === 'profil') {
+  if (resolved === 'profil' || resolved === 'admin') {
     return state.lastNavBarView ?? (state.bereich === 'rechnungen' ? 'rechnung-neu' : 'neu');
   }
   if (
@@ -1925,7 +2259,6 @@ function resolveNavBarView(view) {
     resolved === 'archiv' ||
     resolved === 'katalog' ||
     resolved === 'kunden' ||
-    resolved === 'admin' ||
     resolved === 'rechnung-neu' ||
     resolved === 'rechnung-archiv' ||
     isPdfVorlageView(resolved)
@@ -1938,60 +2271,15 @@ function resolveNavBarView(view) {
 let navIndicatorEl = null;
 let navIndicatorReady = false;
 
-function ensureNavIndicator() {
-  const list = els.mainNav?.querySelector('.app-nav__list');
-  if (!list || navIndicatorEl) return;
-  navIndicatorEl = document.createElement('div');
-  navIndicatorEl.className = 'app-nav__indicator';
-  navIndicatorEl.setAttribute('aria-hidden', 'true');
-  list.prepend(navIndicatorEl);
-}
+function ensureNavIndicator() {}
 
-function syncNavIndicator(animate = true) {
-  if (!window.matchMedia('(max-width: 920px)').matches) {
-    navIndicatorEl?.classList.add('hidden');
-    return;
-  }
-
-  ensureNavIndicator();
-  const list = els.mainNav?.querySelector('.app-nav__list');
-  if (!list || !navIndicatorEl) return;
-
-  navIndicatorEl.classList.remove('hidden');
-  list.classList.toggle('is-rechnungen', state.bereich === 'rechnungen');
-
-  const current =
-    list.querySelector('[data-nav-view].is-current') ||
-    list.querySelector(`[data-nav-view="${state.bereich === 'rechnungen' ? 'rechnung-neu' : 'neu'}"]`);
-  if (!current) return;
-
-  const listRect = list.getBoundingClientRect();
-  const tabRect = current.getBoundingClientRect();
-  const x = tabRect.left - listRect.left;
-  const w = tabRect.width;
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const shouldAnimate = animate && navIndicatorReady && !reduceMotion;
-
-  if (!shouldAnimate) {
-    navIndicatorEl.style.transition = 'none';
-  }
-
-  navIndicatorEl.style.width = `${w}px`;
-  navIndicatorEl.style.transform = `translateX(${x}px)`;
-
-  if (!shouldAnimate) {
-    requestAnimationFrame(() => {
-      if (navIndicatorEl) navIndicatorEl.style.transition = '';
-      navIndicatorReady = true;
-    });
-  }
-}
+function syncNavIndicator() {}
 
 function syncNavState(view) {
   const resolved = resolvePdfVorlageView(view);
   const navView = resolveNavBarView(view);
 
-  if (resolved !== 'profil') {
+  if (resolved !== 'profil' && resolved !== 'admin') {
     state.lastNavBarView = navView;
   }
 
@@ -2004,29 +2292,31 @@ function syncNavState(view) {
 
   document.querySelectorAll('[data-nav-group]').forEach((group) => {
     const groupId = group.dataset.navGroup;
-    group.classList.toggle('is-active', NAV_VIEW_GROUPS[navView] === groupId);
+    const isActive = NAV_VIEW_GROUPS[navView] === groupId;
+    group.classList.toggle('is-active', isActive);
+    if (isActive) {
+      group.classList.add('is-open');
+      const trigger = group.querySelector('[data-nav-trigger]');
+      if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    }
   });
-
-  syncNavIndicator(true);
-
-  if (window.matchMedia('(max-width: 920px)').matches) {
-    requestAnimationFrame(() => {
-      const current = document.querySelector('[data-nav-view].is-current');
-      current?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
-      syncNavIndicator(false);
-    });
-  }
 }
 
-function toggleNavGroup(group, forceOpen) {
-  const isOpen = group.classList.contains('is-open');
-  const shouldOpen = forceOpen ?? !isOpen;
-  closeNavMenus();
-  if (shouldOpen) {
+function expandVisibleNavGroups() {
+  document.querySelectorAll('.app-nav__group:not(.is-bereich-hidden)').forEach((group) => {
     group.classList.add('is-open');
     const trigger = group.querySelector('[data-nav-trigger]');
     if (trigger) trigger.setAttribute('aria-expanded', 'true');
-  }
+  });
+}
+
+function toggleNavGroup(group, forceOpen) {
+  if (!group) return;
+  const isOpen = group.classList.contains('is-open');
+  const shouldOpen = forceOpen ?? !isOpen;
+  group.classList.toggle('is-open', shouldOpen);
+  const trigger = group.querySelector('[data-nav-trigger]');
+  if (trigger) trigger.setAttribute('aria-expanded', String(shouldOpen));
 }
 
 function syncBereichNav() {
@@ -2061,17 +2351,12 @@ function syncBereichSwitcher() {
     btn.hidden = btn.dataset.bereich !== alternate;
   });
 
-  document.querySelectorAll('.app-bereich-segment__btn').forEach((btn) => {
-    const active = btn.dataset.bereich === state.bereich;
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-selected', String(active));
-  });
+  els.app?.classList.toggle('app--rechnungen', state.bereich === 'rechnungen');
 }
 
 function openBereichDropdown() {
   if (!els.bereichSwitcherMenu || !els.bereichSwitcherWrap) return;
   syncBereichSwitcher();
-  closeNavMenus();
   els.bereichSwitcherMenu.classList.remove('hidden');
   els.bereichSwitcherWrap.classList.add('is-open');
   els.bereichSwitcher?.setAttribute('aria-expanded', 'true');
@@ -2140,33 +2425,29 @@ function bindBereichSwitch() {
       activateBereich(btn.dataset.bereich);
     });
   });
-
-  document.querySelectorAll('.app-bereich-segment__btn').forEach((btn) => {
-    btn.addEventListener('click', () => activateBereich(btn.dataset.bereich));
-  });
 }
 
 function bindMainNav() {
   if (!els.mainNav) return;
 
+  expandVisibleNavGroups();
   bindBereichSwitch();
-  window.addEventListener('resize', () => syncNavIndicator(false));
 
   els.navMobileToggle?.addEventListener('click', () => {
-    const open = els.mainNav.classList.toggle('is-mobile-open');
+    const open = els.appSidebar.classList.toggle('is-mobile-open');
     els.navMobileToggle.setAttribute('aria-expanded', String(open));
     els.navMobileToggle.setAttribute('aria-label', open ? 'Menü schließen' : 'Menü öffnen');
-    if (!open) closeNavMenus();
+    els.appSidebarBackdrop?.classList.toggle('hidden', !open);
+    els.appSidebarBackdrop?.setAttribute('aria-hidden', String(!open));
   });
+
+  els.appSidebarBackdrop?.addEventListener('click', closeMobileNav);
 
   els.mainNav.addEventListener('click', (e) => {
     const trigger = e.target.closest('[data-nav-trigger]');
     if (trigger) {
       e.preventDefault();
-      const mobileNav = window.matchMedia('(max-width: 920px)').matches;
-      if (mobileNav) {
-        toggleNavGroup(trigger.closest('.app-nav__group'));
-      }
+      toggleNavGroup(trigger.closest('.app-nav__group'));
       return;
     }
 
@@ -2180,7 +2461,6 @@ function bindMainNav() {
       }
       showView(link.dataset.navView);
       closeMobileNav();
-      closeNavMenus();
     }
   });
 
@@ -2188,8 +2468,11 @@ function bindMainNav() {
     if (!e.target.closest('.bereich-switcher')) {
       closeBereichDropdown();
     }
-    if (!e.target.closest('.app-header')) {
-      closeNavMenus();
+    if (
+      !e.target.closest('.app-sidebar') &&
+      !e.target.closest('.app-nav-toggle') &&
+      !e.target.closest('.app-sidebar-backdrop')
+    ) {
       closeMobileNav();
     }
   });
@@ -2197,7 +2480,6 @@ function bindMainNav() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeBereichDropdown();
-      closeNavMenus();
       closeMobileNav();
     }
   });
@@ -3345,6 +3627,7 @@ function setRechnungFooterBusy(busy) {
 }
 
 let documentPreviewKind = null;
+let documentPreviewData = null;
 
 async function buildAngebotPreviewData() {
   angebotPostenEditor.flushEntwurfIfComplete();
@@ -3373,6 +3656,7 @@ async function openDocumentPreviewModal(kind) {
   }
 
   documentPreviewKind = previewData.type;
+  documentPreviewData = previewData;
   els.documentPreviewContent.innerHTML = '';
 
   els.documentPreviewModal.classList.remove('hidden');
@@ -3387,21 +3671,35 @@ async function openDocumentPreviewModal(kind) {
   );
 
   requestAnimationFrame(() => {
-    fitDocumentPreviewPage();
-    els.documentPreviewModal.querySelector('[data-close-document-preview].btn')?.focus();
+    requestAnimationFrame(() => {
+      fitDocumentPreviewPage();
+      els.documentPreviewModal.querySelector('[data-close-document-preview].btn')?.focus();
+    });
   });
 }
 
-function fitDocumentPreviewPage() {
+function fitDocumentPreviewPage(retry = 0) {
   const viewport = els.documentPreviewViewport;
   const sheet = els.documentPreviewContent?.querySelector('.pdf-layout-preview__sheet');
   if (!viewport || !sheet) return;
 
   sheet.style.width = '';
   sheet.style.height = '';
+  sheet.style.maxWidth = '';
+  sheet.style.aspectRatio = '';
 
   const { width: cw, height: ch } = viewport.getBoundingClientRect();
-  if (cw <= 0 || ch <= 0) return;
+  if (cw <= 0 || ch <= 0) {
+    if (retry < 4) {
+      requestAnimationFrame(() => fitDocumentPreviewPage(retry + 1));
+      return;
+    }
+    sheet.style.width = '100%';
+    sheet.style.maxWidth = '420px';
+    sheet.style.aspectRatio = '210 / 297';
+    sheet.style.height = 'auto';
+    return;
+  }
 
   const pageRatio = 210 / 297;
   let pageWidth = cw;
@@ -3415,11 +3713,27 @@ function fitDocumentPreviewPage() {
   sheet.style.height = `${Math.floor(pageHeight)}px`;
 }
 
+async function openDocumentPreviewPdfTab() {
+  if (!documentPreviewData) return;
+
+  const { type, document, posten } = documentPreviewData;
+  try {
+    if (type === 'rechnung') {
+      await openRechnungPdfPreview(document, posten);
+    } else {
+      openPdfPreview(document, posten);
+    }
+  } catch (err) {
+    alert(`PDF konnte nicht geöffnet werden: ${err.message}`);
+  }
+}
+
 function closeDocumentPreviewModal() {
   if (!els.documentPreviewModal) return;
   els.documentPreviewModal.classList.add('hidden');
   els.documentPreviewModal.setAttribute('aria-hidden', 'true');
   documentPreviewKind = null;
+  documentPreviewData = null;
   if (els.documentPreviewContent) els.documentPreviewContent.innerHTML = '';
 }
 
@@ -3724,6 +4038,7 @@ async function showApp() {
   els.app.classList.remove('hidden');
   syncProfileButton();
   syncAdminNav();
+  syncImpersonationBanner();
 
   if (!state.appStarted) {
     bindAppEvents();
@@ -3759,6 +4074,7 @@ function bindAppEvents() {
   bindRechnungKopfToggle();
   bindRechnungPostenKopfToggle();
   bindFormPdfValidation();
+  updateAllKundeSaveButtonStates();
   initKatalogModal({
     modal: els.katalogModal,
     liste: els.katalogModalListe,
@@ -3768,7 +4084,55 @@ function bindAppEvents() {
       { button: els.rechnungKatalogOeffnenBtn, editor: rechnungPostenEditor },
     ],
   });
-  els.profileBtn?.addEventListener('click', () => showView('profil'));
+  els.profileBtn?.addEventListener('click', () => {
+    showView('profil');
+    closeMobileNav();
+  });
+  els.adminBtn?.addEventListener('click', () => {
+    showView('admin');
+    closeMobileNav();
+  });
+  els.adminImpersonationStopBtn?.addEventListener('click', () => {
+    void stopAdminImpersonationFlow();
+  });
+  els.adminImpersonationArchivBtn?.addEventListener('click', () => {
+    state.bereich = 'angebote';
+    syncBereichSwitcher();
+    syncBereichNav();
+    showView('archiv');
+  });
+  els.adminImpersonationRechnungenBtn?.addEventListener('click', () => {
+    state.bereich = 'rechnungen';
+    syncBereichSwitcher();
+    syncBereichNav();
+    showView('rechnung-archiv');
+  });
+  els.adminUserList?.addEventListener('click', (e) => {
+    const openBtn = e.target.closest('[data-admin-open-tenant]');
+    if (openBtn) {
+      void openAdminTenant(openBtn.dataset.adminOpenTenant, 'archiv');
+      return;
+    }
+
+    const toggleBtn = e.target.closest('[data-admin-toggle-detail]');
+    if (!toggleBtn) return;
+
+    const tenantId = toggleBtn.dataset.adminToggleDetail;
+    const detailRow = els.adminUserList.querySelector(
+      `[data-admin-detail-row="${CSS.escape(tenantId)}"]`
+    );
+    if (!detailRow) return;
+
+    const willOpen = detailRow.classList.contains('hidden');
+    els.adminUserList
+      .querySelectorAll('.admin-user-detail-row')
+      .forEach((row) => row.classList.add('hidden'));
+    if (!willOpen) return;
+
+    detailRow.classList.remove('hidden');
+    const host = detailRow.querySelector('[data-admin-detail-host]');
+    void loadAdminUserDetail(tenantId, host);
+  });
   els.profilAccountForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     setProfilAccountStatus('');
@@ -3854,10 +4218,15 @@ function bindAppEvents() {
     el.addEventListener('click', () => closeDocumentPreviewModal());
   });
   els.documentPreviewSendBtn?.addEventListener('click', () => sendDocumentFromPreviewModal());
+  els.documentPreviewViewport?.addEventListener('dblclick', () => {
+    void openDocumentPreviewPdfTab();
+  });
 
   els.kundeAuswahlBtn.addEventListener('click', () => openKundenModal('angebot'));
+  els.kundeSaveBtn?.addEventListener('click', () => saveDocumentKundeFromForm('angebot'));
   els.kundeName.addEventListener('input', clearKundeAuswahl);
   els.rechnungKundeAuswahlBtn?.addEventListener('click', () => openKundenModal('rechnung'));
+  els.rechnungKundeSaveBtn?.addEventListener('click', () => saveDocumentKundeFromForm('rechnung'));
   els.rechnungKundeName?.addEventListener('input', clearRechnungKundeAuswahl);
 
   els.kundeAdresseAuswahl?.addEventListener('click', (e) => {
