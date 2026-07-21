@@ -1,7 +1,9 @@
 import { previewAngebotsnummer, previewRechnungsnummer } from './dokumentnummer.js';
+import { formatPostenArt } from './data.js';
 import { applyI18n, getLocale, t } from './i18n.js';
-import { berechneSummenAusPosten, formatEuro } from './pdf.js';
-import { getPdfTemplate } from './pdfTemplate.js';
+import { normalizeAdresse } from './adresse.js';
+import { berechneSummenAusPosten, formatDatum, formatEuro } from './pdf.js';
+import { getFussSpalten, getPdfTemplate, mergePdfTemplate } from './pdfTemplate.js';
 import {
   applyPdfLayoutPreviewVariantStyles,
   createPdfLayoutPreviewMarkup,
@@ -294,6 +296,275 @@ export function updatePdfTemplatePreview(form, previewRoot, type, variant = 1) {
   }
 
   const { netto, mwst, brutto } = samplePreviewTotals();
+  setText(previewRoot, '[data-preview-part="total-netto"]', formatEuro(netto));
+  setText(previewRoot, '[data-preview-part="total-mwst"]', formatEuro(mwst));
+  setText(previewRoot, '[data-preview-part="total-brutto"]', formatEuro(brutto));
+}
+
+function escapePreviewHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function formatDocumentPreviewDate(value) {
+  if (!value) return '—';
+  try {
+    return formatDatum(new Date(value));
+  } catch {
+    return '—';
+  }
+}
+
+function mapPreviewPostenRows(posten) {
+  return posten.map((p) => ({
+    bez: p.bezeichnung || '',
+    art: formatPostenArt(p.art),
+    menge: p.menge,
+    einheit: p.einheit,
+    preis: p.preis,
+    sum: formatEuro((p.preis || 0) * (p.menge || 0)),
+  }));
+}
+
+function renderPreviewTableBody(tbody, rows, layoutVariant) {
+  if (!tbody) return;
+  if (layoutVariant === 3) {
+    tbody.innerHTML = rows
+      .map(
+        (row, i) => `
+        <tr class="${i % 2 === 1 ? 'is-alt' : ''}">
+          <td>${i + 1}.</td>
+          <td>${escapePreviewHtml(row.bez)}</td>
+          <td>${escapePreviewHtml(row.menge)} ${escapePreviewHtml(row.einheit)}</td>
+          <td>${escapePreviewHtml(row.sum)}</td>
+        </tr>`
+      )
+      .join('');
+    return;
+  }
+  if (layoutVariant === 2) {
+    tbody.innerHTML = rows
+      .map(
+        (row, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${escapePreviewHtml(row.bez)}</td>
+          <td>${escapePreviewHtml(row.art)}</td>
+          <td>${escapePreviewHtml(row.menge)}</td>
+          <td>${formatEuro(row.preis)}</td>
+          <td>${escapePreviewHtml(row.sum)}</td>
+        </tr>`
+      )
+      .join('');
+    return;
+  }
+  tbody.innerHTML = rows
+    .map(
+      (row, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${escapePreviewHtml(row.bez)}</td>
+        <td>${escapePreviewHtml(row.art)}</td>
+        <td>${escapePreviewHtml(row.menge)}</td>
+        <td>${escapePreviewHtml(row.einheit)}</td>
+        <td>${formatEuro(row.preis)}</td>
+        <td>${escapePreviewHtml(row.sum)}</td>
+      </tr>`
+    )
+    .join('');
+}
+
+function stylePreviewTableHead(tableHead, layoutVariant, primaer, lineColor) {
+  if (!tableHead) return;
+  tableHead.style.backgroundColor = '';
+  tableHead.style.color = '';
+  tableHead.style.borderBottom = '';
+  tableHead.querySelectorAll('th').forEach((th) => {
+    th.style.borderColor = '';
+    th.style.backgroundColor = '';
+    th.style.color = '';
+  });
+
+  if (layoutVariant === 2) {
+    tableHead.style.backgroundColor = 'transparent';
+    tableHead.style.color = primaer;
+    tableHead.style.borderBottom = `2px solid ${primaer}`;
+    tableHead.querySelectorAll('th').forEach((th) => {
+      th.style.borderColor = 'transparent';
+      th.style.borderBottom = `2px solid ${primaer}`;
+      th.style.backgroundColor = 'transparent';
+      th.style.color = primaer;
+    });
+  } else if (layoutVariant === 3) {
+    tableHead.style.backgroundColor = 'transparent';
+    tableHead.style.color = '#374151';
+    tableHead.style.borderBottom = `1px solid ${lineColor}`;
+    tableHead.querySelectorAll('th').forEach((th) => {
+      th.style.border = 'none';
+      th.style.borderBottom = `1px solid ${lineColor}`;
+      th.style.fontWeight = '600';
+    });
+  } else {
+    tableHead.style.backgroundColor = primaer;
+    tableHead.style.color = '#ffffff';
+  }
+}
+
+/** Live document preview (Angebot/Rechnung form) with real data. */
+export function updateDocumentLayoutPreview(previewRoot, type, document, posten, template) {
+  if (!previewRoot || !document) return;
+
+  const tpl = mergePdfTemplate(template);
+  const isAngebot = type === 'angebot';
+  const variantKey = isAngebot ? 'angebotVariant' : 'rechnungVariant';
+  const layoutVariant = normalizePdfLayoutVariant(tpl.layout?.[variantKey] ?? 1);
+
+  previewRoot.innerHTML = createPdfLayoutPreviewMarkup(type, layoutVariant);
+  previewRoot.dataset.previewType = type;
+  previewRoot.dataset.previewVariant = String(layoutVariant);
+  previewRoot.dataset.documentPreview = 'true';
+
+  const firma = tpl.firma || {};
+  const farben = tpl.farben || {};
+  const texte = isAngebot ? tpl.texte || {} : tpl.texteRechnung || {};
+  const fussSpalten = getFussSpalten(tpl);
+  const primaer = farben.primaer || '#1e3a5f';
+  const textMuted = farben.textMuted || '#505050';
+  const fussfarbe = farben.fusszeile || '#646464';
+  const lineColor = farben.trennlinie || '#dcdcdc';
+  const headerActive = !!tpl.layout?.headerAktiv;
+  const logoData = tpl.bilder?.logo || '';
+  const headerData = tpl.bilder?.header || '';
+  const kunde = document.kunde || {};
+  const addr = normalizeAdresse(kunde);
+  const kundeLines = [addr.strasse, addr.plzOrt].filter(Boolean);
+  const rows = mapPreviewPostenRows(posten || []);
+
+  setVisible(previewRoot, '[data-preview-part="banner"]', headerActive && !!headerData);
+  const bannerImg = previewRoot.querySelector('[data-preview-part="banner"] img');
+  if (bannerImg) {
+    if (headerActive && headerData) {
+      bannerImg.src = headerData;
+      bannerImg.classList.remove('hidden');
+    } else {
+      bannerImg.removeAttribute('src');
+      bannerImg.classList.add('hidden');
+    }
+  }
+
+  const logoWrap = previewRoot.querySelector('[data-preview-part="logo"]');
+  const logoImg = previewRoot.querySelector('[data-preview-part="logo"] img');
+  const logoFallback = previewRoot.querySelector('[data-preview-part="logo-fallback"]');
+  if (logoData) {
+    logoWrap?.classList.remove('hidden');
+    logoFallback?.classList.add('hidden');
+    if (logoImg) logoImg.src = logoData;
+  } else {
+    logoWrap?.classList.add('hidden');
+    logoFallback?.classList.remove('hidden');
+    setText(
+      previewRoot,
+      '[data-preview-part="logo-fallback"]',
+      layoutVariant === 3 ? String(firma.name || '').toUpperCase() : firma.name || ''
+    );
+  }
+
+  setText(previewRoot, '[data-preview-part="firma-strasse"]', firma.strasse || '');
+  setText(previewRoot, '[data-preview-part="firma-plz"]', firma.plzOrt || '');
+  setText(
+    previewRoot,
+    '[data-preview-part="letterhead-address"]',
+    [firma.strasse, firma.plzOrt].filter(Boolean).join(' · ') || 'Adresse'
+  );
+  setText(
+    previewRoot,
+    '[data-preview-part="sender-text"]',
+    [firma.name, firma.strasse, firma.plzOrt].filter(Boolean).join(' · ') || 'Absender'
+  );
+  setText(
+    previewRoot,
+    '[data-preview-part="firma-kontakt"]',
+    [firma.telefon && `Tel: ${firma.telefon}`, firma.email, firma.ustId && `USt-IdNr.: ${firma.ustId}`]
+      .filter(Boolean)
+      .join(' · ') || t('pdfPreview.contact')
+  );
+
+  setText(previewRoot, '[data-preview-part="doc-titel"]', texte.titel || (isAngebot ? 'ANGEBOT' : 'RECHNUNG'));
+  setText(
+    previewRoot,
+    '[data-preview-part="kunde-label"]',
+    isAngebot ? t('pdfPreview.quoteFor') : t('pdfPreview.invoiceTo')
+  );
+  setText(previewRoot, '[data-preview-part="einleitung"]', texte.einleitung || t('pdfPreview.intro'));
+  setText(previewRoot, '[data-preview-part="fuss1"]', texte.fuss1 || t('pdfPreview.footer1'));
+  setText(previewRoot, '[data-preview-part="fuss2"]', texte.fuss2 || t('pdfPreview.footer2'));
+
+  fussSpalten.forEach((col, index) => {
+    const n = index + 1;
+    setText(previewRoot, `[data-preview-part="fuss-col${n}-header"]`, col.ueberschrift || t('pdfPreview.column', { n }));
+    setText(previewRoot, `[data-preview-part="fuss-col${n}-text"]`, col.text || t('pdfPreview.text'));
+  });
+
+  if (isAngebot) {
+    setText(previewRoot, '[data-preview-part="meta-1"]', `${t('form.quoteNumber')}: ${document.angebotNr || '—'}`);
+    setText(
+      previewRoot,
+      '[data-preview-part="meta-2"]',
+      `${t('form.quoteDate')}: ${formatDocumentPreviewDate(document.angebotsdatum || document.erstelltAm)}`
+    );
+    setText(
+      previewRoot,
+      '[data-preview-part="meta-3"]',
+      `${t('form.validUntil')}: ${formatDocumentPreviewDate(document.gueltigBis)}`
+    );
+    setVisible(previewRoot, '[data-preview-part="meta-4"]', false);
+  } else {
+    setText(previewRoot, '[data-preview-part="meta-1"]', `${t('form.invoiceNumber')}: ${document.rechnungNr || '—'}`);
+    setText(
+      previewRoot,
+      '[data-preview-part="meta-2"]',
+      `${t('form.invoiceDate')}: ${formatDocumentPreviewDate(document.rechnungsdatum || document.erstelltAm)}`
+    );
+    setText(
+      previewRoot,
+      '[data-preview-part="meta-3"]',
+      `${t('form.dueDate')}: ${formatDocumentPreviewDate(document.faelligAm)}`
+    );
+    const hasRef = !!document.angebotNr;
+    setVisible(previewRoot, '[data-preview-part="meta-4"]', hasRef);
+    if (hasRef) {
+      setText(previewRoot, '[data-preview-part="meta-4"]', t('pdfPreview.refQuote', { nr: document.angebotNr }));
+    }
+  }
+
+  setText(previewRoot, '[data-preview-part="kunde-name"]', kunde.name || '—');
+  setHtml(
+    previewRoot,
+    '[data-preview-part="kunde-adresse"]',
+    kundeLines.map((line) => `<span>${escapePreviewHtml(line)}</span>`).join('')
+  );
+
+  stylePreviewTableHead(previewRoot.querySelector('[data-preview-part="table-head"]'), layoutVariant, primaer, lineColor);
+
+  applyPdfLayoutPreviewVariantStyles(previewRoot, layoutVariant, {
+    primaer,
+    lineColor,
+  });
+
+  if (layoutVariant === 1) {
+    setStyle(previewRoot, '[data-preview-part="trennlinie"]', 'borderColor', lineColor);
+  }
+  setStyle(previewRoot, '[data-preview-part="fuss-trennlinie"]', 'borderColor', lineColor);
+  setStyle(previewRoot, '[data-preview-part="firma-block"]', 'color', textMuted);
+  setStyle(previewRoot, '[data-preview-part="fuss-block"]', 'color', fussfarbe);
+  setStyle(previewRoot, '[data-preview-part="fuss-closing"]', 'color', fussfarbe);
+
+  renderPreviewTableBody(previewRoot.querySelector('[data-preview-part="table-body"]'), rows, layoutVariant);
+
+  const { netto, mwst, brutto } = berechneSummenAusPosten(posten || []);
   setText(previewRoot, '[data-preview-part="total-netto"]', formatEuro(netto));
   setText(previewRoot, '[data-preview-part="total-mwst"]', formatEuro(mwst));
   setText(previewRoot, '[data-preview-part="total-brutto"]', formatEuro(brutto));

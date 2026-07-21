@@ -86,6 +86,7 @@ import {
   normalizePdfLayoutVariant,
   refreshPdfTemplateFormLabels,
   updatePdfTemplatePreview,
+  updateDocumentLayoutPreview,
 } from './pdfTemplatePreview.js';
 import { PDF_LAYOUT_VARIANTS } from './pdfLayoutVariants.js';
 import {
@@ -269,11 +270,10 @@ const els = {
   archivListe: document.getElementById('archiv-liste'),
   resetBtn: document.getElementById('reset-btn'),
   saveBtn: document.getElementById('save-btn'),
-  saveCloseBtn: document.getElementById('save-close-btn'),
   pdfFooter: document.getElementById('pdf-footer'),
   angebotStickyFooter: document.getElementById('angebot-sticky-footer'),
   pdfBtn: document.getElementById('pdf-btn'),
-  pdfSendBtn: document.getElementById('pdf-send-btn'),
+  previewBtn: document.getElementById('preview-btn'),
   pdfSendHint: document.getElementById('pdf-send-hint'),
   postenListe: document.getElementById('posten-liste'),
   zusammenfassung: document.getElementById('zusammenfassung'),
@@ -348,10 +348,9 @@ const els = {
   postenKopfBody: document.getElementById('posten-kopf-body'),
   rechnungResetBtn: document.getElementById('rechnung-reset-btn'),
   rechnungSaveBtn: document.getElementById('rechnung-save-btn'),
-  rechnungSaveCloseBtn: document.getElementById('rechnung-save-close-btn'),
   rechnungStickyFooter: document.getElementById('rechnung-sticky-footer'),
   rechnungPdfBtn: document.getElementById('rechnung-pdf-btn'),
-  rechnungPdfSendBtn: document.getElementById('rechnung-pdf-send-btn'),
+  rechnungPreviewBtn: document.getElementById('rechnung-preview-btn'),
   rechnungPdfSendHint: document.getElementById('rechnung-pdf-send-hint'),
   rechnungKopf: document.getElementById('rechnung-kopf'),
   rechnungKopfToggle: document.getElementById('rechnung-kopf-toggle'),
@@ -386,6 +385,10 @@ const els = {
   katalogModal: document.getElementById('katalog-modal'),
   katalogModalListe: document.getElementById('katalog-modal-liste'),
   katalogModalSuche: document.getElementById('katalog-modal-suche'),
+  documentPreviewModal: document.getElementById('document-preview-modal'),
+  documentPreviewViewport: document.querySelector('.document-preview-modal__viewport'),
+  documentPreviewContent: document.getElementById('document-preview-content'),
+  documentPreviewSendBtn: document.getElementById('document-preview-send-btn'),
 };
 
 const angebotPostenEditor = createPostenEditor(angebotPostenState, {
@@ -396,9 +399,8 @@ const angebotPostenEditor = createPostenEditor(angebotPostenState, {
   summeMwst: els.summeMwst,
   summeBrutto: els.summeBrutto,
   pdfBtn: els.pdfBtn,
-  pdfSendBtn: els.pdfSendBtn,
+  previewBtn: els.previewBtn,
   saveBtn: els.saveBtn,
-  saveCloseBtn: els.saveCloseBtn,
   canSave: () => isAngebotKopfComplete(),
   onUpdate: () => {
     updatePostenKopfSummary();
@@ -413,9 +415,8 @@ const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
   summeMwst: els.rechnungSummeMwst,
   summeBrutto: els.rechnungSummeBrutto,
   pdfBtn: els.rechnungPdfBtn,
-  pdfSendBtn: els.rechnungPdfSendBtn,
+  previewBtn: els.rechnungPreviewBtn,
   saveBtn: els.rechnungSaveBtn,
-  saveCloseBtn: els.rechnungSaveCloseBtn,
   canSave: () => isRechnungKopfComplete(),
   onUpdate: () => {
     updateRechnungPostenKopfSummary();
@@ -1377,7 +1378,6 @@ function rechnungFormHasChanges() {
 }
 
 function updatePageHeader() {
-  els.pdfBtn.textContent = state.angebot.editingId ? t('pdf.update') : t('pdf.create');
   setFooterButtonEnabled(els.resetBtn, angebotFormHasChanges());
   updateAngebotKopfSummary();
 }
@@ -1602,7 +1602,6 @@ function bindRechnungPostenKopfToggle() {
 }
 
 function updateRechnungPageHeader() {
-  els.rechnungPdfBtn.textContent = state.rechnung.editingId ? t('pdf.update') : t('pdf.create');
   setFooterButtonEnabled(els.rechnungResetBtn, rechnungFormHasChanges());
   updateRechnungKopfSummary();
 }
@@ -3347,17 +3346,105 @@ async function persistRechnungFromForm() {
 }
 
 function setAngebotFooterBusy(busy) {
-  [els.saveBtn, els.saveCloseBtn, els.pdfBtn, els.pdfSendBtn].forEach((btn) => {
+  [els.saveBtn, els.resetBtn, els.pdfBtn, els.previewBtn].forEach((btn) => {
     if (btn) btn.disabled = busy;
   });
 }
 
 function setRechnungFooterBusy(busy) {
-  [els.rechnungSaveBtn, els.rechnungSaveCloseBtn, els.rechnungPdfBtn, els.rechnungPdfSendBtn].forEach(
-    (btn) => {
-      if (btn) btn.disabled = busy;
-    }
+  [els.rechnungSaveBtn, els.rechnungResetBtn, els.rechnungPdfBtn, els.rechnungPreviewBtn].forEach((btn) => {
+    if (btn) btn.disabled = busy;
+  });
+}
+
+let documentPreviewKind = null;
+
+async function buildAngebotPreviewData() {
+  angebotPostenEditor.flushEntwurfIfComplete();
+  const posten = angebotPostenEditor.getAusgewaehltePosten();
+  if (posten.length === 0 || !isAngebotKopfComplete()) return null;
+  const angebot = await getFormAngebot();
+  return { type: 'angebot', document: angebot, posten };
+}
+
+async function buildRechnungPreviewData() {
+  rechnungPostenEditor.flushEntwurfIfComplete();
+  const posten = rechnungPostenEditor.getAusgewaehltePosten();
+  if (posten.length === 0 || !isRechnungKopfComplete()) return null;
+  const rechnung = await getFormRechnung();
+  return { type: 'rechnung', document: rechnung, posten };
+}
+
+async function openDocumentPreviewModal(kind) {
+  if (!els.documentPreviewModal || !els.documentPreviewContent) return;
+
+  const previewData =
+    kind === 'rechnung' ? await buildRechnungPreviewData() : await buildAngebotPreviewData();
+  if (!previewData) {
+    alert(getPersistIncompleteMessage(kind));
+    return;
+  }
+
+  documentPreviewKind = previewData.type;
+  els.documentPreviewContent.innerHTML = '';
+
+  els.documentPreviewModal.classList.remove('hidden');
+  els.documentPreviewModal.setAttribute('aria-hidden', 'false');
+
+  updateDocumentLayoutPreview(
+    els.documentPreviewContent,
+    previewData.type,
+    previewData.document,
+    previewData.posten,
+    getPdfTemplate()
   );
+
+  requestAnimationFrame(() => {
+    fitDocumentPreviewPage();
+    els.documentPreviewModal.querySelector('[data-close-document-preview].btn')?.focus();
+  });
+}
+
+function fitDocumentPreviewPage() {
+  const viewport = els.documentPreviewViewport;
+  const sheet = els.documentPreviewContent?.querySelector('.pdf-layout-preview__sheet');
+  if (!viewport || !sheet) return;
+
+  sheet.style.width = '';
+  sheet.style.height = '';
+
+  const { width: cw, height: ch } = viewport.getBoundingClientRect();
+  if (cw <= 0 || ch <= 0) return;
+
+  const pageRatio = 210 / 297;
+  let pageWidth = cw;
+  let pageHeight = pageWidth / pageRatio;
+  if (pageHeight > ch) {
+    pageHeight = ch;
+    pageWidth = pageHeight * pageRatio;
+  }
+
+  sheet.style.width = `${Math.floor(pageWidth)}px`;
+  sheet.style.height = `${Math.floor(pageHeight)}px`;
+}
+
+function closeDocumentPreviewModal() {
+  if (!els.documentPreviewModal) return;
+  els.documentPreviewModal.classList.add('hidden');
+  els.documentPreviewModal.setAttribute('aria-hidden', 'true');
+  documentPreviewKind = null;
+  if (els.documentPreviewContent) els.documentPreviewContent.innerHTML = '';
+}
+
+async function sendDocumentFromPreviewModal() {
+  const kind = documentPreviewKind;
+  if (!kind) return;
+  closeDocumentPreviewModal();
+  if (kind === 'rechnung') {
+    await speichernUndRechnungPdfAnKundenSenden();
+  } else {
+    await speichernUndPdfAnKundenSenden();
+  }
 }
 
 function arrayBufferToBase64(buffer) {
@@ -3767,16 +3854,19 @@ function bindAppEvents() {
     bindPdfTemplateForms();
   }
 
-  els.resetBtn.addEventListener('click', () => resetForm());
+  els.resetBtn?.addEventListener('click', () => resetForm());
   els.saveBtn?.addEventListener('click', () => speichernAngebot());
-  els.saveCloseBtn?.addEventListener('click', () => speichernAngebotUndSchliessen());
   els.pdfBtn.addEventListener('click', () => speichernUndPdf());
-  els.pdfSendBtn?.addEventListener('click', () => speichernUndPdfAnKundenSenden());
+  els.previewBtn?.addEventListener('click', () => openDocumentPreviewModal('angebot'));
   els.rechnungResetBtn?.addEventListener('click', () => resetRechnungForm());
   els.rechnungSaveBtn?.addEventListener('click', () => speichernRechnung());
-  els.rechnungSaveCloseBtn?.addEventListener('click', () => speichernRechnungUndSchliessen());
   els.rechnungPdfBtn?.addEventListener('click', () => speichernUndRechnungPdf());
-  els.rechnungPdfSendBtn?.addEventListener('click', () => speichernUndRechnungPdfAnKundenSenden());
+  els.rechnungPreviewBtn?.addEventListener('click', () => openDocumentPreviewModal('rechnung'));
+
+  els.documentPreviewModal?.querySelectorAll('[data-close-document-preview]').forEach((el) => {
+    el.addEventListener('click', () => closeDocumentPreviewModal());
+  });
+  els.documentPreviewSendBtn?.addEventListener('click', () => sendDocumentFromPreviewModal());
 
   els.kundeAuswahlBtn.addEventListener('click', () => openKundenModal('angebot'));
   els.kundeName.addEventListener('input', clearKundeAuswahl);

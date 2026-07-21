@@ -884,7 +884,16 @@
             </section>
 
             <div id="rechnung-pdf-footer" class="pdf-footer">
-              <div class="pdf-footer__save-row">
+              <div class="pdf-footer__actions">
+                <button
+                  type="button"
+                  id="rechnung-reset-btn"
+                  class="btn btn-ghost is-disabled"
+                  disabled
+                  aria-disabled="true"
+                >
+                  <span data-i18n="common.reset">Zurücksetzen</span>
+                </button>
                 <button
                   type="button"
                   id="rechnung-save-btn"
@@ -893,28 +902,17 @@
                 >
                   <span data-i18n="pdf.save">Speichern</span>
                 </button>
-                <button
-                  type="button"
-                  id="rechnung-save-close-btn"
-                  class="btn btn-ghost is-disabled"
-                  aria-disabled="true"
-                >
-                  <span data-i18n="pdf.saveClose">Speichern &amp; schließen</span>
-                </button>
                 <button type="button" id="rechnung-pdf-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
-                  PDF erstellen
+                  <span data-i18n="pdf.create">PDF erstellen</span>
                 </button>
-              </div>
-              <div class="pdf-footer__action-row">
                 <button
                   type="button"
-                  id="rechnung-pdf-send-btn"
-                  class="btn btn-primary is-disabled"
+                  id="rechnung-preview-btn"
+                  class="btn btn-primary pdf-footer__preview-btn is-disabled"
                   aria-disabled="true"
                 >
-                  <span data-i18n="pdf.send">PDF generieren und an Kunden senden</span>
+                  <span data-i18n="pdf.preview">Vorschau &amp; Senden</span>
                 </button>
-                <button type="button" id="rechnung-reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true"><span data-i18n="common.reset">Zurücksetzen</span></button>
               </div>
               <p id="rechnung-pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
             </div>
@@ -1099,27 +1097,19 @@
             </section>
 
             <div id="pdf-footer" class="pdf-footer">
-              <div class="pdf-footer__save-row">
+              <div class="pdf-footer__actions">
+                <button type="button" id="reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true">
+                  <span data-i18n="common.reset">Zurücksetzen</span>
+                </button>
                 <button type="button" id="save-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
                   <span data-i18n="pdf.save">Speichern</span>
                 </button>
-                <button type="button" id="save-close-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
-                  <span data-i18n="pdf.saveClose">Speichern &amp; schließen</span>
-                </button>
                 <button type="button" id="pdf-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
-                  PDF erstellen
+                  <span data-i18n="pdf.create">PDF erstellen</span>
                 </button>
-              </div>
-              <div class="pdf-footer__action-row">
-                <button
-                  type="button"
-                  id="pdf-send-btn"
-                  class="btn btn-primary is-disabled"
-                  aria-disabled="true"
-                >
-                  <span data-i18n="pdf.send">PDF generieren und an Kunden senden</span>
+                <button type="button" id="preview-btn" class="btn btn-primary pdf-footer__preview-btn is-disabled" aria-disabled="true">
+                  <span data-i18n="pdf.preview">Vorschau &amp; Senden</span>
                 </button>
-                <button type="button" id="reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true"><span data-i18n="common.reset">Zurücksetzen</span></button>
               </div>
               <p id="pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
             </div>
@@ -1701,6 +1691,25 @@
             <button type="button" id="onboarding-next" class="btn btn-primary">Weiter</button>
           </footer>
           <p id="onboarding-status" class="settings-status hidden onboarding-status" role="status"></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="document-preview-modal" class="modal hidden document-preview-modal" aria-hidden="true">
+      <div class="modal-backdrop" data-close-document-preview></div>
+      <div
+        class="modal-panel card document-preview-modal__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="document-preview-title"
+      >
+        <h2 id="document-preview-title" class="document-preview-modal__title" data-i18n="pdf.preview">Vorschau &amp; Senden</h2>
+        <div class="document-preview-modal__viewport">
+          <div id="document-preview-content"></div>
+        </div>
+        <div class="document-preview-modal__actions">
+          <button type="button" class="btn btn-ghost" data-close-document-preview data-i18n="pdf.back">Zurück</button>
+          <button type="button" id="document-preview-send-btn" class="btn btn-primary" data-i18n="pdf.send">Senden</button>
         </div>
       </div>
     </div>
