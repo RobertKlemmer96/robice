@@ -1765,13 +1765,12 @@ body {
   min-width: 42px;
   padding: 0;
   line-height: 1;
-  border: 1px solid color-mix(in srgb, var(--border) 50%, var(--bg)) !important;
-  background: color-mix(in srgb, var(--surface) 55%, var(--bg)) !important;
+  border: none !important;
+  background: transparent !important;
 }
 
 .lang-switcher__trigger:hover {
-  background: color-mix(in srgb, var(--surface-hover) 75%, var(--bg)) !important;
-  border-color: color-mix(in srgb, var(--border-hover) 55%, var(--bg)) !important;
+  background: var(--surface-hover) !important;
 }
 
 .lang-switcher__trigger.app-header__action-btn--lang {
@@ -1837,8 +1836,7 @@ body {
 }
 
 .lang-switcher.is-open .lang-switcher__trigger {
-  background: color-mix(in srgb, var(--surface-hover) 70%, var(--bg));
-  border-color: color-mix(in srgb, var(--border) 55%, var(--bg));
+  background: var(--surface-hover);
 }
 
 .login-screen__top {
@@ -3432,6 +3430,16 @@ h1 {
   font-size: 0.7rem;
 }
 
+.angebot-kopf__contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.angebot-kopf__contact label {
+  margin: 0;
+}
+
 .angebot-kopf .adresse-fields {
   gap: 8px;
   display: grid;
@@ -3919,6 +3927,68 @@ textarea:focus,
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+#katalog-form-section.card {
+  padding: 16px 18px;
+}
+
+#katalog-form-section h2 {
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+#katalog-form-section .settings-lead {
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.form-grid--katalog {
+  gap: 10px;
+}
+
+#katalog-form-section label {
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+#katalog-form-section input,
+#katalog-form-section textarea,
+#katalog-form-section select {
+  padding: 8px 10px;
+}
+
+#katalog-form-section textarea {
+  min-height: 2.35rem;
+  resize: vertical;
+}
+
+.katalog-form-pricing {
+  display: grid;
+  grid-template-columns: minmax(0, 0.425fr) minmax(0, 1.2125fr) minmax(0, 1.2125fr);
+  gap: 10px;
+}
+
+#katalog-form-section .form-actions {
+  margin-top: 2px;
+  gap: 8px;
+}
+
+.kunden-form-meta {
+  display: grid;
+  grid-template-columns: minmax(0, 0.38fr) minmax(0, 1.82fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.kunden-form-contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.form-grid--kunden {
+  gap: 10px;
 }
 
 .katalog-liste-toolbar .search {
@@ -5798,6 +5868,18 @@ textarea:focus,
   .form-grid {
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+
+  .katalog-form-pricing {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .kunden-form-meta,
+  .kunden-form-contact,
+  .angebot-kopf__contact {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .form-actions {

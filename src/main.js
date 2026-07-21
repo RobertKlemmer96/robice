@@ -41,9 +41,6 @@ import {
 } from './katalogPosten.js';
 import {
   listKundenObjekte,
-  saveKundenObjekt,
-  deleteKundenObjekt,
-  createKundenObjektId,
 } from './kundenObjekte.js';
 import {
   getAllRechnungen,
@@ -193,7 +190,6 @@ const state = {
   bereich: 'angebote',
   editingKundeId: null,
   detailKundeId: null,
-  editingObjektId: null,
   kundenPickerSuche: '',
   kundenSuche: '',
   kundenPickerFor: 'angebot',
@@ -291,6 +287,7 @@ const els = {
   kundeStrasse: document.getElementById('kunde-strasse'),
   kundePlzOrt: document.getElementById('kunde-plz-ort'),
   kundeEmail: document.getElementById('kunde-email'),
+  kundeTelefon: document.getElementById('kunde-telefon'),
   kundeAdresseAuswahl: document.getElementById('kunde-adresse-auswahl'),
   kundeEinsatzortHinweis: document.getElementById('kunde-einsatzort-hinweis'),
   kundenModal: document.getElementById('kunden-modal'),
@@ -317,13 +314,6 @@ const els = {
   kundenDetailEmail: document.getElementById('kunden-detail-email'),
   kundenDetailNotizWrap: document.getElementById('kunden-detail-notiz-wrap'),
   kundenDetailNotiz: document.getElementById('kunden-detail-notiz'),
-  kundenDetailObjekteListe: document.getElementById('kunden-detail-objekte-liste'),
-  kundenObjektForm: document.getElementById('kunden-objekt-form'),
-  kundenObjektName: document.getElementById('kunden-objekt-name'),
-  kundenObjektStrasse: document.getElementById('kunden-objekt-strasse'),
-  kundenObjektPlzOrt: document.getElementById('kunden-objekt-plz-ort'),
-  kundenObjektTyp: document.getElementById('kunden-objekt-typ'),
-  kundenObjektCancel: document.getElementById('kunden-objekt-cancel'),
   kundenDetailDokumente: document.getElementById('kunden-detail-dokumente'),
   kundenDetailNeuAngebot: document.getElementById('kunden-detail-neu-angebot'),
   kundenDetailNeuRechnung: document.getElementById('kunden-detail-neu-rechnung'),
@@ -382,6 +372,7 @@ const els = {
   rechnungKundeStrasse: document.getElementById('rechnung-kunde-strasse'),
   rechnungKundePlzOrt: document.getElementById('rechnung-kunde-plz-ort'),
   rechnungKundeEmail: document.getElementById('rechnung-kunde-email'),
+  rechnungKundeTelefon: document.getElementById('rechnung-kunde-telefon'),
   rechnungAdresseAuswahl: document.getElementById('rechnung-adresse-auswahl'),
   rechnungEinsatzortHinweis: document.getElementById('rechnung-einsatzort-hinweis'),
   rechnungNr: document.getElementById('rechnung-nr'),
@@ -683,7 +674,7 @@ function handleAdresseAuswahlClick(meta, adresseFields, pickerEl, hinweisEl, eve
   syncAdresseAuswahlActive(pickerEl, meta);
 }
 
-function buildKundePayload(name, adresseData, meta, email = '') {
+function buildKundePayload(name, adresseData, meta, email = '', telefon = '') {
   const addr = normalizeAdresse(adresseData);
   const kunde = {
     name,
@@ -692,7 +683,9 @@ function buildKundePayload(name, adresseData, meta, email = '') {
     adresse: addr.adresse,
   };
   const trimmedEmail = String(email || adresseData?.email || '').trim();
+  const trimmedTelefon = String(telefon || adresseData?.telefon || '').trim();
   if (trimmedEmail) kunde.email = trimmedEmail;
+  if (trimmedTelefon) kunde.telefon = trimmedTelefon;
   const anrede = normalizeKundeAnrede(meta.kundeAnrede);
   if (anrede) kunde.anrede = anrede;
   if (meta.kundeKundenNr) kunde.kundenNr = meta.kundeKundenNr;
@@ -711,51 +704,11 @@ function buildKundePayload(name, adresseData, meta, email = '') {
   return kunde;
 }
 
-function resetKundenObjektForm() {
-  state.editingObjektId = null;
-  els.kundenObjektForm?.reset();
-  els.kundenObjektTyp.value = 'einsatz';
-  els.kundenObjektCancel?.classList.add('hidden');
-}
-
-function renderKundenObjekteHtml(objekte) {
-  if (!objekte.length) {
-    return `<p class="empty">${t('kunden.objectsEmpty')}</p>`;
-  }
-
-  return objekte
-    .map(
-      (o) => `
-      <article class="kunden-objekt-item" data-id="${o.id}">
-        <div class="kunden-objekt-item__main">
-          <span class="kunden-objekt-item__badge kunden-objekt-item__badge--${o.typ}">${escapeHtml(getObjektTypLabel(o.typ))}</span>
-          <h4>${escapeHtml(o.name)}</h4>
-          ${o.adresse || o.strasse || o.plzOrt ? `<p>${formatAdresseHtml(o)}</p>` : ''}
-        </div>
-        <div class="kunden-objekt-item__actions">
-          ${editIconButton(t('common.edit'), `data-action="edit-objekt" data-id="${o.id}"`)}
-          ${deleteIconButton(t('common.delete'), `data-action="delete-objekt" data-id="${o.id}"`)}
-        </div>
-      </article>`
-    )
-    .join('');
-}
-
-async function renderKundenObjekteSection(kundeId) {
-  if (!els.kundenDetailObjekteListe || !kundeId) return;
-  els.kundenDetailObjekteListe.innerHTML = `<p class="empty">${t('kunden.loadingObjects')}</p>`;
-  try {
-    const objekte = await listKundenObjekte(kundeId);
-    els.kundenDetailObjekteListe.innerHTML = renderKundenObjekteHtml(objekte);
-  } catch (err) {
-    els.kundenDetailObjekteListe.innerHTML = `<p class="empty">Fehler: ${escapeHtml(err.message)}</p>`;
-  }
-}
-
 async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
   const trimmedName = (name || '').trim();
   const addr = normalizeAdresse(adresseData);
   const email = String(adresseData?.email || '').trim();
+  const telefon = String(adresseData?.telefon || '').trim();
 
   if (!trimmedName) {
     return {
@@ -763,6 +716,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
       kunde: {
         name: '',
         email,
+        telefon,
         strasse: addr.strasse,
         plzOrt: addr.plzOrt,
         adresse: addr.adresse,
@@ -775,6 +729,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
   const kundeSnapshot = {
     name: trimmedName,
     email,
+    telefon,
     strasse: addr.strasse,
     plzOrt: addr.plzOrt,
     adresse: addr.adresse,
@@ -791,6 +746,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
     const changed =
       next.name !== kunde.name ||
       (next.email || '') !== (kunde.email || '') ||
+      (next.telefon || '') !== (kunde.telefon || '') ||
       prev.strasse !== next.strasse ||
       prev.plzOrt !== next.plzOrt;
     if (changed) await saveKunde(next);
@@ -803,6 +759,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
       const updated = await syncKunde(selectedKunde, {
         name: trimmedName,
         email,
+        telefon,
         strasse: addr.strasse || normalizeAdresse(selectedKunde).strasse,
         plzOrt: addr.plzOrt || normalizeAdresse(selectedKunde).plzOrt,
       });
@@ -813,6 +770,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
           anrede: normalizeKundeAnrede(updated.anrede),
           kundenNr: updated.kundenNr || '',
           email: updated.email || '',
+          telefon: updated.telefon || '',
           name: updated.name,
           strasse: normalized.strasse,
           plzOrt: normalized.plzOrt,
@@ -827,6 +785,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
     const prev = normalizeAdresse(byName);
     const updated = await syncKunde(byName, {
       email,
+      telefon,
       strasse: addr.strasse || prev.strasse,
       plzOrt: addr.plzOrt || prev.plzOrt,
     });
@@ -837,6 +796,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
         anrede: normalizeKundeAnrede(updated.anrede),
         kundenNr: updated.kundenNr || '',
         email: updated.email || '',
+        telefon: updated.telefon || '',
         name: updated.name,
         strasse: normalized.strasse,
         plzOrt: normalized.plzOrt,
@@ -852,6 +812,7 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
     anrede: '',
     name: trimmedName,
     email,
+    telefon,
     strasse: addr.strasse,
     plzOrt: addr.plzOrt,
     adresse: addr.adresse,
@@ -1027,7 +988,8 @@ async function getFormAngebot() {
       els.kundeName.value.trim(),
       readAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt),
       state.angebot,
-      els.kundeEmail?.value.trim()
+      els.kundeEmail?.value.trim(),
+      els.kundeTelefon?.value.trim()
     ),
     posten: angebotPostenEditor.getPostenForSave(),
   };
@@ -1049,7 +1011,8 @@ async function getFormRechnung() {
       els.rechnungKundeName.value.trim(),
       readAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt),
       state.rechnung,
-      els.rechnungKundeEmail?.value.trim()
+      els.rechnungKundeEmail?.value.trim(),
+      els.rechnungKundeTelefon?.value.trim()
     ),
     posten: rechnungPostenEditor.getPostenForSave(),
     angebotId: state.rechnung.angebotId || undefined,
@@ -1084,6 +1047,7 @@ async function setupAngebotKundeAdressen(kunde) {
   setBillingSnapshot(state.angebot, addr);
   els.kundeName.value = kunde.name;
   if (els.kundeEmail) els.kundeEmail.value = kunde.email || '';
+  if (els.kundeTelefon) els.kundeTelefon.value = kunde.telefon || '';
   setAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt, addr);
   await refreshAdresseAuswahl(
     kunde.id,
@@ -1104,6 +1068,7 @@ async function setupRechnungKundeAdressen(kunde) {
   setBillingSnapshot(state.rechnung, addr);
   els.rechnungKundeName.value = kunde.name;
   if (els.rechnungKundeEmail) els.rechnungKundeEmail.value = kunde.email || '';
+  if (els.rechnungKundeTelefon) els.rechnungKundeTelefon.value = kunde.telefon || '';
   setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, addr);
   await refreshAdresseAuswahl(
     kunde.id,
@@ -1182,6 +1147,7 @@ async function resetForm() {
   clearKundeAuswahl();
   els.kundeName.value = '';
   if (els.kundeEmail) els.kundeEmail.value = '';
+  if (els.kundeTelefon) els.kundeTelefon.value = '';
   clearAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt);
   els.angebotNr.value = await generiereAngebotsnummer();
 
@@ -1201,6 +1167,7 @@ async function resetRechnungForm() {
   rechnungPostenEditor.clearPostenState();
   els.rechnungKundeName.value = '';
   if (els.rechnungKundeEmail) els.rechnungKundeEmail.value = '';
+  if (els.rechnungKundeTelefon) els.rechnungKundeTelefon.value = '';
   clearAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt);
   await refreshAdresseAuswahl(
     null,
@@ -1234,6 +1201,7 @@ async function loadAngebotIntoForm(angebot) {
 
   els.kundeName.value = angebot.kunde.name;
   if (els.kundeEmail) els.kundeEmail.value = angebot.kunde.email || '';
+  if (els.kundeTelefon) els.kundeTelefon.value = angebot.kunde.telefon || '';
   setAdresseFieldPair(els.kundeStrasse, els.kundePlzOrt, angebot.kunde);
   els.angebotNr.value = angebot.angebotNr;
   els.angebotDatum.value =
@@ -1283,6 +1251,7 @@ async function loadRechnungIntoForm(rechnung) {
 
   els.rechnungKundeName.value = rechnung.kunde.name;
   if (els.rechnungKundeEmail) els.rechnungKundeEmail.value = rechnung.kunde.email || '';
+  if (els.rechnungKundeTelefon) els.rechnungKundeTelefon.value = rechnung.kunde.telefon || '';
   setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, rechnung.kunde);
   els.rechnungNr.value = rechnung.rechnungNr;
   els.rechnungDatum.value = rechnung.rechnungsdatum || rechnung.erstelltAm?.split('T')[0] || '';
@@ -1335,6 +1304,7 @@ async function loadAngebotAsRechnungEntwurf(angebot) {
 
   els.rechnungKundeName.value = angebot.kunde.name;
   if (els.rechnungKundeEmail) els.rechnungKundeEmail.value = angebot.kunde.email || '';
+  if (els.rechnungKundeTelefon) els.rechnungKundeTelefon.value = angebot.kunde.telefon || '';
   setAdresseFieldPair(els.rechnungKundeStrasse, els.rechnungKundePlzOrt, angebot.kunde);
   if (angebot.kundeId) {
     const stamm = await getKunde(angebot.kundeId);
@@ -1387,6 +1357,7 @@ function angebotFormHasChanges() {
   if (state.angebot.selectedKundeId) return true;
   if (els.kundeName?.value.trim()) return true;
   if (els.kundeEmail?.value.trim()) return true;
+  if (els.kundeTelefon?.value.trim()) return true;
   if (els.kundeStrasse?.value.trim()) return true;
   if (els.kundePlzOrt?.value.trim()) return true;
   return false;
@@ -1399,6 +1370,7 @@ function rechnungFormHasChanges() {
   if (state.rechnung.selectedKundeId) return true;
   if (els.rechnungKundeName?.value.trim()) return true;
   if (els.rechnungKundeEmail?.value.trim()) return true;
+  if (els.rechnungKundeTelefon?.value.trim()) return true;
   if (els.rechnungKundeStrasse?.value.trim()) return true;
   if (els.rechnungKundePlzOrt?.value.trim()) return true;
   return false;
@@ -1448,6 +1420,7 @@ function bindFormPdfValidation() {
     els.gueltigBis,
     els.kundeName,
     els.kundeEmail,
+    els.kundeTelefon,
     els.kundeStrasse,
     els.kundePlzOrt,
   ].forEach((el) => {
@@ -1461,6 +1434,7 @@ function bindFormPdfValidation() {
     els.rechnungFaellig,
     els.rechnungKundeName,
     els.rechnungKundeEmail,
+    els.rechnungKundeTelefon,
     els.rechnungKundeStrasse,
     els.rechnungKundePlzOrt,
   ].forEach((el) => {
@@ -1919,12 +1893,12 @@ const NAV_VIEW_GROUPS = {
   archiv: 'angebote',
   'rechnung-neu': 'rechnungen',
   'rechnung-archiv': 'rechnungen',
-  kunden: 'kunden',
-  katalog: 'katalog',
-  'pdf-vorlage': 'pdf-vorlage',
-  'pdf-vorlage-angebot': 'pdf-vorlage',
-  'pdf-vorlage-rechnung': 'pdf-vorlage',
-  admin: 'admin',
+  kunden: 'stammdaten',
+  katalog: 'stammdaten',
+  'pdf-vorlage': 'einstellungen',
+  'pdf-vorlage-angebot': 'einstellungen',
+  'pdf-vorlage-rechnung': 'einstellungen',
+  admin: 'einstellungen',
 };
 
 function closeNavMenus() {
@@ -2890,6 +2864,7 @@ function resetKundenForm() {
 
 function openKundenForm() {
   els.kundenFormSection?.classList.remove('hidden');
+  els.kundenFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function closeKundenForm() {
@@ -2899,14 +2874,12 @@ function closeKundenForm() {
 
 function closeKundenDetail() {
   state.detailKundeId = null;
-  resetKundenObjektForm();
   els.kundenDetail?.classList.add('hidden');
 }
 
 async function openKundenDetail(kundeId) {
   closeKundenForm();
   state.detailKundeId = kundeId;
-  resetKundenObjektForm();
   els.kundenDetail?.classList.remove('hidden');
   await refreshKundenDetail();
 }
@@ -2951,12 +2924,8 @@ async function refreshKundenDetail() {
     }
 
     els.kundenDetailDokumente.innerHTML = renderKundenDokumenteHtml(kAngebote, kRechnungen);
-    await renderKundenObjekteSection(kunde.id);
   } catch (err) {
     els.kundenDetailDokumente.innerHTML = `<p class="empty">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
-    if (els.kundenDetailObjekteListe) {
-      els.kundenDetailObjekteListe.innerHTML = '';
-    }
   }
 }
 
@@ -3322,46 +3291,6 @@ async function saveKundenForm(e) {
     alert(
       `Speichern fehlgeschlagen: ${err.message}\n\nBitte prüfen, ob der Server läuft (npm run dev).`
     );
-  }
-}
-
-async function saveKundenObjektForm(e) {
-  e.preventDefault();
-  if (!state.detailKundeId) return;
-
-  const name = els.kundenObjektName.value.trim();
-  if (!name) {
-    alert('Bitte einen Objektnamen eingeben.');
-    els.kundenObjektName.focus();
-    return;
-  }
-
-  const jetzt = new Date().toISOString();
-  let erstelltAm = jetzt;
-  if (state.editingObjektId) {
-    const objekte = await listKundenObjekte(state.detailKundeId);
-    const bestehend = objekte.find((o) => o.id === state.editingObjektId);
-    if (bestehend) erstelltAm = bestehend.erstelltAm;
-  }
-
-  const objAdresse = readAdresseFieldPair(els.kundenObjektStrasse, els.kundenObjektPlzOrt);
-  const objekt = {
-    id: state.editingObjektId || createKundenObjektId(),
-    name,
-    strasse: objAdresse.strasse,
-    plzOrt: objAdresse.plzOrt,
-    adresse: objAdresse.adresse,
-    typ: els.kundenObjektTyp.value === 'rechnung' ? 'rechnung' : 'einsatz',
-    erstelltAm,
-    aktualisiertAm: jetzt,
-  };
-
-  try {
-    await saveKundenObjekt(state.detailKundeId, objekt);
-    resetKundenObjektForm();
-    await renderKundenObjekteSection(state.detailKundeId);
-  } catch (err) {
-    alert(`Objekt konnte nicht gespeichert werden: ${err.message}`);
   }
 }
 
@@ -3985,40 +3914,6 @@ function bindAppEvents() {
       if (action === 'kunde-rechnung-edit') {
         const rechnung = await getRechnung(id);
         if (rechnung) await loadRechnungIntoForm(rechnung);
-      }
-    } catch (err) {
-      alert(`Fehler: ${err.message}`);
-    }
-  });
-
-  els.kundenObjektForm?.addEventListener('submit', saveKundenObjektForm);
-  els.kundenObjektCancel?.addEventListener('click', resetKundenObjektForm);
-
-  els.kundenDetailObjekteListe?.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn || !state.detailKundeId) return;
-    const { action, id } = btn.dataset;
-
-    try {
-      const objekte = await listKundenObjekte(state.detailKundeId);
-      const objekt = objekte.find((o) => o.id === id);
-      if (!objekt) return;
-
-      if (action === 'edit-objekt') {
-        state.editingObjektId = objekt.id;
-        els.kundenObjektName.value = objekt.name;
-        setAdresseFieldPair(els.kundenObjektStrasse, els.kundenObjektPlzOrt, objekt);
-        els.kundenObjektTyp.value = objekt.typ === 'rechnung' ? 'rechnung' : 'einsatz';
-        els.kundenObjektCancel?.classList.remove('hidden');
-        els.kundenObjektName.focus();
-        return;
-      }
-
-      if (action === 'delete-objekt') {
-        if (!confirm(`Objekt „${objekt.name}" wirklich löschen?`)) return;
-        await deleteKundenObjekt(state.detailKundeId, id);
-        if (state.editingObjektId === id) resetKundenObjektForm();
-        await renderKundenObjekteSection(state.detailKundeId);
       }
     } catch (err) {
       alert(`Fehler: ${err.message}`);

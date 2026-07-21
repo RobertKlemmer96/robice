@@ -561,29 +561,57 @@
                   </button>
                 </div>
               </li>
-              <li class="app-nav__group app-nav__group--direct" data-nav-group="katalog">
-                <button type="button" class="app-nav__trigger" data-nav-view="katalog">
-                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop" data-i18n="nav.catalog">Katalog</span>
-                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile" data-i18n="nav.catalog">Katalog</span>
+              <li class="app-nav__group" data-nav-group="stammdaten">
+                <button
+                  type="button"
+                  class="app-nav__trigger"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  data-nav-trigger
+                >
+                  <span data-i18n="nav.masterData">Stammdaten</span>
+                  <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
                 </button>
+                <div class="app-nav__menu" role="menu">
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="katalog">
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.catalog">Katalog</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.catalog">Katalog</span>
+                    <span class="app-nav__link-desc" data-i18n="nav.catalogDesc">Leistungen &amp; Preise</span>
+                  </button>
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="kunden">
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.customers">Kunden</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.customers">Kunden</span>
+                    <span class="app-nav__link-desc" data-i18n="nav.customersDesc">Kunden verwalten</span>
+                  </button>
+                </div>
               </li>
-              <li class="app-nav__group app-nav__group--direct" data-nav-group="kunden">
-                <button type="button" class="app-nav__trigger" data-nav-view="kunden">
-                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop" data-i18n="nav.customers">Kunden</span>
-                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile" data-i18n="nav.customers">Kunden</span>
+              <li class="app-nav__group" data-nav-group="einstellungen">
+                <button
+                  type="button"
+                  class="app-nav__trigger"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  data-nav-trigger
+                >
+                  <span data-i18n="nav.settings">Einstellungen</span>
+                  <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
                 </button>
-              </li>
-              <li class="app-nav__group app-nav__group--direct" data-nav-group="pdf-vorlage">
-                <button type="button" class="app-nav__trigger" data-nav-view="pdf-vorlage">
-                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop" data-i18n="nav.template">Vorlage</span>
-                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile" data-i18n="nav.template">Vorlage</span>
-                </button>
-              </li>
-              <li class="app-nav__group app-nav__group--direct is-admin-only hidden" data-nav-group="admin">
-                <button type="button" class="app-nav__trigger" data-nav-view="admin">
-                  <span class="app-nav__trigger-label app-nav__trigger-label--desktop" data-i18n="nav.admin">Admin</span>
-                  <span class="app-nav__trigger-label app-nav__trigger-label--mobile" data-i18n="nav.admin">Admin</span>
-                </button>
+                <div class="app-nav__menu" role="menu">
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="pdf-vorlage">
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.template">Vorlage</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.template">Vorlage</span>
+                    <span class="app-nav__link-desc" data-i18n="nav.templateDesc">PDF-Vorlage anpassen</span>
+                  </button>
+                  <button type="button" class="app-nav__link is-admin-only hidden" role="menuitem" data-nav-view="admin">
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.admin">Admin</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.admin">Admin</span>
+                    <span class="app-nav__link-desc" data-i18n="nav.adminDesc">Nutzer verwalten</span>
+                  </button>
+                </div>
               </li>
             </ul>
           </nav>
@@ -737,16 +765,28 @@
                         <button type="button" id="rechnung-kunde-auswahl-btn" class="btn btn-ghost" data-i18n="form.selectCustomer">Kunde auswählen</button>
                       </div>
                     </label>
-                    <label>
-                      <span data-i18n="form.email">E-Mail</span>
-                      <input
-                        type="email"
-                        id="rechnung-kunde-email"
-                        data-i18n-placeholder="form.emailPlaceholder"
-                        placeholder="kunde@beispiel.de"
-                        autocomplete="email"
-                      />
-                    </label>
+                    <div class="angebot-kopf__contact">
+                      <label>
+                        <span data-i18n="form.email">E-Mail</span>
+                        <input
+                          type="email"
+                          id="rechnung-kunde-email"
+                          data-i18n-placeholder="form.emailPlaceholder"
+                          placeholder="kunde@beispiel.de"
+                          autocomplete="email"
+                        />
+                      </label>
+                      <label>
+                        <span data-i18n="form.phone">Telefon</span>
+                        <input
+                          type="tel"
+                          id="rechnung-kunde-telefon"
+                          data-i18n-placeholder="form.phonePlaceholder"
+                          placeholder="z. B. 0170 …"
+                          autocomplete="tel"
+                        />
+                      </label>
+                    </div>
                     <div class="adresse-fields">
                       <div id="rechnung-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" data-i18n-aria-label="form.savedAddresses" aria-label="Gespeicherte Adressen"></div>
                       <p id="rechnung-einsatzort-hinweis" class="adresse-auswahl__active hidden"></p>
@@ -940,16 +980,28 @@
                         <button type="button" id="kunde-auswahl-btn" class="btn btn-ghost" data-i18n="form.selectCustomer">Kunde auswählen</button>
                       </div>
                     </label>
-                    <label>
-                      <span data-i18n="form.email">E-Mail</span>
-                      <input
-                        type="email"
-                        id="kunde-email"
-                        data-i18n-placeholder="form.emailPlaceholder"
-                        placeholder="kunde@beispiel.de"
-                        autocomplete="email"
-                      />
-                    </label>
+                    <div class="angebot-kopf__contact">
+                      <label>
+                        <span data-i18n="form.email">E-Mail</span>
+                        <input
+                          type="email"
+                          id="kunde-email"
+                          data-i18n-placeholder="form.emailPlaceholder"
+                          placeholder="kunde@beispiel.de"
+                          autocomplete="email"
+                        />
+                      </label>
+                      <label>
+                        <span data-i18n="form.phone">Telefon</span>
+                        <input
+                          type="tel"
+                          id="kunde-telefon"
+                          data-i18n-placeholder="form.phonePlaceholder"
+                          placeholder="z. B. 0170 …"
+                          autocomplete="tel"
+                        />
+                      </label>
+                    </div>
                     <div class="adresse-fields">
                       <div id="kunde-adresse-auswahl" class="adresse-auswahl hidden" role="listbox" data-i18n-aria-label="form.savedAddresses" aria-label="Gespeicherte Adressen"></div>
                       <p id="kunde-einsatzort-hinweis" class="adresse-auswahl__active hidden"></p>
@@ -1343,30 +1395,32 @@
             <p class="settings-lead" data-i18n="form.catalogLead">
               Legen Sie Posten an, die Sie in Angeboten und Rechnungen aus dem Katalog auswählen können.
             </p>
-            <form id="katalog-form" class="form-grid">
+            <form id="katalog-form" class="form-grid form-grid--katalog">
               <label class="full">
                 <span data-i18n="form.designation">Bezeichnung</span>
                 <input type="text" id="katalog-form-bezeichnung" required data-i18n-placeholder="form.designationPlaceholder" placeholder="z. B. Montagearbeiten" />
               </label>
               <label class="full">
                 <span data-i18n="form.description">Beschreibung</span>
-                <textarea id="katalog-form-beschreibung" rows="2" data-i18n-placeholder="form.descriptionPlaceholder" placeholder="Kurze Beschreibung (optional)"></textarea>
+                <textarea id="katalog-form-beschreibung" rows="1" data-i18n-placeholder="form.descriptionPlaceholder" placeholder="Kurze Beschreibung (optional)"></textarea>
               </label>
-              <label>
-                <span data-i18n="form.itemType">Art</span>
-                <select id="katalog-form-art">
-                  <option value="lohn" data-i18n="form.typeLabor">Lohn</option>
-                  <option value="material" data-i18n="form.typeMaterial">Material</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="form.priceUnit">Preis (Stk.)</span>
-                <input type="text" id="katalog-form-preis-stk" placeholder="0,00" inputmode="decimal" />
-              </label>
-              <label>
-                <span data-i18n="form.priceHour">Preis (Std.)</span>
-                <input type="text" id="katalog-form-preis-std" placeholder="0,00" inputmode="decimal" />
-              </label>
+              <div class="katalog-form-pricing full">
+                <label>
+                  <span data-i18n="form.itemType">Art</span>
+                  <select id="katalog-form-art">
+                    <option value="lohn" data-i18n="form.typeLabor">Lohn</option>
+                    <option value="material" data-i18n="form.typeMaterial">Material</option>
+                  </select>
+                </label>
+                <label>
+                  <span data-i18n="form.priceUnit">Preis (Stk.)</span>
+                  <input type="text" id="katalog-form-preis-stk" placeholder="0,00" inputmode="decimal" />
+                </label>
+                <label>
+                  <span data-i18n="form.priceHour">Preis (Std.)</span>
+                  <input type="text" id="katalog-form-preis-std" placeholder="0,00" inputmode="decimal" />
+                </label>
+              </div>
               <div class="form-actions full">
                 <button type="submit" class="btn btn-primary" data-i18n="common.save">Speichern</button>
                 <button type="button" id="katalog-form-reset" class="btn btn-ghost hidden" data-i18n="common.cancel">Abbrechen</button>
@@ -1430,95 +1484,40 @@
                 <h3 class="kunden-detail__subheading" data-i18n="form.note">Notiz</h3>
                 <p id="kunden-detail-notiz" class="kunden-detail__notiz-text"></p>
               </div>
-              <div id="kunden-detail-objekte" class="kunden-detail__objekte">
-                <div class="kunden-detail__objekte-header">
-                  <h3 class="kunden-detail__subheading" data-i18n="form.objectsAddresses">Objekte &amp; Adressen</h3>
-                </div>
-                <div id="kunden-detail-objekte-liste" class="kunden-objekte-liste"></div>
-                <form id="kunden-objekt-form" class="form-grid kunden-objekt-form">
-                  <label class="full">
-                    <span data-i18n="form.objectName">Objektname</span>
-                    <input type="text" id="kunden-objekt-name" required data-i18n-placeholder="form.objectNamePlaceholder" placeholder="z. B. WEG Musterstraße 12" />
-                  </label>
-                  <div class="adresse-fields full">
-                    <span class="adresse-fields__heading" data-i18n="form.addressHeading">Adresse</span>
-                    <label>
-                      <span data-i18n="form.street">Straße, Hausnummer</span>
-                      <input
-                        type="text"
-                        id="kunden-objekt-strasse"
-                        data-i18n-placeholder="form.streetPlaceholder"
-                        placeholder="Musterstraße 12"
-                        autocomplete="street-address"
-                      />
-                    </label>
-                    <label>
-                      <span data-i18n="form.zipCity">PLZ, Ort</span>
-                      <input
-                        type="text"
-                        id="kunden-objekt-plz-ort"
-                        data-i18n-placeholder="form.zipCityPlaceholder"
-                        placeholder="12345 Musterstadt"
-                        autocomplete="postal-code"
-                      />
-                    </label>
-                  </div>
-                  <label class="full">
-                    <span data-i18n="form.objectType">Art</span>
-                    <select id="kunden-objekt-typ">
-                      <option value="einsatz" data-i18n="form.objectTypeService">Einsatzort / Leistungsort</option>
-                      <option value="rechnung" data-i18n="form.objectTypeBilling">Adresse (alternativ)</option>
-                    </select>
-                  </label>
-                  <div class="form-actions full">
-                    <button type="submit" class="btn btn-primary btn-sm" data-i18n="form.saveObject">Objekt speichern</button>
-                    <button type="button" id="kunden-objekt-cancel" class="btn btn-ghost btn-sm hidden" data-i18n="common.cancel">Abbrechen</button>
-                  </div>
-                </form>
-              </div>
               <div id="kunden-detail-dokumente" class="kunden-detail__dokumente"></div>
             </div>
           </section>
 
-          <section class="card">
-            <div class="card-header">
-              <h2 data-i18n="kunden.list">Kundenliste</h2>
-              <div class="kunden-liste-toolbar">
-                <input type="search" id="kunden-suche" class="search" data-i18n-placeholder="kunden.search" placeholder="Kunden suchen…" />
-                <button type="button" id="kunden-neu-btn" class="btn btn-icon btn-primary btn-sm"></button>
-              </div>
-            </div>
-            <div id="kunden-liste" class="kunden-liste"></div>
-          </section>
-
           <section id="kunden-form-section" class="card hidden">
             <h2 id="kunden-form-title">Neuer Kunde</h2>
-            <form id="kunden-form" class="form-grid">
-              <label>
-                <span data-i18n="form.salutation">Anrede</span>
-                <select id="kunden-form-anrede">
-                  <option value="">—</option>
-                  <option value="Herr" data-i18n="form.salutationMr">Herr</option>
-                  <option value="Frau" data-i18n="form.salutationMs">Frau</option>
-                  <option value="Firma" data-i18n="form.salutationCompany">Firma</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="form.customerNumber">Kundennummer</span>
-                <input
-                  type="text"
-                  id="kunden-form-kunden-nr"
-                  readonly
-                  tabindex="-1"
-                  data-i18n-placeholder="form.customerNumberPlaceholder"
-                  placeholder="Wird beim Speichern vergeben"
-                />
-              </label>
-              <label class="full">
-                <span data-i18n="form.nameOrCompany">Firmenname / Name</span>
-                <input type="text" id="kunden-form-name" required data-i18n-placeholder="form.namePlaceholder" placeholder="Firma oder Name" />
-              </label>
-              <div class="adresse-fields full">
+            <form id="kunden-form" class="form-grid form-grid--kunden">
+              <div class="kunden-form-meta full">
+                <label>
+                  <span data-i18n="form.salutation">Anrede</span>
+                  <select id="kunden-form-anrede">
+                    <option value="">—</option>
+                    <option value="Herr" data-i18n="form.salutationMr">Herr</option>
+                    <option value="Frau" data-i18n="form.salutationMs">Frau</option>
+                    <option value="Firma" data-i18n="form.salutationCompany">Firma</option>
+                  </select>
+                </label>
+                <label>
+                  <span data-i18n="form.nameOrCompany">Firmenname / Name</span>
+                  <input type="text" id="kunden-form-name" required data-i18n-placeholder="form.namePlaceholder" placeholder="Firma oder Name" />
+                </label>
+                <label>
+                  <span data-i18n="form.customerNumber">Kundennummer</span>
+                  <input
+                    type="text"
+                    id="kunden-form-kunden-nr"
+                    readonly
+                    tabindex="-1"
+                    data-i18n-placeholder="form.customerNumberPlaceholder"
+                    placeholder="Wird beim Speichern vergeben"
+                  />
+                </label>
+              </div>
+              <div class="kunden-form-contact full">
                 <label>
                   <span data-i18n="form.street">Straße, Hausnummer</span>
                   <input
@@ -1539,15 +1538,15 @@
                     autocomplete="postal-code"
                   />
                 </label>
+                <label>
+                  <span data-i18n="form.phone">Telefon</span>
+                  <input type="tel" id="kunden-form-telefon" data-i18n-placeholder="form.phonePlaceholder" placeholder="z. B. 0170 …" autocomplete="tel" />
+                </label>
+                <label>
+                  <span data-i18n="form.email">E-Mail</span>
+                  <input type="email" id="kunden-form-email" data-i18n-placeholder="form.emailPlaceholder" placeholder="kunde@beispiel.de" autocomplete="email" />
+                </label>
               </div>
-              <label>
-                <span data-i18n="form.phone">Telefon</span>
-                <input type="tel" id="kunden-form-telefon" data-i18n-placeholder="form.phonePlaceholder" placeholder="z. B. 0170 …" autocomplete="tel" />
-              </label>
-              <label>
-                <span data-i18n="form.email">E-Mail</span>
-                <input type="email" id="kunden-form-email" data-i18n-placeholder="form.emailPlaceholder" placeholder="kunde@beispiel.de" autocomplete="email" />
-              </label>
               <label class="full">
                 <span data-i18n="form.note">Notiz</span>
                 <textarea id="kunden-form-notiz" rows="3" data-i18n-placeholder="form.notePlaceholder" placeholder="z. B. Anfahrt, Schlüssel, Besonderheiten"></textarea>
@@ -1557,6 +1556,17 @@
                 <button type="button" id="kunden-form-reset" class="btn btn-ghost" data-i18n="common.cancel">Abbrechen</button>
               </div>
             </form>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <h2 data-i18n="kunden.list">Kundenliste</h2>
+              <div class="kunden-liste-toolbar">
+                <input type="search" id="kunden-suche" class="search" data-i18n-placeholder="kunden.search" placeholder="Kunden suchen…" />
+                <button type="button" id="kunden-neu-btn" class="btn btn-icon btn-primary btn-sm"></button>
+              </div>
+            </div>
+            <div id="kunden-liste" class="kunden-liste"></div>
           </section>
         </main>
       </div>
