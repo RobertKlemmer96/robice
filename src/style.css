@@ -4923,6 +4923,25 @@ textarea:focus,
   font-size: 0.82rem;
 }
 
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  min-width: 34px;
+  line-height: 0;
+}
+
+.btn-icon.btn-sm {
+  padding: 7px;
+  min-width: 32px;
+}
+
+.btn-icon__svg {
+  display: block;
+  flex-shrink: 0;
+}
+
 .btn-danger {
   background: transparent;
   color: var(--danger);

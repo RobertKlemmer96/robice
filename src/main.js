@@ -14,6 +14,7 @@ import { loadAdminUsers } from './adminUsers.js';
 import { initOnboarding, openOnboarding, closeOnboarding } from './onboarding.js';
 import { initKatalogModal } from './katalogModal.js';
 import { initDatePickers, refreshDatePickers } from './datePicker.js';
+import { deleteIconButton, editIconButton, mountIconButton } from './icons.js';
 import { initTheme } from './theme.js';
 import { applyI18n, getBereichMark, initI18n, onLocaleChange, syncBereichMarks, t } from './i18n.js';
 import { initLangSwitcher } from './langSwitcher.js';
@@ -732,8 +733,8 @@ function renderKundenObjekteHtml(objekte) {
           ${o.adresse || o.strasse || o.plzOrt ? `<p>${formatAdresseHtml(o)}</p>` : ''}
         </div>
         <div class="kunden-objekt-item__actions">
-          <button type="button" class="btn btn-ghost btn-sm" data-action="edit-objekt" data-id="${o.id}">Bearbeiten</button>
-          <button type="button" class="btn btn-danger btn-sm" data-action="delete-objekt" data-id="${o.id}">Löschen</button>
+          ${editIconButton(t('common.edit'), `data-action="edit-objekt" data-id="${o.id}"`)}
+          ${deleteIconButton(t('common.delete'), `data-action="delete-objekt" data-id="${o.id}"`)}
         </div>
       </article>`
     )
@@ -2808,7 +2809,7 @@ async function renderArchiv() {
           <div class="archiv-actions">
             <button type="button" class="btn btn-ghost btn-sm" data-action="rechnung" data-id="${a.id}">Rechnung erstellen</button>
             <button type="button" class="btn btn-ghost btn-sm" data-action="pdf" data-id="${a.id}">PDF ansehen</button>
-            <button type="button" class="btn btn-danger btn-sm" data-action="delete" data-id="${a.id}">Löschen</button>
+            ${deleteIconButton(t('common.delete'), `data-action="delete" data-id="${a.id}"`)}
           </div>
         </article>
       `;
@@ -2865,7 +2866,7 @@ async function renderRechnungArchiv() {
           </div>
           <div class="archiv-actions">
             <button type="button" class="btn btn-ghost btn-sm" data-action="pdf" data-id="${r.id}">PDF ansehen</button>
-            <button type="button" class="btn btn-danger btn-sm" data-action="delete" data-id="${r.id}">Löschen</button>
+            ${deleteIconButton(t('common.delete'), `data-action="delete" data-id="${r.id}"`)}
           </div>
         </article>
       `;
@@ -2988,6 +2989,23 @@ async function refreshPostenEditors() {
   rechnungPostenEditor.render();
 }
 
+function mountStaticActionIcons() {
+  mountIconButton(els.katalogNeuBtn, {
+    type: 'add',
+    label: t('form.newCatalogItem'),
+    variant: 'ghost',
+  });
+  mountIconButton(els.kundenNeuBtn, {
+    type: 'add',
+    label: t('kunden.newBtn'),
+    variant: 'primary',
+  });
+  mountIconButton(els.kundenDetailEdit, {
+    type: 'edit',
+    label: t('common.edit'),
+  });
+}
+
 function resetKatalogForm() {
   state.editingKatalogPostenId = null;
   els.katalogForm?.reset();
@@ -3047,8 +3065,8 @@ async function renderKatalogView() {
             <p class="katalog-posten-item__preise">${escapeHtml(artLabel)} · ${preisStk} / Stk. · ${preisStd} / Std.</p>
           </div>
           <div class="katalog-posten-item__actions">
-            <button type="button" class="btn btn-ghost btn-sm" data-action="edit-katalog-posten" data-id="${p.id}">Bearbeiten</button>
-            <button type="button" class="btn btn-danger btn-sm" data-action="delete-katalog-posten" data-id="${p.id}">Löschen</button>
+            ${editIconButton(t('common.edit'), `data-action="edit-katalog-posten" data-id="${p.id}"`)}
+            ${deleteIconButton(t('common.delete'), `data-action="delete-katalog-posten" data-id="${p.id}"`)}
           </div>
         </article>`;
       })
@@ -3171,8 +3189,8 @@ async function renderKundenView() {
             </div>
             <div class="kunden-actions">
               <button type="button" class="btn btn-primary btn-sm" data-action="show-kunde-detail" data-id="${k.id}">${escapeHtml(t('common.open'))}</button>
-              <button type="button" class="btn btn-ghost btn-sm" data-action="edit-kunde" data-id="${k.id}">${escapeHtml(t('common.edit'))}</button>
-              <button type="button" class="btn btn-danger btn-sm" data-action="delete-kunde" data-id="${k.id}">${escapeHtml(t('common.delete'))}</button>
+              ${editIconButton(t('common.edit'), `data-action="edit-kunde" data-id="${k.id}"`)}
+              ${deleteIconButton(t('common.delete'), `data-action="delete-kunde" data-id="${k.id}"`)}
             </div>
           </div>
           <div class="kunden-item__dokumente">
@@ -4291,6 +4309,8 @@ async function refreshLocaleUi() {
       : t('form.catalogNewItem');
   }
 
+  mountStaticActionIcons();
+
   refreshPostenEditors();
   refreshDatePickers();
   refreshPdfTemplateFormLabels();
@@ -4324,6 +4344,7 @@ async function bootstrap() {
   initTheme();
   initI18n();
   initLangSwitcher();
+  mountStaticActionIcons();
   onLocaleChange(() => {
     void refreshLocaleUi();
   });
