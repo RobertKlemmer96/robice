@@ -95,7 +95,8 @@
               </button>
             </article>
 
-            <article class="landing-plan landing-plan--plus" role="listitem">
+            <article class="landing-plan landing-plan--plus landing-plan--unavailable" role="listitem" aria-disabled="true">
+              <span class="landing-plan__soon-badge">Demnächst verfügbar</span>
               <header class="landing-plan__header">
                 <span class="landing-plan__badge">Stufe 2</span>
                 <h3 class="landing-plan__name">Plus</h3>
@@ -111,12 +112,13 @@
                 <li>Eigene PDF-Vorlage</li>
                 <li>Monats-Export (CSV)</li>
               </ul>
-              <button type="button" class="btn btn-primary landing-plan__cta" data-landing-action="register" data-landing-plan="plus">
-                Mit Plus starten
+              <button type="button" class="btn btn-ghost landing-plan__cta" disabled aria-disabled="true">
+                Demnächst verfügbar
               </button>
             </article>
 
-            <article class="landing-plan landing-plan--pro" role="listitem">
+            <article class="landing-plan landing-plan--pro landing-plan--unavailable" role="listitem" aria-disabled="true">
+              <span class="landing-plan__soon-badge">Demnächst verfügbar</span>
               <header class="landing-plan__header">
                 <span class="landing-plan__badge landing-plan__badge--popular">Stufe 3</span>
                 <h3 class="landing-plan__name">Pro</h3>
@@ -132,8 +134,8 @@
                 <li>KI-Import aus alten PDFs</li>
                 <li>Offene Posten, Jahres-Export &amp; CSV-Import</li>
               </ul>
-              <button type="button" class="btn btn-primary landing-plan__cta" data-landing-action="register" data-landing-plan="pro">
-                Mit Pro starten
+              <button type="button" class="btn btn-ghost landing-plan__cta" disabled aria-disabled="true">
+                Demnächst verfügbar
               </button>
             </article>
               </div>
@@ -345,6 +347,10 @@
           <span class="legal-nav__sep" aria-hidden="true">·</span>
           <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="handbook" data-i18n="legal.handbook">Handbuch</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="faq" data-i18n="legal.faq">FAQ</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
           <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
         </nav>
       </footer>
@@ -423,6 +429,10 @@
           <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
           <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="handbook" data-i18n="legal.handbook">Handbuch</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="faq" data-i18n="legal.faq">FAQ</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
           <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
         </nav>
@@ -1578,6 +1588,10 @@
           <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
           <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="handbook" data-i18n="legal.handbook">Handbuch</button>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-nav__link" data-legal-page="faq" data-i18n="legal.faq">FAQ</button>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
           <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
         </nav>

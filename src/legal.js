@@ -1,10 +1,14 @@
 import { LEGAL_CONFIG, getCompanyLine } from './legalConfig.js';
 import { ROADMAP, ROADMAP_STATUS_LABELS } from './roadmapConfig.js';
+import { HANDBOOK } from './handbookConfig.js';
+import { FAQ } from './faqConfig.js';
 
 const PAGE_TITLES = {
   impressum: 'Impressum',
   datenschutz: 'Datenschutzerklärung',
   agb: 'Allgemeine Geschäftsbedingungen',
+  handbook: 'Handbuch',
+  faq: 'FAQ',
   roadmap: 'Roadmap',
 };
 
@@ -296,10 +300,56 @@ function renderRoadmap() {
   `;
 }
 
+function renderHandbookSection(section, index) {
+  return `
+    <section class="legal-section handbook-section">
+      <h2>${index + 1}. ${escapeHtml(section.title)}</h2>
+      <ol class="handbook-steps">
+        ${section.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}
+      </ol>
+    </section>
+  `;
+}
+
+function renderHandbook() {
+  const c = LEGAL_CONFIG;
+
+  return `
+    <h1>Handbuch</h1>
+    <p class="legal-lead">${escapeHtml(HANDBOOK.intro)}</p>
+    ${HANDBOOK.sections.map(renderHandbookSection).join('')}
+    <p class="legal-meta">Stand: ${escapeHtml(HANDBOOK.lastUpdated)} · ${escapeHtml(c.productName)}</p>
+  `;
+}
+
+function renderFaqItem(item) {
+  return `
+    <article class="faq-item">
+      <h2 class="faq-item__question">${escapeHtml(item.q)}</h2>
+      <p class="faq-item__answer">${escapeHtml(item.a)}</p>
+    </article>
+  `;
+}
+
+function renderFaq() {
+  const c = LEGAL_CONFIG;
+
+  return `
+    <h1>FAQ</h1>
+    <p class="legal-lead">${escapeHtml(FAQ.intro)}</p>
+    <div class="faq-list">
+      ${FAQ.items.map(renderFaqItem).join('')}
+    </div>
+    <p class="legal-meta">Stand: ${escapeHtml(FAQ.lastUpdated)} · ${escapeHtml(c.productName)}</p>
+  `;
+}
+
 const RENDERERS = {
   impressum: renderImpressum,
   datenschutz: renderDatenschutz,
   agb: renderAgb,
+  handbook: renderHandbook,
+  faq: renderFaq,
   roadmap: renderRoadmap,
 };
 
