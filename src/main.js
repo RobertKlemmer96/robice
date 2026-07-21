@@ -2979,7 +2979,16 @@ function resetKatalogForm() {
   state.editingKatalogPostenId = null;
   els.katalogForm?.reset();
   if (els.katalogFormTitle) els.katalogFormTitle.textContent = t('form.catalogNewItem');
-  els.katalogFormReset?.classList.add('hidden');
+}
+
+function openKatalogForm() {
+  els.katalogFormSection?.classList.remove('hidden');
+  els.katalogFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeKatalogForm() {
+  resetKatalogForm();
+  els.katalogFormSection?.classList.add('hidden');
 }
 
 function fillKatalogForm(posten) {
@@ -2994,8 +3003,7 @@ function fillKatalogForm(posten) {
   els.katalogFormPreisStd.value =
     posten.preisStd != null && posten.preisStd !== '' ? String(posten.preisStd).replace('.', ',') : '';
   if (els.katalogFormTitle) els.katalogFormTitle.textContent = t('form.catalogEditItem');
-  els.katalogFormReset?.classList.remove('hidden');
-  els.katalogFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  openKatalogForm();
 }
 
 async function renderKatalogView() {
@@ -3091,7 +3099,7 @@ async function saveKatalogForm(e) {
     await saveKatalogPosten(posten);
     state.katalogSuche = '';
     if (els.katalogSuche) els.katalogSuche.value = '';
-    resetKatalogForm();
+    closeKatalogForm();
     await renderKatalogView();
     refreshPostenEditors();
   } catch (err) {
@@ -3811,11 +3819,11 @@ function bindAppEvents() {
   els.kundenFormReset?.addEventListener('click', closeKundenForm);
 
   els.katalogForm?.addEventListener('submit', saveKatalogForm);
-  els.katalogFormReset?.addEventListener('click', resetKatalogForm);
+  els.katalogFormReset?.addEventListener('click', closeKatalogForm);
   bindPreisBlurFormat(els.katalogFormPreisStk, els.katalogFormPreisStd);
   els.katalogNeuBtn?.addEventListener('click', () => {
     resetKatalogForm();
-    els.katalogFormSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    openKatalogForm();
     els.katalogFormBezeichnung?.focus();
   });
   els.katalogSuche?.addEventListener('input', (e) => {
@@ -3839,7 +3847,7 @@ function bindAppEvents() {
         if (!posten) return;
         if (!confirm(`Katalog-Posten „${posten.bezeichnung}" wirklich löschen?`)) return;
         await deleteKatalogPosten(id);
-        if (state.editingKatalogPostenId === id) resetKatalogForm();
+        if (state.editingKatalogPostenId === id) closeKatalogForm();
         await renderKatalogView();
         refreshPostenEditors();
       }
