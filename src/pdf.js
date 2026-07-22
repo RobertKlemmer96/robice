@@ -4,14 +4,13 @@ import autoTable from 'jspdf-autotable';
 
 import {
   getPdfTemplate,
-
   getFussSpalten,
-
   hexToRgb,
-
   detectImageFormat,
-
+  withProfileFirma,
 } from './pdfTemplate.js';
+
+import { getSession } from './auth.js';
 
 import { adresseToLines } from './adresse.js';
 import { formatPostenArt } from './data.js';
@@ -21,6 +20,10 @@ import { normalizePdfLayoutVariant } from './pdfLayoutVariants.js';
 
 
 const MWST_SATZ = 0.19;
+
+function getDocumentPdfTemplate() {
+  return withProfileFirma(getPdfTemplate(), getSession());
+}
 
 function writeKundeAdressBlock(doc, kunde, startY) {
   let y = startY;
@@ -183,6 +186,31 @@ export function formatDatum(datum) {
 
 }
 
+function renderPdfMetaRows(doc, rows, { anchorX, yStart, lineHeight = 5, gap = 2, align = 'right' }) {
+  const labelWidths = rows.map(([label]) => doc.getTextWidth(`${label}:`));
+  const maxLabelWidth = Math.max(...labelWidths);
+
+  if (align === 'right') {
+    const valueWidths = rows.map(([, value]) => doc.getTextWidth(String(value)));
+    const maxValueWidth = Math.max(...valueWidths);
+    const labelRightX = anchorX - maxValueWidth - gap;
+
+    rows.forEach(([label, value], index) => {
+      const y = yStart + index * lineHeight;
+      doc.text(`${label}:`, labelRightX, y, { align: 'right' });
+      doc.text(String(value), anchorX, y, { align: 'right' });
+    });
+    return;
+  }
+
+  const valueX = anchorX + maxLabelWidth + gap;
+  rows.forEach(([label, value], index) => {
+    const y = yStart + index * lineHeight;
+    doc.text(`${label}:`, anchorX, y);
+    doc.text(String(value), valueX, y);
+  });
+}
+
 
 
 export function berechneSummenAusPosten(posten) {
@@ -269,7 +297,10 @@ function renderPdfTotalsBlock(
   doc.text(formatEuro(brutto), 190, startY + 14, { align: 'right' });
 }
 
-function renderPostenTable(doc, startY, tableBody, variant, primaerRgb, lineRgb) {
+function renderPostenTable(doc, startY, tableBody, variant, tpl) {
+  const farben = tpl?.farben || {};
+  const primaerRgb = hexToRgb(farben.primaer);
+  const lineRgb = hexToRgb(farben.trennlinie);
   const tableOptions = {
     startY,
     head: [['Pos', 'Bezeichnung', 'Art', 'Beschreibung', 'Menge', 'Einheit', 'Einzelpreis', 'Gesamt']],
@@ -313,10 +344,38 @@ function renderPostenTable(doc, startY, tableBody, variant, primaerRgb, lineRgb)
     return;
   }
 
+  const borderRgb = hexToRgb(farben.tabellenRand || '#e5e7eb');
+  const kopfTextRgb = hexToRgb(farben.tabellenkopfText || '#ffffff');
+  const koerperTextRgb = hexToRgb(farben.tabellenKoerperText || '#374151');
+  const zebrRgb = hexToRgb(farben.tabellenZebr || '#f3f4f6');
+  const stil = tpl?.layout?.klassischTabellenStil === 'plain' ? 'plain' : 'grid';
+  const zebrAktiv = !!tpl?.layout?.klassischTabellenZebr;
+
+  const klassischOptions = {
+    theme: stil,
+    headStyles: {
+      fillColor: primaerRgb,
+      textColor: kopfTextRgb,
+      lineColor: borderRgb,
+    },
+    bodyStyles: {
+      textColor: koerperTextRgb,
+      lineColor: borderRgb,
+    },
+  };
+
+  if (stil === 'plain') {
+    klassischOptions.headStyles.lineWidth = { bottom: 0.4 };
+    klassischOptions.bodyStyles.lineWidth = { bottom: 0.2, top: 0, left: 0, right: 0 };
+  }
+
+  if (zebrAktiv) {
+    klassischOptions.alternateRowStyles = { fillColor: zebrRgb };
+  }
+
   autoTable(doc, {
     ...tableOptions,
-    theme: 'grid',
-    headStyles: { fillColor: primaerRgb, textColor: 255 },
+    ...klassischOptions,
   });
 }
 
@@ -354,12 +413,15 @@ function buildAngebotPdfV2(angebot, postenDetails, tpl) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(255);
-  doc.text(`${tpl.firma.telefon} · ${tpl.firma.email}`, 20, 30);
+  doc.text(tpl.firma.telefon ? `Tel: ${tpl.firma.telefon}` : '', 20, 30);
+  if (tpl.firma.email) {
+    doc.text(tpl.firma.email, 20, 34);
+  }
 
   const chips = [
-    `Angebotsnr.: ${angebot.angebotNr}`,
-    `Datum: ${erstelltAm}`,
-    `Gültig bis: ${gueltigBis}`,
+    `A-Nummer: ${angebot.angebotNr}`,
+    `A-Datum: ${erstelltAm}`,
+    `Gültig: ${gueltigBis}`,
   ];
   let chipX = 20;
   const chipY = bannerH - 9;
@@ -391,7 +453,7 @@ function buildAngebotPdfV2(angebot, postenDetails, tpl) {
     y += 10;
   }
 
-  renderPostenTable(doc, y + 8, buildPostenTableBody(postenDetails), 2, primaerRgb, lineRgb);
+  renderPostenTable(doc, y + 8, buildPostenTableBody(postenDetails), 2, tpl);
   renderPdfTotalsBlock(doc, { netto, mwst, brutto }, doc.lastAutoTable.finalY + 10, 2, primaerRgb);
   renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
   return doc;
@@ -418,7 +480,12 @@ function buildAngebotPdfV3(angebot, postenDetails, tpl) {
   doc.setFontSize(8);
   doc.setTextColor(...mutedRgb);
   doc.text(`${tpl.firma.strasse} · ${tpl.firma.plzOrt}`, 105, 26, { align: 'center' });
-  doc.text(`${tpl.firma.telefon} · ${tpl.firma.email}`, 105, 31, { align: 'center' });
+  if (tpl.firma.telefon) {
+    doc.text(`Tel: ${tpl.firma.telefon}`, 105, 31, { align: 'center' });
+  }
+  if (tpl.firma.email) {
+    doc.text(tpl.firma.email, 105, tpl.firma.telefon ? 36 : 31, { align: 'center' });
+  }
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
@@ -427,9 +494,15 @@ function buildAngebotPdfV3(angebot, postenDetails, tpl) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...mutedRgb);
-  doc.text(`Angebotsnr.: ${angebot.angebotNr}`, 190, 54, { align: 'right' });
-  doc.text(`Angebotsdatum: ${erstelltAm}`, 190, 59, { align: 'right' });
-  doc.text(`Gültig bis: ${gueltigBis}`, 190, 64, { align: 'right' });
+  renderPdfMetaRows(
+    doc,
+    [
+      ['A-Nummer', angebot.angebotNr],
+      ['A-Datum', erstelltAm],
+      ['Gültig', gueltigBis],
+    ],
+    { anchorX: 190, yStart: 54, align: 'right' }
+  );
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
@@ -448,7 +521,7 @@ function buildAngebotPdfV3(angebot, postenDetails, tpl) {
     y += 8;
   }
 
-  renderPostenTable(doc, y + 16, buildPostenTableBody(postenDetails), 3, primaerRgb, lineRgb);
+  renderPostenTable(doc, y + 16, buildPostenTableBody(postenDetails), 3, tpl);
   renderPdfTotalsBlock(doc, { netto, mwst, brutto }, doc.lastAutoTable.finalY + 10, 3, primaerRgb);
   renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
   return doc;
@@ -560,7 +633,7 @@ function buildAngebotPdfV1(angebot, postenDetails, tpl) {
 
   doc.setFontSize(22);
 
-  doc.text(tpl.texte.titel || 'ANGEBOT', 140, titelY);
+  doc.text(tpl.texte.titel || 'ANGEBOT', 190, titelY, { align: 'right' });
 
 
 
@@ -568,11 +641,15 @@ function buildAngebotPdfV1(angebot, postenDetails, tpl) {
 
   doc.setFontSize(10);
 
-  doc.text(`Angebotsnr.: ${angebot.angebotNr}`, 140, titelY + 10);
-
-  doc.text(`Angebotsdatum: ${erstelltAm}`, 140, titelY + 16);
-
-  doc.text(`Gültig bis: ${gueltigBis}`, 140, titelY + 22);
+  renderPdfMetaRows(
+    doc,
+    [
+      ['A-Nummer', angebot.angebotNr],
+      ['A-Datum', erstelltAm],
+      ['Gültig', gueltigBis],
+    ],
+    { anchorX: 190, yStart: titelY + 10, align: 'right' }
+  );
 
 
 
@@ -614,7 +691,7 @@ function buildAngebotPdfV1(angebot, postenDetails, tpl) {
 
   const tableBody = buildPostenTableBody(postenDetails);
 
-  renderPostenTable(doc, y + 18, tableBody, 1, primaerRgb, lineRgb);
+  renderPostenTable(doc, y + 18, tableBody, 1, tpl);
 
   renderPdfTotalsBlock(doc, { netto, mwst, brutto }, doc.lastAutoTable.finalY + 10, 1, primaerRgb);
 
@@ -624,7 +701,7 @@ function buildAngebotPdfV1(angebot, postenDetails, tpl) {
 }
 
 export function buildPdfDoc(angebot, postenDetails) {
-  const tpl = getPdfTemplate();
+  const tpl = getDocumentPdfTemplate();
   const variant = normalizePdfLayoutVariant(tpl.layout?.angebotVariant);
   if (variant === 2) return buildAngebotPdfV2(angebot, postenDetails, tpl);
   if (variant === 3) return buildAngebotPdfV3(angebot, postenDetails, tpl);
@@ -662,7 +739,7 @@ export function openPdfPreview(angebot, postenDetails) {
 }
 
 export function buildRechnungPdfDoc(rechnung, postenDetails) {
-  const tpl = getPdfTemplate();
+  const tpl = getDocumentPdfTemplate();
   const variant = normalizePdfLayoutVariant(tpl.layout?.rechnungVariant);
   if (variant === 2) return buildRechnungPdfV2(rechnung, postenDetails, tpl);
   if (variant === 3) return buildRechnungPdfV3(rechnung, postenDetails, tpl);
@@ -710,7 +787,10 @@ function buildRechnungPdfV2(rechnung, postenDetails, tpl) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(255);
-  doc.text(`${tpl.firma.telefon} · ${tpl.firma.email}`, 20, 30);
+  doc.text(tpl.firma.telefon ? `Tel: ${tpl.firma.telefon}` : '', 20, 30);
+  if (tpl.firma.email) {
+    doc.text(tpl.firma.email, 20, 34);
+  }
 
   const chips = [
     `Rechnungsnr.: ${rechnung.rechnungNr}`,
@@ -754,7 +834,7 @@ function buildRechnungPdfV2(rechnung, postenDetails, tpl) {
     y += 10;
   }
 
-  renderPostenTable(doc, y + 8, buildPostenTableBody(postenDetails), 2, primaerRgb, lineRgb);
+  renderPostenTable(doc, y + 8, buildPostenTableBody(postenDetails), 2, tpl);
   renderPdfTotalsBlock(
     doc,
     { netto, mwst, brutto },
@@ -789,7 +869,12 @@ function buildRechnungPdfV3(rechnung, postenDetails, tpl) {
   doc.setFontSize(8);
   doc.setTextColor(...mutedRgb);
   doc.text(`${tpl.firma.strasse} · ${tpl.firma.plzOrt}`, 105, 26, { align: 'center' });
-  doc.text(`${tpl.firma.telefon} · ${tpl.firma.email}`, 105, 31, { align: 'center' });
+  if (tpl.firma.telefon) {
+    doc.text(`Tel: ${tpl.firma.telefon}`, 105, 31, { align: 'center' });
+  }
+  if (tpl.firma.email) {
+    doc.text(tpl.firma.email, 105, tpl.firma.telefon ? 36 : 31, { align: 'center' });
+  }
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
@@ -822,7 +907,7 @@ function buildRechnungPdfV3(rechnung, postenDetails, tpl) {
     y += 8;
   }
 
-  renderPostenTable(doc, y + 16, buildPostenTableBody(postenDetails), 3, primaerRgb, lineRgb);
+  renderPostenTable(doc, y + 16, buildPostenTableBody(postenDetails), 3, tpl);
   renderPdfTotalsBlock(
     doc,
     { netto, mwst, brutto },
@@ -931,7 +1016,7 @@ function buildRechnungPdfV1(rechnung, postenDetails, tpl) {
 
   const tableBody = buildPostenTableBody(postenDetails);
 
-  renderPostenTable(doc, y + 18, tableBody, 1, primaerRgb, lineRgb);
+  renderPostenTable(doc, y + 18, tableBody, 1, tpl);
 
   renderPdfTotalsBlock(
     doc,

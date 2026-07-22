@@ -78,6 +78,8 @@ import {
   templatePatchFromRechnungPage,
   fillPdfTemplateAngebotForm,
   fillPdfTemplateRechnungForm,
+  fillProfileFirmaForm,
+  withProfileFirma,
   readImageFileAsDataUrl,
   updateImagePreview,
   formatRgbFromHex,
@@ -86,10 +88,12 @@ import {
 } from './pdfTemplate.js';
 import {
   bindPdfTemplatePreview,
+  bindPdfPreviewRegionLabels,
   createPdfLayoutPreviewMarkup,
   mountPdfTemplateFormSections,
   normalizePdfLayoutVariant,
   refreshPdfTemplateFormLabels,
+  syncPdfPreviewRegionLabels,
   updatePdfTemplatePreview,
   updateDocumentLayoutPreview,
 } from './pdfTemplatePreview.js';
@@ -232,6 +236,7 @@ const els = {
   appSidebar: document.getElementById('app-sidebar'),
   appSidebarBackdrop: document.getElementById('app-sidebar-backdrop'),
   navMobileToggle: document.getElementById('nav-mobile-toggle'),
+  sidebarCollapseBtn: document.getElementById('sidebar-collapse-btn'),
   bereichSwitcher: document.getElementById('bereich-switcher'),
   bereichSwitcherWrap: document.getElementById('bereich-switcher-wrap'),
   bereichSwitcherMenu: document.getElementById('bereich-switcher-menu'),
@@ -1811,7 +1816,6 @@ async function renderProfilView() {
   const tenant = session?.tenant;
   const user = session?.user;
 
-  if (els.profilTenantName) els.profilTenantName.value = tenant?.name || '';
   if (els.profilEmail) els.profilEmail.textContent = user?.email || '—';
   if (els.profilPlan) els.profilPlan.textContent = formatPlan(tenant?.plan);
 
@@ -1820,9 +1824,21 @@ async function renderProfilView() {
   els.profilPasswordForm?.reset();
 
   await loadPdfTemplate();
+  fillProfileFirmaForm(els.profilAccountForm, getPdfTemplate(), session);
   updateProfilSchemaPreviews(getPdfTemplate());
   syncProfilNummernAccess();
   syncProfilPlanAccess();
+}
+
+function refreshPdfTemplatePreviewsFromProfile() {
+  const angebotVariant = getPdfLayoutVariant('angebot');
+  const rechnungVariant = getPdfLayoutVariant('rechnung');
+  if (els.pdfAngebotForm && els.pdfPreviewAngebot) {
+    updatePdfTemplatePreview(els.pdfAngebotForm, els.pdfPreviewAngebot, 'angebot', angebotVariant);
+  }
+  if (els.pdfRechnungForm && els.pdfPreviewRechnung) {
+    updatePdfTemplatePreview(els.pdfRechnungForm, els.pdfPreviewRechnung, 'rechnung', rechnungVariant);
+  }
 }
 
 function syncProfilPlanAccess() {
@@ -2240,6 +2256,110 @@ const NAV_VIEW_GROUPS = {
   'pdf-vorlage-rechnung': 'einstellungen',
 };
 
+const SIDEBAR_COLLAPSED_KEY = 'klemdesk.sidebarCollapsed';
+
+function isDesktopSidebarLayout() {
+  return window.matchMedia('(min-width: 921px)').matches;
+}
+
+function isSidebarCollapsed() {
+  return els.appSidebar?.classList.contains('is-collapsed') ?? false;
+}
+
+function closeNavFlyouts() {
+  document.querySelectorAll('.app-nav__group.is-flyout-open').forEach((group) => {
+    group.classList.remove('is-flyout-open');
+    const menu = group.querySelector('.app-nav__menu');
+    if (menu) {
+      menu.style.top = '';
+      menu.style.left = '';
+    }
+  });
+}
+
+function positionNavFlyout(group) {
+  const trigger = group?.querySelector('[data-nav-trigger]');
+  const menu = group?.querySelector('.app-nav__menu');
+  if (!trigger || !menu) return;
+  const rect = trigger.getBoundingClientRect();
+  menu.style.top = `${Math.max(8, rect.top)}px`;
+  menu.style.left = `${rect.right + 8}px`;
+}
+
+function resetBereichDropdownPosition() {
+  const menu = els.bereichSwitcherMenu;
+  if (!menu) return;
+  menu.style.position = '';
+  menu.style.top = '';
+  menu.style.left = '';
+  menu.style.right = '';
+  menu.style.width = '';
+}
+
+function positionBereichDropdown() {
+  if (!isSidebarCollapsed() || !isDesktopSidebarLayout()) {
+    resetBereichDropdownPosition();
+    return;
+  }
+  const trigger = els.bereichSwitcher;
+  const menu = els.bereichSwitcherMenu;
+  if (!trigger || !menu) return;
+  const rect = trigger.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.top = `${Math.max(8, rect.top)}px`;
+  menu.style.left = `${rect.right + 8}px`;
+  menu.style.right = 'auto';
+  menu.style.width = '240px';
+}
+
+function syncSidebarCollapseUi() {
+  if (!els.sidebarCollapseBtn) return;
+  const collapsed = isSidebarCollapsed();
+  els.sidebarCollapseBtn.setAttribute('aria-expanded', String(!collapsed));
+  const labelKey = collapsed ? 'nav.sidebarExpand' : 'nav.sidebarCollapse';
+  const label = t(labelKey);
+  els.sidebarCollapseBtn.setAttribute('aria-label', label);
+  els.sidebarCollapseBtn.setAttribute('title', label);
+}
+
+function setSidebarCollapsed(collapsed, { persist = true } = {}) {
+  if (!els.appSidebar) return;
+
+  if (persist) {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+  }
+
+  if (!isDesktopSidebarLayout()) {
+    els.appSidebar.classList.remove('is-collapsed');
+    els.app?.classList.remove('app--sidebar-collapsed');
+    closeNavFlyouts();
+    resetBereichDropdownPosition();
+    syncSidebarCollapseUi();
+    return;
+  }
+
+  els.appSidebar.classList.toggle('is-collapsed', collapsed);
+  els.app?.classList.toggle('app--sidebar-collapsed', collapsed);
+  if (collapsed) {
+    closeNavFlyouts();
+    closeBereichDropdown();
+  } else {
+    closeNavFlyouts();
+    resetBereichDropdownPosition();
+    expandVisibleNavGroups();
+  }
+  syncSidebarCollapseUi();
+}
+
+function toggleSidebarCollapsed() {
+  setSidebarCollapsed(!isSidebarCollapsed());
+}
+
+function initSidebarCollapsed() {
+  const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+  setSidebarCollapsed(saved && isDesktopSidebarLayout(), { persist: false });
+}
+
 function closeMobileNav() {
   if (!els.appSidebar || !els.navMobileToggle) return;
   els.appSidebar.classList.remove('is-mobile-open');
@@ -2312,6 +2432,23 @@ function expandVisibleNavGroups() {
 
 function toggleNavGroup(group, forceOpen) {
   if (!group) return;
+
+  if (isSidebarCollapsed() && isDesktopSidebarLayout()) {
+    const isFlyoutOpen = group.classList.contains('is-flyout-open');
+    const shouldOpen = forceOpen ?? !isFlyoutOpen;
+    closeNavFlyouts();
+    if (shouldOpen) {
+      group.classList.add('is-flyout-open');
+      positionNavFlyout(group);
+      const trigger = group.querySelector('[data-nav-trigger]');
+      if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    } else {
+      const trigger = group.querySelector('[data-nav-trigger]');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    }
+    return;
+  }
+
   const isOpen = group.classList.contains('is-open');
   const shouldOpen = forceOpen ?? !isOpen;
   group.classList.toggle('is-open', shouldOpen);
@@ -2360,6 +2497,7 @@ function openBereichDropdown() {
   els.bereichSwitcherMenu.classList.remove('hidden');
   els.bereichSwitcherWrap.classList.add('is-open');
   els.bereichSwitcher?.setAttribute('aria-expanded', 'true');
+  positionBereichDropdown();
 }
 
 function closeBereichDropdown() {
@@ -2367,6 +2505,7 @@ function closeBereichDropdown() {
   els.bereichSwitcherMenu.classList.add('hidden');
   els.bereichSwitcherWrap.classList.remove('is-open');
   els.bereichSwitcher?.setAttribute('aria-expanded', 'false');
+  resetBereichDropdownPosition();
 }
 
 function toggleBereichDropdown() {
@@ -2432,6 +2571,11 @@ function bindMainNav() {
 
   expandVisibleNavGroups();
   bindBereichSwitch();
+  initSidebarCollapsed();
+
+  els.sidebarCollapseBtn?.addEventListener('click', () => {
+    toggleSidebarCollapsed();
+  });
 
   els.navMobileToggle?.addEventListener('click', () => {
     const open = els.appSidebar.classList.toggle('is-mobile-open');
@@ -2447,6 +2591,7 @@ function bindMainNav() {
     const trigger = e.target.closest('[data-nav-trigger]');
     if (trigger) {
       e.preventDefault();
+      e.stopPropagation();
       toggleNavGroup(trigger.closest('.app-nav__group'));
       return;
     }
@@ -2460,13 +2605,39 @@ function bindMainNav() {
         closeKundenForm();
       }
       showView(link.dataset.navView);
+      closeNavFlyouts();
       closeMobileNav();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+    if (!isDesktopSidebarLayout()) {
+      els.appSidebar?.classList.remove('is-collapsed');
+      els.app?.classList.remove('app--sidebar-collapsed');
+      closeNavFlyouts();
+      resetBereichDropdownPosition();
+      syncSidebarCollapseUi();
+      return;
+    }
+    els.appSidebar?.classList.toggle('is-collapsed', saved);
+    els.app?.classList.toggle('app--sidebar-collapsed', saved);
+    syncSidebarCollapseUi();
+    document.querySelectorAll('.app-nav__group.is-flyout-open').forEach(positionNavFlyout);
+    if (els.bereichSwitcherWrap?.classList.contains('is-open')) {
+      positionBereichDropdown();
     }
   });
 
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.bereich-switcher')) {
       closeBereichDropdown();
+    }
+    if (
+      !e.target.closest('.app-nav__group.is-flyout-open') &&
+      !e.target.closest('[data-nav-trigger]')
+    ) {
+      closeNavFlyouts();
     }
     if (
       !e.target.closest('.app-sidebar') &&
@@ -2480,6 +2651,7 @@ function bindMainNav() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeBereichDropdown();
+      closeNavFlyouts();
       closeMobileNav();
     }
   });
@@ -2658,6 +2830,9 @@ function setPdfTemplatePreviewHighlight(previewRoot, regions) {
   previewRoot.querySelectorAll('[data-region]').forEach((el) => {
     el.classList.toggle('is-active', regions.includes(el.dataset.region));
   });
+  previewRoot.querySelectorAll('.pdf-layout-preview__label').forEach((label) => {
+    label.classList.toggle('is-active', regions.includes(label.dataset.region));
+  });
 }
 
 function openPdfTemplateSectionsFromPreview(form, previewRoot, region) {
@@ -2735,6 +2910,34 @@ function bindPdfTemplatePreviewSectionClicks(form, previewRoot) {
         activate();
       }
     });
+    el.addEventListener('mouseenter', () => {
+      setPdfTemplatePreviewHighlight(previewRoot, resolvePdfPreviewHighlightRegions(el.dataset.region));
+    });
+    el.addEventListener('mouseleave', () => {
+      window.setTimeout(() => {
+        if (!form.contains(document.activeElement)) {
+          setPdfTemplatePreviewHighlight(previewRoot, []);
+        }
+      }, 0);
+    });
+  });
+}
+
+function bindPdfTemplatePreviewRegionLabels(form, previewRoot) {
+  if (!form || !previewRoot) return;
+  bindPdfPreviewRegionLabels(previewRoot, {
+    onHover: (region) => {
+      setPdfTemplatePreviewHighlight(previewRoot, resolvePdfPreviewHighlightRegions(region));
+    },
+    onLeave: () => {
+      window.setTimeout(() => {
+        if (!form.contains(document.activeElement)) {
+          setPdfTemplatePreviewHighlight(previewRoot, []);
+        }
+      }, 0);
+    },
+    onClick: (region) => openPdfTemplateSectionsFromPreview(form, previewRoot, region),
+    isClickable: (region) => resolvePdfPreviewSections(region).length > 0,
   });
 }
 
@@ -2773,6 +2976,7 @@ function ensurePdfTemplatePreview(form, previewRoot, type, variant = 1) {
   const normalized = normalizePdfLayoutVariant(variant);
   const needsRebuild =
     !previewRoot.querySelector('.pdf-layout-preview__sheet') ||
+    !previewRoot.querySelector('.pdf-layout-preview__labels--right') ||
     previewRoot.dataset.previewType !== type ||
     Number(previewRoot.dataset.previewVariant) !== normalized;
   if (needsRebuild) {
@@ -2780,6 +2984,7 @@ function ensurePdfTemplatePreview(form, previewRoot, type, variant = 1) {
     previewRoot.dataset.previewType = type;
     previewRoot.dataset.previewVariant = String(normalized);
     delete previewRoot.dataset.sectionClicksBound;
+    delete previewRoot.dataset.labelsBound;
   }
 }
 
@@ -2803,11 +3008,12 @@ async function renderPdfTemplateView(view, { syncLayoutFromTemplate = false } = 
   enhancePdfTemplateCollapsibleSections(form);
   collapseAllPdfTemplateSections(form);
   setPdfTemplatePreviewHighlight(previewRoot, []);
-  bindPdfTemplatePreviewSectionClicks(form, previewRoot);
   if (isAngebot) fillPdfTemplateAngebotForm(form, tpl);
   else fillPdfTemplateRechnungForm(form, tpl);
   syncColorHexFields(form);
   updatePdfTemplatePreview(form, previewRoot, type, variant);
+  bindPdfTemplatePreviewSectionClicks(form, previewRoot);
+  bindPdfTemplatePreviewRegionLabels(form, previewRoot);
   setPdfTemplateStatus(form, '');
 }
 
@@ -2864,8 +3070,9 @@ async function handlePdfTemplateReset(form, type) {
     syncColorHexFields(form);
     const variant = getPdfLayoutVariant(scope);
     ensurePdfTemplatePreview(form, previewRoot, type, variant);
-    bindPdfTemplatePreviewSectionClicks(form, previewRoot);
     updatePdfTemplatePreview(form, previewRoot, type, variant);
+    bindPdfTemplatePreviewSectionClicks(form, previewRoot);
+    bindPdfTemplatePreviewRegionLabels(form, previewRoot);
     setPdfTemplateStatus(form, 'Standardvorlage wiederhergestellt.');
   } catch (err) {
     setPdfTemplateStatus(form, err.message, true);
@@ -2913,6 +3120,7 @@ function bindPdfTemplateForm(form, previewRoot, type) {
   bindPdfTemplatePreview(form, previewRoot, type, () => getPdfLayoutVariant(type));
   bindPdfTemplateFormHighlight(form, previewRoot);
   bindPdfTemplatePreviewSectionClicks(form, previewRoot);
+  bindPdfTemplatePreviewRegionLabels(form, previewRoot);
 
   form.addEventListener('submit', (e) => handlePdfTemplateSubmit(e, type));
   form.querySelector('.pdf-template-reset')?.addEventListener('click', () => {
@@ -2974,6 +3182,11 @@ function syncPdfLayoutTabs(scope) {
     btn.setAttribute('aria-selected', String(isActive));
     const meta = PDF_LAYOUT_VARIANTS[layout];
     if (meta) btn.textContent = meta.label;
+  });
+
+  const isKlassisch = activeLayout === 1;
+  root.querySelectorAll('.pdf-klassisch-table-opt').forEach((el) => {
+    el.classList.toggle('hidden', !isKlassisch);
   });
 }
 
@@ -3796,8 +4009,7 @@ async function ensureDocumentMailReady(selectedKundeId, formEmailEl) {
 async function sendAngebotPdfByMail(angebot, posten) {
   const kundeEmail = await ensureDocumentMailReady(state.angebot.selectedKundeId, els.kundeEmail);
 
-  const tpl = getPdfTemplate();
-  const firmaName = tpl.firma?.name || 'Ihr Unternehmen';
+  const firmaName = withProfileFirma(getPdfTemplate(), getSession()).firma?.name || 'Ihr Unternehmen';
   const { filename, content } = getAngebotPdfAttachment(angebot, posten);
 
   const sendResult = await sendDocumentPdf({
@@ -3846,8 +4058,7 @@ async function sendRechnungPdfByMail(rechnung, posten) {
     els.rechnungKundeEmail
   );
 
-  const tpl = getPdfTemplate();
-  const firmaName = tpl.firma?.name || 'Ihr Unternehmen';
+  const firmaName = withProfileFirma(getPdfTemplate(), getSession()).firma?.name || 'Ihr Unternehmen';
   const { filename, content } = await getRechnungPdfAttachment(rechnung, posten);
 
   const sendResult = await sendDocumentPdf({
@@ -4144,11 +4355,24 @@ function bindAppEvents() {
     }
 
     try {
+      const patch = templatePatchFromForm(els.profilAccountForm, 'firma');
+      const current = getPdfTemplate();
+      const session = getSession();
+      await savePdfTemplate({
+        ...current,
+        firma: {
+          ...current.firma,
+          ...patch.firma,
+          email: patch.firma.email || session?.user?.email || '',
+        },
+      });
       await updateTenantName(name);
+      await refreshSession();
       syncProfileButton();
-      setProfilAccountStatus('Firma wurde gespeichert.');
+      refreshPdfTemplatePreviewsFromProfile();
+      setProfilAccountStatus('Profil wurde gespeichert.');
     } catch (err) {
-      setProfilAccountStatus(err.message || 'Firma konnte nicht gespeichert werden.', true);
+      setProfilAccountStatus(err.message || 'Profil konnte nicht gespeichert werden.', true);
     }
   });
   els.profilPasswordForm?.addEventListener('submit', async (e) => {
@@ -4628,6 +4852,7 @@ function bindAuthEvents() {
 
 async function refreshLocaleUi() {
   applyI18n();
+  syncSidebarCollapseUi();
   syncBereichSwitcher();
   updatePageHeader();
   updateRechnungPageHeader();

@@ -22,6 +22,10 @@ export function getDefaultPdfTemplate() {
       textMuted: '#505050',
       fusszeile: '#646464',
       trennlinie: '#dcdcdc',
+      tabellenkopfText: '#ffffff',
+      tabellenRand: '#e5e7eb',
+      tabellenKoerperText: '#374151',
+      tabellenZebr: '#f3f4f6',
     },
     texte: {
       titel: 'ANGEBOT',
@@ -40,6 +44,8 @@ export function getDefaultPdfTemplate() {
       logoHoeheMm: 18,
       headerHoeheMm: 22,
       headerAktiv: false,
+      klassischTabellenStil: 'grid',
+      klassischTabellenZebr: false,
     },
     angebot: {
       nummerSchema: 'ANG-{YYYY}{MM}{DD}-{NR:3}',
@@ -97,6 +103,43 @@ function deepMerge(base, patch) {
 
 export function mergePdfTemplate(stored) {
   return deepMerge(getDefaultPdfTemplate(), stored || {});
+}
+
+/** Briefkopf-Firmendaten mit Profil (Mandantenname, Login-E-Mail) zusammenführen. */
+export function withProfileFirma(template, session = null) {
+  const tpl = mergePdfTemplate(template);
+  const firma = tpl.firma || {};
+  const tenantName = String(session?.tenant?.name ?? '').trim();
+  const loginEmail = String(session?.user?.email ?? '').trim();
+  return {
+    ...tpl,
+    firma: {
+      ...firma,
+      name: tenantName || String(firma.name ?? '').trim() || 'Ihre Firma',
+      email: String(firma.email ?? loginEmail ?? '').trim(),
+    },
+  };
+}
+
+export function fillProfileFirmaForm(form, template, session = null) {
+  if (!form) return;
+  const tpl = mergePdfTemplate(template);
+  const firma = tpl.firma || {};
+  const tenantName = String(session?.tenant?.name ?? '').trim();
+  const loginEmail = String(session?.user?.email ?? '').trim();
+  const set = (name, value) => {
+    if (form.elements[name]) form.elements[name].value = value ?? '';
+  };
+  set('firma-name', tenantName || firma.name || '');
+  set('firma-strasse', firma.strasse || '');
+  set('firma-plzOrt', firma.plzOrt || '');
+  set('firma-telefon', firma.telefon || '');
+  set('firma-email', firma.email || loginEmail || '');
+  set('firma-web', firma.web || '');
+  set('firma-ustId', firma.ustId || '');
+  set('firma-iban', firma.iban || '');
+  set('firma-bic', firma.bic || '');
+  set('firma-bankName', firma.bankName || '');
 }
 
 export function hexToRgb(hex) {
@@ -168,30 +211,30 @@ export async function savePdfTemplate(template) {
 
 export function templatePatchFromAngebotPage(form) {
   let patch = {};
-  for (const section of ['bilder', 'firma', 'farben', 'fuss-spalten', 'angebot-texte']) {
-    patch = { ...patch, ...templatePatchFromForm(form, section) };
+  for (const section of ['bilder', 'farben', 'fuss-spalten', 'angebot-texte']) {
+    patch = deepMerge(patch, templatePatchFromForm(form, section));
   }
   return patch;
 }
 
 export function templatePatchFromRechnungPage(form) {
   let patch = {};
-  for (const section of ['bilder', 'firma', 'farben', 'fuss-spalten', 'rechnung-zahlungsziel', 'rechnung-texte']) {
-    patch = { ...patch, ...templatePatchFromForm(form, section) };
+  for (const section of ['bilder', 'farben', 'fuss-spalten', 'rechnung-zahlungsziel', 'rechnung-texte']) {
+    patch = deepMerge(patch, templatePatchFromForm(form, section));
   }
   return patch;
 }
 
 export function fillPdfTemplateAngebotForm(form, template) {
   const tpl = mergePdfTemplate(template);
-  for (const section of ['bilder', 'firma', 'farben', 'fuss-spalten', 'angebot-texte']) {
+  for (const section of ['bilder', 'farben', 'fuss-spalten', 'angebot-texte']) {
     fillPdfTemplateSectionForm(form, tpl, section);
   }
 }
 
 export function fillPdfTemplateRechnungForm(form, template) {
   const tpl = mergePdfTemplate(template);
-  for (const section of ['bilder', 'firma', 'farben', 'fuss-spalten', 'rechnung-zahlungsziel', 'rechnung-texte']) {
+  for (const section of ['bilder', 'farben', 'fuss-spalten', 'rechnung-zahlungsziel', 'rechnung-texte']) {
     fillPdfTemplateSectionForm(form, tpl, section);
   }
 }
@@ -221,6 +264,15 @@ export function templatePatchFromForm(form, section) {
           textMuted: String(fd.get('farbe-textMuted') || '#505050'),
           fusszeile: String(fd.get('farbe-fusszeile') || '#646464'),
           trennlinie: String(fd.get('farbe-trennlinie') || '#dcdcdc'),
+          tabellenkopfText: String(fd.get('farbe-tabellenkopfText') || '#ffffff'),
+          tabellenRand: String(fd.get('farbe-tabellenRand') || '#e5e7eb'),
+          tabellenKoerperText: String(fd.get('farbe-tabellenKoerperText') || '#374151'),
+          tabellenZebr: String(fd.get('farbe-tabellenZebr') || '#f3f4f6'),
+        },
+        layout: {
+          klassischTabellenStil:
+            String(fd.get('layout-klassischTabellenStil') || 'grid') === 'plain' ? 'plain' : 'grid',
+          klassischTabellenZebr: fd.get('layout-klassischTabellenZebr') === 'on',
         },
       };
     case 'angebot-texte':
@@ -290,22 +342,41 @@ export function fillPdfTemplateSectionForm(form, template, section) {
   const tpl = mergePdfTemplate(template);
   switch (section) {
     case 'firma':
-      form.elements['firma-name'].value = tpl.firma.name;
-      form.elements['firma-strasse'].value = tpl.firma.strasse;
-      form.elements['firma-plzOrt'].value = tpl.firma.plzOrt;
-      form.elements['firma-telefon'].value = tpl.firma.telefon;
-      form.elements['firma-email'].value = tpl.firma.email;
-      form.elements['firma-web'].value = tpl.firma.web;
-      form.elements['firma-ustId'].value = tpl.firma.ustId;
-      form.elements['firma-iban'].value = tpl.firma.iban || '';
-      form.elements['firma-bic'].value = tpl.firma.bic || '';
-      form.elements['firma-bankName'].value = tpl.firma.bankName || '';
+      if (form.elements['firma-name']) form.elements['firma-name'].value = tpl.firma.name;
+      if (form.elements['firma-strasse']) form.elements['firma-strasse'].value = tpl.firma.strasse;
+      if (form.elements['firma-plzOrt']) form.elements['firma-plzOrt'].value = tpl.firma.plzOrt;
+      if (form.elements['firma-telefon']) form.elements['firma-telefon'].value = tpl.firma.telefon;
+      if (form.elements['firma-email']) form.elements['firma-email'].value = tpl.firma.email;
+      if (form.elements['firma-web']) form.elements['firma-web'].value = tpl.firma.web;
+      if (form.elements['firma-ustId']) form.elements['firma-ustId'].value = tpl.firma.ustId;
+      if (form.elements['firma-iban']) form.elements['firma-iban'].value = tpl.firma.iban || '';
+      if (form.elements['firma-bic']) form.elements['firma-bic'].value = tpl.firma.bic || '';
+      if (form.elements['firma-bankName']) form.elements['firma-bankName'].value = tpl.firma.bankName || '';
       break;
     case 'farben':
       form.elements['farbe-primaer'].value = tpl.farben.primaer;
       form.elements['farbe-textMuted'].value = tpl.farben.textMuted;
       form.elements['farbe-fusszeile'].value = tpl.farben.fusszeile;
       form.elements['farbe-trennlinie'].value = tpl.farben.trennlinie;
+      if (form.elements['farbe-tabellenkopfText']) {
+        form.elements['farbe-tabellenkopfText'].value = tpl.farben.tabellenkopfText || '#ffffff';
+      }
+      if (form.elements['farbe-tabellenRand']) {
+        form.elements['farbe-tabellenRand'].value = tpl.farben.tabellenRand || '#e5e7eb';
+      }
+      if (form.elements['farbe-tabellenKoerperText']) {
+        form.elements['farbe-tabellenKoerperText'].value = tpl.farben.tabellenKoerperText || '#374151';
+      }
+      if (form.elements['farbe-tabellenZebr']) {
+        form.elements['farbe-tabellenZebr'].value = tpl.farben.tabellenZebr || '#f3f4f6';
+      }
+      if (form.elements['layout-klassischTabellenStil']) {
+        form.elements['layout-klassischTabellenStil'].value =
+          tpl.layout?.klassischTabellenStil === 'plain' ? 'plain' : 'grid';
+      }
+      if (form.elements['layout-klassischTabellenZebr']) {
+        form.elements['layout-klassischTabellenZebr'].checked = !!tpl.layout?.klassischTabellenZebr;
+      }
       break;
     case 'angebot-texte':
       form.elements['text-titel'].value = tpl.texte.titel;
@@ -382,6 +453,10 @@ export function templateFromForm(form) {
       textMuted: String(fd.get('farbe-textMuted') || '#505050'),
       fusszeile: String(fd.get('farbe-fusszeile') || '#646464'),
       trennlinie: String(fd.get('farbe-trennlinie') || '#dcdcdc'),
+      tabellenkopfText: String(fd.get('farbe-tabellenkopfText') || '#ffffff'),
+      tabellenRand: String(fd.get('farbe-tabellenRand') || '#e5e7eb'),
+      tabellenKoerperText: String(fd.get('farbe-tabellenKoerperText') || '#374151'),
+      tabellenZebr: String(fd.get('farbe-tabellenZebr') || '#f3f4f6'),
     },
     texte: {
       titel: String(fd.get('text-titel') || 'ANGEBOT').trim(),
@@ -398,6 +473,9 @@ export function templateFromForm(form) {
       logoHoeheMm: Number(fd.get('layout-logoHoeheMm')) || 18,
       headerHoeheMm: Number(fd.get('layout-headerHoeheMm')) || 22,
       headerAktiv: fd.get('layout-headerAktiv') === 'on',
+      klassischTabellenStil:
+        String(fd.get('layout-klassischTabellenStil') || 'grid') === 'plain' ? 'plain' : 'grid',
+      klassischTabellenZebr: fd.get('layout-klassischTabellenZebr') === 'on',
     },
     angebot: {
       nummerSchema:
@@ -438,6 +516,25 @@ export function fillPdfTemplateForm(form, template) {
   form.elements['farbe-textMuted'].value = tpl.farben.textMuted;
   form.elements['farbe-fusszeile'].value = tpl.farben.fusszeile;
   form.elements['farbe-trennlinie'].value = tpl.farben.trennlinie;
+  if (form.elements['farbe-tabellenkopfText']) {
+    form.elements['farbe-tabellenkopfText'].value = tpl.farben.tabellenkopfText || '#ffffff';
+  }
+  if (form.elements['farbe-tabellenRand']) {
+    form.elements['farbe-tabellenRand'].value = tpl.farben.tabellenRand || '#e5e7eb';
+  }
+  if (form.elements['farbe-tabellenKoerperText']) {
+    form.elements['farbe-tabellenKoerperText'].value = tpl.farben.tabellenKoerperText || '#374151';
+  }
+  if (form.elements['farbe-tabellenZebr']) {
+    form.elements['farbe-tabellenZebr'].value = tpl.farben.tabellenZebr || '#f3f4f6';
+  }
+  if (form.elements['layout-klassischTabellenStil']) {
+    form.elements['layout-klassischTabellenStil'].value =
+      tpl.layout?.klassischTabellenStil === 'plain' ? 'plain' : 'grid';
+  }
+  if (form.elements['layout-klassischTabellenZebr']) {
+    form.elements['layout-klassischTabellenZebr'].checked = !!tpl.layout?.klassischTabellenZebr;
+  }
 
   form.elements['text-titel'].value = tpl.texte.titel;
   form.elements['text-einleitung'].value = tpl.texte.einleitung;

@@ -21,6 +21,15 @@ export function normalizePdfLayoutVariant(value) {
   return variant === 2 || variant === 3 ? variant : 1;
 }
 
+function wrapPdfLayoutPreviewFrame(sheetMarkup) {
+  return `
+    <div class="pdf-layout-preview__frame">
+      <div class="pdf-layout-preview__labels pdf-layout-preview__labels--left" role="list" aria-label="PDF-Bereiche links"></div>
+      ${sheetMarkup}
+      <div class="pdf-layout-preview__labels pdf-layout-preview__labels--right" role="list" aria-label="PDF-Bereiche rechts"></div>
+    </div>`;
+}
+
 function previewFussBlockV1() {
   return `
       <div class="pdf-layout-preview__region pdf-layout-preview__region--fuss" data-region="fuss">
@@ -76,7 +85,7 @@ function previewTableBlockV1() {
 
 function createPdfLayoutPreviewMarkupV1(type) {
   const isAngebot = type === 'angebot';
-  return `
+  return wrapPdfLayoutPreviewFrame(`
     <div class="pdf-layout-preview__sheet pdf-layout-preview__sheet--v1" data-layout-variant="1">
       <div class="pdf-layout-preview__region pdf-layout-preview__region--banner hidden" data-preview-part="banner" data-region="briefkopf">
         <span class="pdf-layout-preview__tag">Header-Banner</span>
@@ -90,16 +99,28 @@ function createPdfLayoutPreviewMarkupV1(type) {
             <strong class="pdf-layout-preview__firma-name" data-preview-part="logo-fallback">Firma</strong>
             <p data-preview-part="firma-strasse">Straße</p>
             <p data-preview-part="firma-plz">PLZ Ort</p>
-            <p class="pdf-layout-preview__small" data-preview-part="firma-kontakt">Kontakt</p>
+            <div class="pdf-layout-preview__firma-kontakt pdf-layout-preview__small" data-preview-part="firma-kontakt">
+              <p data-preview-part="firma-telefon">Tel.</p>
+              <p data-preview-part="firma-email">E-Mail</p>
+              <p data-preview-part="firma-ust">USt-IdNr.</p>
+            </div>
           </div>
         </div>
         <div class="pdf-layout-preview__region pdf-layout-preview__region--meta" data-region="meta">
           <span class="pdf-layout-preview__tag">Dokumentenkopf</span>
-          <h3 class="pdf-layout-preview__doc-title" data-preview-part="doc-titel">${isAngebot ? 'ANGEBOT' : 'RECHNUNG'}</h3>
-          <p data-preview-part="meta-1">Nr.</p>
-          <p data-preview-part="meta-2">Datum</p>
-          <p data-preview-part="meta-3">Termin</p>
-          <p class="pdf-layout-preview__small hidden" data-preview-part="meta-4">Bezug</p>
+          <div class="pdf-layout-preview__meta-block">
+            <h3 class="pdf-layout-preview__doc-title" data-preview-part="doc-titel">${isAngebot ? 'ANGEBOT' : 'RECHNUNG'}</h3>
+            <div class="pdf-layout-preview__meta-rows">
+              <span class="pdf-layout-preview__meta-label" data-preview-part="meta-1-label"></span>
+              <span class="pdf-layout-preview__meta-value" data-preview-part="meta-1-value"></span>
+              <span class="pdf-layout-preview__meta-label" data-preview-part="meta-2-label"></span>
+              <span class="pdf-layout-preview__meta-value" data-preview-part="meta-2-value"></span>
+              <span class="pdf-layout-preview__meta-label" data-preview-part="meta-3-label"></span>
+              <span class="pdf-layout-preview__meta-value" data-preview-part="meta-3-value"></span>
+              <span class="pdf-layout-preview__meta-label pdf-layout-preview__small hidden" data-preview-part="meta-4-label"></span>
+              <span class="pdf-layout-preview__meta-value pdf-layout-preview__small hidden" data-preview-part="meta-4-value"></span>
+            </div>
+          </div>
         </div>
       </div>
       <hr class="pdf-layout-preview__line" data-preview-part="trennlinie" data-region="briefkopf" />
@@ -115,12 +136,12 @@ function createPdfLayoutPreviewMarkupV1(type) {
       </div>
       ${previewTableBlockV1()}
       ${previewFussBlockV1()}
-    </div>`;
+    </div>`);
 }
 
 function createPdfLayoutPreviewMarkupV2(type) {
   const isAngebot = type === 'angebot';
-  return `
+  return wrapPdfLayoutPreviewFrame(`
     <div class="pdf-layout-preview__sheet pdf-layout-preview__sheet--v2" data-layout-variant="2">
       <div class="pdf-layout-preview__hero" data-preview-part="hero" data-region="briefkopf">
         <span class="pdf-layout-preview__tag">Banner</span>
@@ -128,7 +149,10 @@ function createPdfLayoutPreviewMarkupV2(type) {
           <div class="pdf-layout-preview__hero-brand">
             <div class="pdf-layout-preview__logo pdf-layout-preview__logo--hero hidden" data-preview-part="logo"><img alt="" /></div>
             <strong class="pdf-layout-preview__hero-firma" data-preview-part="logo-fallback">Firma</strong>
-            <p class="pdf-layout-preview__hero-contact" data-preview-part="firma-kontakt">Kontakt</p>
+            <div class="pdf-layout-preview__hero-contact" data-preview-part="firma-kontakt">
+              <p data-preview-part="firma-telefon">Tel.</p>
+              <p data-preview-part="firma-email">E-Mail</p>
+            </div>
           </div>
           <h2 class="pdf-layout-preview__hero-title" data-preview-part="doc-titel">${isAngebot ? 'ANGEBOT' : 'RECHNUNG'}</h2>
         </div>
@@ -192,18 +216,21 @@ function createPdfLayoutPreviewMarkupV2(type) {
           </div>
         </div>
       </div>
-    </div>`;
+    </div>`);
 }
 
 function createPdfLayoutPreviewMarkupV3(type) {
   const isAngebot = type === 'angebot';
-  return `
+  return wrapPdfLayoutPreviewFrame(`
     <div class="pdf-layout-preview__sheet pdf-layout-preview__sheet--v3" data-layout-variant="3">
       <header class="pdf-layout-preview__letterhead" data-region="briefkopf">
         <span class="pdf-layout-preview__tag">Briefkopf</span>
         <p class="pdf-layout-preview__letterhead-name" data-preview-part="logo-fallback">FIRMA</p>
         <p class="pdf-layout-preview__letterhead-line" data-preview-part="letterhead-address">Straße · PLZ Ort</p>
-        <p class="pdf-layout-preview__letterhead-contact" data-preview-part="firma-kontakt">Kontakt</p>
+        <div class="pdf-layout-preview__letterhead-contact" data-preview-part="firma-kontakt">
+          <p data-preview-part="firma-telefon">Tel.</p>
+          <p data-preview-part="firma-email">E-Mail</p>
+        </div>
       </header>
       <div class="pdf-layout-preview__letter-window">
         <div class="pdf-layout-preview__letter-address" data-region="kunde">
@@ -214,11 +241,19 @@ function createPdfLayoutPreviewMarkupV3(type) {
         </div>
         <div class="pdf-layout-preview__letter-meta" data-region="meta">
           <span class="pdf-layout-preview__tag">Dokument</span>
-          <p class="pdf-layout-preview__letter-doc-type" data-preview-part="doc-titel">${isAngebot ? 'Angebot' : 'Rechnung'}</p>
-          <p data-preview-part="meta-1">Nr.</p>
-          <p data-preview-part="meta-2">Datum</p>
-          <p data-preview-part="meta-3">Termin</p>
-          <p class="pdf-layout-preview__small hidden" data-preview-part="meta-4">Bezug</p>
+          <div class="pdf-layout-preview__meta-block">
+            <p class="pdf-layout-preview__letter-doc-type" data-preview-part="doc-titel">${isAngebot ? 'Angebot' : 'Rechnung'}</p>
+            <div class="pdf-layout-preview__meta-rows">
+              <span class="pdf-layout-preview__meta-label" data-preview-part="meta-1-label"></span>
+              <span class="pdf-layout-preview__meta-value" data-preview-part="meta-1-value"></span>
+              <span class="pdf-layout-preview__meta-label" data-preview-part="meta-2-label"></span>
+              <span class="pdf-layout-preview__meta-value" data-preview-part="meta-2-value"></span>
+              <span class="pdf-layout-preview__meta-label" data-preview-part="meta-3-label"></span>
+              <span class="pdf-layout-preview__meta-value" data-preview-part="meta-3-value"></span>
+              <span class="pdf-layout-preview__meta-label pdf-layout-preview__small hidden" data-preview-part="meta-4-label"></span>
+              <span class="pdf-layout-preview__meta-value pdf-layout-preview__small hidden" data-preview-part="meta-4-value"></span>
+            </div>
+          </div>
         </div>
       </div>
       <hr class="pdf-layout-preview__letter-rule" data-preview-part="trennlinie" data-region="briefkopf" />
@@ -255,7 +290,7 @@ function createPdfLayoutPreviewMarkupV3(type) {
           </div>
         </div>
       </div>
-    </div>`;
+    </div>`);
 }
 
 export function createPdfLayoutPreviewMarkup(type, variant = 1) {

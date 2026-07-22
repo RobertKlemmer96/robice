@@ -16,6 +16,10 @@ export const PDF_TEMPLATE_DEFAULT = {
     textMuted: '#505050',
     fusszeile: '#646464',
     trennlinie: '#dcdcdc',
+    tabellenkopfText: '#ffffff',
+    tabellenRand: '#e5e7eb',
+    tabellenKoerperText: '#374151',
+    tabellenZebr: '#f3f4f6',
   },
   texte: {
     titel: 'ANGEBOT',
@@ -33,6 +37,8 @@ export const PDF_TEMPLATE_DEFAULT = {
     headerAktiv: false,
     angebotVariant: 1,
     rechnungVariant: 1,
+    klassischTabellenStil: 'grid',
+    klassischTabellenZebr: false,
   },
   angebot: {
     nummerSchema: 'ANG-{YYYY}{MM}{DD}-{NR:3}',
