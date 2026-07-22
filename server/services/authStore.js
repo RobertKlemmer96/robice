@@ -184,6 +184,146 @@ export function listAllUsersWithStats() {
     .all();
 }
 
+export function getTenantDashboard(tenantId, tenantName = '') {
+  const db = getDb();
+  const stats = db
+    .prepare(
+      `SELECT
+        (SELECT COUNT(*) FROM kunden WHERE tenant_id = ?) AS kunden,
+        (SELECT COUNT(*) FROM angebote WHERE tenant_id = ?) AS angebote,
+        (SELECT COUNT(*) FROM rechnungen WHERE tenant_id = ?) AS rechnungen,
+        (SELECT COUNT(*) FROM katalog_posten WHERE tenant_id = ?) AS katalog,
+        (SELECT COUNT(*) FROM angebote WHERE tenant_id = ? AND strftime('%Y-%m', erstellt_am) = strftime('%Y-%m', 'now')) AS angebote_monat,
+        (SELECT COUNT(*) FROM rechnungen WHERE tenant_id = ? AND strftime('%Y-%m', erstellt_am) = strftime('%Y-%m', 'now')) AS rechnungen_monat,
+        (
+          SELECT COUNT(*) FROM rechnungen
+          WHERE tenant_id = ?
+            AND faellig_am IS NOT NULL
+            AND faellig_am != ''
+            AND date(faellig_am) >= date('now')
+            AND date(faellig_am) <= date('now', '+14 days')
+        ) AS faellig_bald,
+        (
+          SELECT MAX(ts) FROM (
+            SELECT aktualisiert_am AS ts FROM angebote WHERE tenant_id = ?
+            UNION ALL
+            SELECT aktualisiert_am AS ts FROM rechnungen WHERE tenant_id = ?
+            UNION ALL
+            SELECT aktualisiert_am AS ts FROM kunden WHERE tenant_id = ?
+          )
+        ) AS last_activity_at`
+    )
+    .get(
+      tenantId,
+      tenantId,
+      tenantId,
+      tenantId,
+      tenantId,
+      tenantId,
+      tenantId,
+      tenantId,
+      tenantId,
+      tenantId
+    );
+
+  const recentAngebote = db
+    .prepare(
+      `SELECT id, angebot_nr, kunde_json, aktualisiert_am, angebotsdatum
+       FROM angebote
+       WHERE tenant_id = ?
+       ORDER BY aktualisiert_am DESC
+       LIMIT 5`
+    )
+    .all(tenantId)
+    .map((row) => {
+      let customer = '';
+      try {
+        customer = JSON.parse(row.kunde_json)?.name || '';
+      } catch {
+        customer = '';
+      }
+      return {
+        id: row.id,
+        type: 'angebot',
+        number: row.angebot_nr,
+        customer,
+        date: row.angebotsdatum || row.aktualisiert_am,
+        updatedAt: row.aktualisiert_am,
+      };
+    });
+
+  const recentRechnungen = db
+    .prepare(
+      `SELECT id, rechnung_nr, kunde_json, aktualisiert_am, rechnungsdatum
+       FROM rechnungen
+       WHERE tenant_id = ?
+       ORDER BY aktualisiert_am DESC
+       LIMIT 5`
+    )
+    .all(tenantId)
+    .map((row) => {
+      let customer = '';
+      try {
+        customer = JSON.parse(row.kunde_json)?.name || '';
+      } catch {
+        customer = '';
+      }
+      return {
+        id: row.id,
+        type: 'rechnung',
+        number: row.rechnung_nr,
+        customer,
+        date: row.rechnungsdatum || row.aktualisiert_am,
+        updatedAt: row.aktualisiert_am,
+      };
+    });
+
+  const recentDocuments = [...recentAngebote, ...recentRechnungen]
+    .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
+    .slice(0, 8);
+
+  return {
+    stats: {
+      kunden: stats?.kunden ?? 0,
+      angebote: stats?.angebote ?? 0,
+      rechnungen: stats?.rechnungen ?? 0,
+      katalog: stats?.katalog ?? 0,
+      angeboteMonat: stats?.angebote_monat ?? 0,
+      rechnungenMonat: stats?.rechnungen_monat ?? 0,
+      faelligBald: stats?.faellig_bald ?? 0,
+    },
+    lastActivityAt: stats?.last_activity_at ?? null,
+    recentDocuments,
+    setupMissing: getFirmaSetupMissing(tenantId, tenantName),
+  };
+}
+
+function getFirmaSetupMissing(tenantId, tenantName = '') {
+  const db = getDb();
+  const row = db
+    .prepare('SELECT template_json FROM pdf_templates WHERE tenant_id = ?')
+    .get(tenantId);
+
+  let firma = {};
+  if (row?.template_json) {
+    try {
+      firma = JSON.parse(row.template_json)?.firma ?? {};
+    } catch {
+      firma = {};
+    }
+  }
+
+  const missing = [];
+  if (!(String(tenantName || firma.name || '').trim())) missing.push('companyName');
+  if (!String(firma.strasse || '').trim()) missing.push('street');
+  if (!String(firma.plzOrt || '').trim()) missing.push('zipCity');
+  if (!String(firma.telefon || '').trim()) missing.push('phone');
+  if (!String(firma.email || '').trim()) missing.push('email');
+  if (!String(firma.ustId || '').trim()) missing.push('vatId');
+  if (!String(firma.iban || '').trim()) missing.push('iban');
+  return missing;
+}
+
 export function getAdminOverviewStats() {
   const db = getDb();
   const row = db

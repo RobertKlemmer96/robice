@@ -5,6 +5,7 @@ import {
   findUserById,
   findUserAuthById,
   getTenantById,
+  getTenantDashboard,
   completeTenantOnboarding,
   hashPassword,
   normalizeRegistrationPlan,
@@ -121,6 +122,21 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
       return;
     }
     res.json(payload);
+  });
+
+  router.get('/dashboard', (req, res) => {
+    const resolved = resolveSessionUser(req.session);
+    if (!resolved) {
+      res.status(401).json({ error: 'Nicht angemeldet.' });
+      return;
+    }
+    try {
+      const tenant = getTenantById(resolved.effectiveTenantId);
+      res.json(getTenantDashboard(resolved.effectiveTenantId, tenant?.name));
+    } catch (err) {
+      console.error('dashboard:', err);
+      res.status(500).json({ error: 'Dashboard konnte nicht geladen werden.' });
+    }
   });
 
   router.patch('/onboarding', (req, res) => {

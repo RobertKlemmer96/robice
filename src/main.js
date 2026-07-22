@@ -7,6 +7,7 @@ import {
   readAdresseFieldPair,
   clearAdresseFieldPair,
 } from './adresse.js';
+import { loadDashboardData, renderDashboard } from './dashboard.js';
 import { formatPlanLabel, normalizeRegistrationPlan, PLAN_LABELS, PLAN_PRICES, PLAN_TAGLINES, REGISTRATION_PLANS } from './plans.js';
 import { formatPostenArt, normalizePostenArt } from './data.js';
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isImpersonating, getImpersonation, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
@@ -189,14 +190,14 @@ function saveBereich(bereich) {
   }
 }
 
-function getDefaultViewForBereich(bereich = state.bereich) {
-  return bereich === 'rechnungen' ? 'rechnung-neu' : 'neu';
+function getDefaultViewForBereich(_bereich = state.bereich) {
+  return 'dashboard';
 }
 
 const state = {
   appStarted: false,
-  view: 'neu',
-  lastNavBarView: 'neu',
+  view: 'dashboard',
+  lastNavBarView: 'dashboard',
   bereich: 'angebote',
   editingKundeId: null,
   detailKundeId: null,
@@ -244,6 +245,8 @@ const els = {
   bereichSwitcherLabel: document.getElementById('bereich-switcher-label'),
   viewRechnungNeu: document.getElementById('view-rechnung-neu'),
   viewRechnungArchiv: document.getElementById('view-rechnung-archiv'),
+  viewDashboard: document.getElementById('view-dashboard'),
+  dashboardRoot: document.getElementById('dashboard-root'),
   viewNeu: document.getElementById('view-neu'),
   viewArchiv: document.getElementById('view-archiv'),
   viewKunden: document.getElementById('view-kunden'),
@@ -2120,6 +2123,7 @@ async function reloadAfterTenantSwitch() {
   else if (state.view === 'katalog') await renderKatalogView();
   else if (state.view === 'admin') await renderAdminView();
   else if (state.view === 'profil') await renderProfilView();
+  else if (state.view === 'dashboard') await renderDashboardView();
 }
 
 function syncImpersonationBanner() {
@@ -2245,6 +2249,7 @@ function syncAdminNav() {
 }
 
 const NAV_VIEW_GROUPS = {
+  dashboard: 'dashboard',
   neu: 'angebote',
   archiv: 'angebote',
   'rechnung-neu': 'rechnungen',
@@ -2372,7 +2377,10 @@ function closeMobileNav() {
 function resolveNavBarView(view) {
   const resolved = resolvePdfVorlageView(view);
   if (resolved === 'profil' || resolved === 'admin') {
-    return state.lastNavBarView ?? (state.bereich === 'rechnungen' ? 'rechnung-neu' : 'neu');
+    return state.lastNavBarView ?? 'dashboard';
+  }
+  if (resolved === 'dashboard') {
+    return 'dashboard';
   }
   if (
     resolved === 'neu' ||
@@ -2385,7 +2393,7 @@ function resolveNavBarView(view) {
   ) {
     return resolved;
   }
-  return state.bereich === 'rechnungen' ? 'rechnung-neu' : 'neu';
+  return 'dashboard';
 }
 
 let navIndicatorEl = null;
@@ -2526,16 +2534,14 @@ function setBereich(bereich, viewAfter) {
 
   if (bereich === 'rechnungen') {
     closeMobileNav();
-    const nextView =
-      viewAfter ?? (isPdfVorlageView(state.view) ? 'pdf-vorlage-rechnung' : 'rechnung-neu');
+    const nextView = viewAfter ?? getDefaultViewForBereich(bereich);
     showView(nextView);
     return;
   }
 
   els.viewRechnungNeu?.classList.add('hidden');
   els.viewRechnungArchiv?.classList.add('hidden');
-  const nextView =
-    viewAfter ?? (isPdfVorlageView(state.view) ? 'pdf-vorlage-angebot' : state.view);
+  const nextView = viewAfter ?? getDefaultViewForBereich(bereich);
   showView(nextView);
 }
 
@@ -2549,13 +2555,7 @@ function bindBereichSwitch() {
     if (!next || next === state.bereich) return;
     closeBereichDropdown();
     closeMobileNav();
-    if (next === 'angebote') {
-      const viewAfter = isPdfVorlageView(state.view) ? 'pdf-vorlage-angebot' : 'neu';
-      setBereich('angebote', viewAfter);
-    } else {
-      const viewAfter = isPdfVorlageView(state.view) ? 'pdf-vorlage-rechnung' : 'rechnung-neu';
-      setBereich('rechnungen', viewAfter);
-    }
+    setBereich(next, 'dashboard');
   };
 
   els.bereichSwitcherMenu?.querySelectorAll('[data-bereich]').forEach((btn) => {
@@ -2657,6 +2657,32 @@ function bindMainNav() {
   });
 }
 
+async function renderDashboardView() {
+  if (!els.dashboardRoot) return;
+  els.dashboardRoot.innerHTML = `<p class="settings-lead">${escapeHtml(t('common.loading'))}</p>`;
+  try {
+    const [data, mailStatus] = await Promise.all([
+      loadDashboardData(),
+      fetchMailStatus().catch(() => null),
+    ]);
+    renderDashboard(els.dashboardRoot, data, { onNavigate: navigateFromDashboard, mailStatus });
+  } catch (err) {
+    els.dashboardRoot.innerHTML = `<p class="settings-status settings-status--error">${escapeHtml(err.message || t('dashboard.loadError'))}</p>`;
+  }
+}
+
+function navigateFromDashboard(view) {
+  if ((view === 'rechnung-neu' || view === 'rechnung-archiv') && state.bereich !== 'rechnungen') {
+    setBereich('rechnungen', view);
+    return;
+  }
+  if ((view === 'neu' || view === 'archiv') && state.bereich !== 'angebote') {
+    setBereich('angebote', view);
+    return;
+  }
+  showView(view);
+}
+
 function showView(view) {
   view = resolvePdfVorlageView(view);
   if (view === 'admin' && !isAdmin()) return;
@@ -2666,6 +2692,7 @@ function showView(view) {
     els.viewArchiv.classList.add('hidden');
     els.viewRechnungNeu.classList.toggle('hidden', view !== 'rechnung-neu');
     els.viewRechnungArchiv.classList.toggle('hidden', view !== 'rechnung-archiv');
+    els.viewDashboard?.classList.toggle('hidden', view !== 'dashboard');
     els.viewKunden.classList.toggle('hidden', view !== 'kunden');
     els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
     syncPdfVorlageViews(view);
@@ -2688,6 +2715,8 @@ function showView(view) {
       renderPdfTemplateView(view, { syncLayoutFromTemplate: true });
     } else if (view === 'profil') {
       renderProfilView();
+    } else if (view === 'dashboard') {
+      void renderDashboardView();
     } else if (view === 'rechnung-neu') {
       updateRechnungPageHeader();
     }
@@ -2700,6 +2729,7 @@ function showView(view) {
   els.rechnungStickyFooter?.classList.add('hidden');
   els.viewNeu.classList.toggle('hidden', view !== 'neu');
   els.viewArchiv.classList.toggle('hidden', view !== 'archiv');
+  els.viewDashboard?.classList.toggle('hidden', view !== 'dashboard');
   els.viewKunden.classList.toggle('hidden', view !== 'kunden');
   els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
   syncPdfVorlageViews(view);
@@ -2726,6 +2756,9 @@ function showView(view) {
   } else if (view === 'profil') {
     els.angebotStickyFooter.classList.add('hidden');
     renderProfilView();
+  } else if (view === 'dashboard') {
+    els.angebotStickyFooter.classList.add('hidden');
+    void renderDashboardView();
   } else {
     els.angebotStickyFooter.classList.remove('hidden');
     updatePageHeader();
@@ -3256,15 +3289,17 @@ async function renderArchiv() {
           <div class="archiv-info" role="button" tabindex="0" aria-label="Angebot ${escapeHtml(a.angebotNr)} bearbeiten">
             <div class="archiv-top">
               <strong>${a.angebotNr}</strong>
-              <span class="archiv-betrag">${formatEuro(brutto)}</span>
             </div>
             <p class="archiv-kunde">${kunde}</p>
             <p class="archiv-meta">Zuletzt bearbeitet: ${datum} · ${posten.length} Posten</p>
           </div>
-          <div class="archiv-actions">
-            <button type="button" class="btn btn-ghost btn-sm" data-action="rechnung" data-id="${a.id}">Rechnung erstellen</button>
-            <button type="button" class="btn btn-ghost btn-sm" data-action="pdf" data-id="${a.id}">PDF ansehen</button>
-            ${deleteIconButton(t('common.delete'), `data-action="delete" data-id="${a.id}"`)}
+          <div class="archiv-aside">
+            <span class="archiv-betrag">${formatEuro(brutto)}</span>
+            <div class="archiv-actions">
+              <button type="button" class="btn btn-ghost btn-sm" data-action="rechnung" data-id="${a.id}">Rechnung erstellen</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="pdf" data-id="${a.id}">PDF ansehen</button>
+              ${deleteIconButton(t('common.delete'), `data-action="delete" data-id="${a.id}"`)}
+            </div>
           </div>
         </article>
       `;
@@ -3313,15 +3348,17 @@ async function renderRechnungArchiv() {
           <div class="archiv-info" role="button" tabindex="0" aria-label="Rechnung ${escapeHtml(r.rechnungNr)} bearbeiten">
             <div class="archiv-top">
               <strong>${r.rechnungNr}</strong>
-              <span class="archiv-betrag">${formatEuro(brutto)}</span>
             </div>
             <p class="archiv-kunde">${kunde}</p>
             ${angebotHint}
             <p class="archiv-meta">Zuletzt bearbeitet: ${datum} · ${posten.length} Posten</p>
           </div>
-          <div class="archiv-actions">
-            <button type="button" class="btn btn-ghost btn-sm" data-action="pdf" data-id="${r.id}">PDF ansehen</button>
-            ${deleteIconButton(t('common.delete'), `data-action="delete" data-id="${r.id}"`)}
+          <div class="archiv-aside">
+            <span class="archiv-betrag">${formatEuro(brutto)}</span>
+            <div class="archiv-actions">
+              <button type="button" class="btn btn-ghost btn-sm" data-action="pdf" data-id="${r.id}">PDF ansehen</button>
+              ${deleteIconButton(t('common.delete'), `data-action="delete" data-id="${r.id}"`)}
+            </div>
           </div>
         </article>
       `;
@@ -4910,6 +4947,7 @@ async function refreshLocaleUi() {
   else if (state.view === 'rechnung-archiv') await renderRechnungArchiv();
   else if (state.view === 'kunden') await renderKundenView();
   else if (state.view === 'katalog') await renderKatalogView();
+  else if (state.view === 'dashboard') await renderDashboardView();
   else if (state.detailKundeId) await refreshKundenDetail();
 }
 

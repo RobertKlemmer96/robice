@@ -503,6 +503,24 @@
 
           <nav class="app-nav app-sidebar__nav" id="main-nav" data-i18n-aria-label="nav.main" aria-label="Hauptnavigation">
             <ul class="app-nav__list">
+              <li class="app-nav__group app-nav__group--solo is-open" data-nav-group="dashboard">
+                <button
+                  type="button"
+                  class="app-nav__trigger app-nav__trigger--solo"
+                  data-nav-view="dashboard"
+                  data-i18n-title="nav.dashboard"
+                >
+                  <span class="app-nav__trigger-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                      <rect x="3" y="3" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.75"/>
+                      <rect x="13" y="3" width="8" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.75"/>
+                      <rect x="3" y="13" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.75"/>
+                      <rect x="13" y="10" width="8" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.75"/>
+                    </svg>
+                  </span>
+                  <span class="app-nav__trigger-label" data-i18n="nav.dashboard">Dashboard</span>
+                </button>
+              </li>
               <li class="app-nav__group is-open" data-nav-group="angebote">
                 <button
                   type="button"
@@ -748,6 +766,11 @@
           </button>
 
           <div class="app-content">
+      <div id="view-dashboard" class="hidden">
+        <main class="main main--dashboard">
+          <div id="dashboard-root" class="dashboard-root" aria-live="polite"></div>
+        </main>
+      </div>
       <div id="view-rechnung-neu" class="hidden">
         <main class="main">
           <section class="card angebot-kopf" id="rechnung-kopf">
@@ -974,7 +997,7 @@
         </main>
       </div>
 
-      <div id="view-neu">
+      <div id="view-neu" class="hidden">
         <main class="main">
           <section class="card angebot-kopf" id="angebot-kopf">
             <button
