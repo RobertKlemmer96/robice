@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="KlemDesk">
   <defs>
-    <linearGradient id="klemdesk-favicon-bg" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+    <linearGradient id="klemdesk-logo-bg" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#7dd3fc" />
       <stop offset="42%" stop-color="#58a6ff" />
       <stop offset="100%" stop-color="#4f46e5" />
     </linearGradient>
-    <linearGradient id="klemdesk-favicon-shine" x1="6" y1="4" x2="22" y2="18" gradientUnits="userSpaceOnUse">
+    <linearGradient id="klemdesk-logo-shine" x1="6" y1="4" x2="22" y2="18" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#fff" stop-opacity="0.55" />
       <stop offset="100%" stop-color="#fff" stop-opacity="0" />
     </linearGradient>
-    <filter id="klemdesk-favicon-glow" x="-30%" y="-30%" width="160%" height="160%">
+    <filter id="klemdesk-logo-glow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#2563eb" flood-opacity="0.45" />
     </filter>
   </defs>
-  <g filter="url(#klemdesk-favicon-glow)">
-    <rect width="32" height="32" rx="9" fill="url(#klemdesk-favicon-bg)" />
-    <rect width="32" height="32" rx="9" fill="url(#klemdesk-favicon-shine)" />
+  <g filter="url(#klemdesk-logo-glow)">
+    <rect width="32" height="32" rx="9" fill="url(#klemdesk-logo-bg)" />
+    <rect width="32" height="32" rx="9" fill="url(#klemdesk-logo-shine)" />
     <rect
       x="1"
       y="1"

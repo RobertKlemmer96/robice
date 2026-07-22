@@ -4290,8 +4290,8 @@ function showLogin(mode = 'login') {
   els.loginScreen.classList.remove('hidden');
   els.app.classList.add('hidden');
   setAuthTab(mode);
-  els.loginUser.value = 'admin';
-  els.loginPass.value = 'admin';
+  els.loginUser.value = '';
+  els.loginPass.value = '';
 }
 
 async function restoreLoginView() {

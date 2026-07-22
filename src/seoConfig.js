@@ -2,7 +2,7 @@
 export const SEO_CONFIG = {
   siteUrl: 'https://robice.onrender.com',
   siteName: 'KlemDesk',
-  ogImagePath: '/favicon.svg',
+  ogImagePath: '/klemdesk-logo.svg',
 };
 
 export function getAbsoluteUrl(path = '/') {

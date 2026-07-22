@@ -26,14 +26,14 @@
     />
     <meta property="og:locale" content="de_DE" />
     <meta property="og:locale:alternate" content="en_GB" />
-    <meta property="og:image" content="https://robice.onrender.com/favicon.svg" />
+    <meta property="og:image" content="https://robice.onrender.com/klemdesk-logo.svg" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="KlemDesk – Angebote &amp; Rechnungen als PDF" />
     <meta
       name="twitter:description"
       content="KlemDesk: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister."
     />
-    <meta name="twitter:image" content="https://robice.onrender.com/favicon.svg" />
+    <meta name="twitter:image" content="https://robice.onrender.com/klemdesk-logo.svg" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="theme-color" content="#121820" media="(prefers-color-scheme: dark)" />
@@ -62,11 +62,8 @@
       <header class="landing-header">
         <div class="landing-header__inner">
           <div class="landing-brand">
-            <span class="landing-brand__mark" aria-hidden="true">Kd</span>
-            <span class="landing-brand__text">
-              <strong class="landing-brand__name">KlemDesk</strong>
-              <span class="landing-brand__tag" data-i18n="landing.tagline">Angebote &amp; Rechnungen</span>
-            </span>
+            <img src="/klemdesk-logo.svg" alt="" class="brand-logo" width="40" height="40" decoding="async" />
+            <strong class="landing-brand__name">KlemDesk</strong>
           </div>
           <div class="landing-header__actions">
             <div class="lang-switcher" id="landing-lang-switcher-wrap">
@@ -420,6 +417,10 @@
           </div>
         </div>
         <div class="login-card">
+          <div class="login-brand">
+            <img src="/klemdesk-logo.svg" alt="" class="brand-logo brand-logo--auth" width="52" height="52" decoding="async" />
+            <strong class="login-brand__name">KlemDesk</strong>
+          </div>
           <div class="login-header">
             <h1 id="auth-title" data-i18n="auth.login">Anmelden</h1>
             <div class="login-tabs" role="tablist">
@@ -430,11 +431,11 @@
           <form id="login-form" class="login-form">
             <label>
               <span data-i18n="auth.emailOrUser">E-Mail oder Benutzername</span>
-              <input type="text" id="login-user" autocomplete="username" value="admin" required />
+              <input type="text" id="login-user" autocomplete="username" required />
             </label>
             <label>
               <span data-i18n="auth.password">Passwort</span>
-              <input type="password" id="login-pass" autocomplete="current-password" value="admin" required />
+              <input type="password" id="login-pass" autocomplete="current-password" required />
             </label>
             <p id="login-error" class="login-error hidden" data-i18n="auth.loginFailed">Anmeldung fehlgeschlagen.</p>
             <button type="submit" class="btn btn-primary btn-full" data-i18n="auth.signIn">Einloggen</button>
