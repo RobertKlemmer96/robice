@@ -1,12 +1,12 @@
 /**
- * FAQ für KlemDesk — bei häufigen Nutzerfragen ergänzen.
+ * FAQ für Quotavo — bei häufigen Nutzerfragen ergänzen.
  */
 export const FAQ = {
   lastUpdated: '22.07.2026',
-  intro: 'Antworten auf die häufigsten Fragen zur Nutzung von KlemDesk.',
+  intro: 'Antworten auf die häufigsten Fragen zur Nutzung von Quotavo.',
   items: [
     {
-      q: 'Ist KlemDesk kostenlos?',
+      q: 'Ist Quotavo kostenlos?',
       a: 'Aktuell ist der Einstiegstarif kostenlos nutzbar. Preisstufen für erweiterte Funktionen sind auf der Startseite beschrieben; Änderungen werden rechtzeitig angekündigt.',
     },
     {
@@ -34,7 +34,7 @@ export const FAQ = {
       a: 'Ja, wenn der Versand serverseitig eingerichtet ist (SMTP). Die Kunden-E-Mail aus dem Formular ist der Empfänger; eine Kopie kann an Ihre Anmelde-E-Mail gehen.',
     },
     {
-      q: 'Funktioniert KlemDesk auf dem Handy?',
+      q: 'Funktioniert Quotavo auf dem Handy?',
       a: 'Ja. Die Oberfläche ist responsiv: kompakte Navigation, Formulare und Archivlisten sind für kleinere Bildschirme optimiert.',
     },
     {
@@ -51,7 +51,7 @@ export const FAQ = {
     },
     {
       q: 'Was passiert bei Updates?',
-      a: 'KlemDesk befindet sich in aktiver Entwicklung. Als Nächstes sind Zahlungsstatus und Übersichten geplant — Details in der Roadmap. Bestehende Daten bleiben beim Update erhalten.',
+      a: 'Quotavo befindet sich in aktiver Entwicklung. Als Nächstes sind Zahlungsstatus und Übersichten geplant — Details in der Roadmap. Bestehende Daten bleiben beim Update erhalten.',
     },
   ],
 };

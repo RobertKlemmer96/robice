@@ -29,3 +29,9 @@ export async function deleteAngebot(id) {
 export function createAngebotId() {
   return `ang_${Date.now()}`;
 }
+
+export async function fetchConfirmationLink(id) {
+  return apiFetch(`${API_BASE}/${encodeURIComponent(id)}/confirmation-link`, {
+    method: 'POST',
+  });
+}

@@ -4,7 +4,8 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
-const dbPath = process.env.DATABASE_PATH || path.join(root, 'data', 'app.db');
+const dataDir = process.env.DATA_DIR || path.join(root, 'data');
+const dbPath = process.env.DATABASE_PATH || path.join(dataDir, 'app.db');
 
 if (!fs.existsSync(dbPath)) {
   console.error('Keine Datenbank gefunden:', dbPath);

@@ -1,7 +1,7 @@
 import { applySeoMeta as applySeoMetaTags } from './seo.js';
 import { mountAllFlags, mountFlag } from './flags.js';
 
-const LOCALE_KEY = 'klem_desk_locale';
+const LOCALE_KEY = 'quotavo_locale';
 const DEFAULT_LOCALE = 'de';
 
 export const LOCALES = {
@@ -11,10 +11,10 @@ export const LOCALES = {
 
 const MESSAGES = {
   de: {
-    'meta.title': 'KlemDesk',
+    'meta.title': 'Quotavo',
     'meta.description':
-      'KlemDesk: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister.',
-    'meta.ogTitle': 'KlemDesk – Angebote & Rechnungen als PDF',
+      'Quotavo: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister.',
+    'meta.ogTitle': 'Quotavo – Angebote & Rechnungen als PDF',
     'meta.keywords':
       'Angebote, Rechnungen, PDF, Angebot erstellen, Rechnung schreiben, Kundenverwaltung, Dienstleister, Kleinunternehmen',
     'meta.author': 'Robert Klemmer',
@@ -63,7 +63,7 @@ const MESSAGES = {
     'bereich.choose': 'Bereich wählen',
     'landing.alpha': 'Alpha-Vorschau',
     'landing.alphaText':
-      'KlemDesk befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können sich noch ändern.',
+      'Quotavo befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können sich noch ändern.',
     'landing.tagline': 'Angebote & Rechnungen',
     'landing.login': 'Anmelden',
     'landing.startFree': 'Kostenlos starten',
@@ -71,7 +71,7 @@ const MESSAGES = {
     'landing.heroTitle': 'Angebote und Rechnungen erstellen —',
     'landing.heroAccent': 'professionell als PDF',
     'landing.heroLead':
-      'KlemDesk bündelt Kunden, Katalog und Dokumente in einer Oberfläche. Registrieren, einloggen und in wenigen Minuten das erste Angebot versenden.',
+      'Quotavo bündelt Kunden, Katalog und Dokumente in einer Oberfläche. Registrieren, einloggen und in wenigen Minuten das erste Angebot versenden.',
     'landing.registerFree': 'Jetzt kostenlos registrieren',
     'landing.hasAccount': 'Bereits Konto? Anmelden',
     'landing.badgeFree': '100 % kostenlos nutzbar',
@@ -80,7 +80,7 @@ const MESSAGES = {
     'landing.featuresTitle': 'Alles für den Büroalltag',
     'landing.featuresLead': 'Von der Kundenanfrage bis zum PDF — ohne Medienbruch.',
     'landing.ctaTitle': 'Bereit für das erste Angebot?',
-    'landing.ctaLead': 'Registrierung dauert unter einer Minute. KlemDesk ist aktuell kostenlos nutzbar.',
+    'landing.ctaLead': 'Registrierung dauert unter einer Minute. Quotavo ist aktuell kostenlos nutzbar.',
     'auth.backHome': '← Zur Startseite',
     'auth.login': 'Anmelden',
     'auth.register': 'Registrieren',
@@ -148,7 +148,7 @@ const MESSAGES = {
     'invoice.fromOffer': 'Übernommen aus Angebot {nr}',
     'objektType.service': 'Einsatzort',
     'objektType.billing': 'Rechnungsadresse',
-    'settings.allUsers': 'Alle registrierten Nutzer und Mandanten auf KlemDesk.',
+    'settings.allUsers': 'Alle registrierten Nutzer und Mandanten auf Quotavo.',
     'form.quoteNumber': 'Angebotsnummer',
     'form.quoteDate': 'Angebotsdatum',
     'form.validUntil': 'Gültig bis',
@@ -374,10 +374,10 @@ const MESSAGES = {
     'pdfTpl.colText': 'Text Spalte {n}',
   },
   en: {
-    'meta.title': 'KlemDesk',
+    'meta.title': 'Quotavo',
     'meta.description':
-      'KlemDesk: Create quotes and invoices online, manage customers and your service catalog, and export professional PDFs — free for service businesses.',
-    'meta.ogTitle': 'KlemDesk – Quotes & Invoices as PDF',
+      'Quotavo: Create quotes and invoices online, manage customers and your service catalog, and export professional PDFs — free for service businesses.',
+    'meta.ogTitle': 'Quotavo – Quotes & Invoices as PDF',
     'meta.keywords':
       'quotes, invoices, PDF, quote software, invoicing, customer management, service business, freelancers',
     'meta.author': 'Robert Klemmer',
@@ -426,7 +426,7 @@ const MESSAGES = {
     'bereich.choose': 'Choose section',
     'landing.alpha': 'Alpha preview',
     'landing.alphaText':
-      'KlemDesk is under active development — features, content, and pricing may still change.',
+      'Quotavo is under active development — features, content, and pricing may still change.',
     'landing.tagline': 'Quotes & invoices',
     'landing.login': 'Log in',
     'landing.startFree': 'Start for free',
@@ -434,7 +434,7 @@ const MESSAGES = {
     'landing.heroTitle': 'Create quotes and invoices —',
     'landing.heroAccent': 'professional PDFs',
     'landing.heroLead':
-      'KlemDesk brings customers, catalog, and documents into one interface. Sign up, log in, and send your first quote in minutes.',
+      'Quotavo brings customers, catalog, and documents into one interface. Sign up, log in, and send your first quote in minutes.',
     'landing.registerFree': 'Register for free',
     'landing.hasAccount': 'Already have an account? Log in',
     'landing.badgeFree': '100% free to use',
@@ -443,7 +443,7 @@ const MESSAGES = {
     'landing.featuresTitle': 'Everything for daily office work',
     'landing.featuresLead': 'From customer inquiry to PDF — without media breaks.',
     'landing.ctaTitle': 'Ready for your first quote?',
-    'landing.ctaLead': 'Registration takes under a minute. KlemDesk is currently free to use.',
+    'landing.ctaLead': 'Registration takes under a minute. Quotavo is currently free to use.',
     'auth.backHome': '← Back to home',
     'auth.login': 'Log in',
     'auth.register': 'Register',
@@ -511,7 +511,7 @@ const MESSAGES = {
     'invoice.fromOffer': 'Taken from quote {nr}',
     'objektType.service': 'Service location',
     'objektType.billing': 'Billing address',
-    'settings.allUsers': 'All registered users and tenants on KlemDesk.',
+    'settings.allUsers': 'All registered users and tenants on Quotavo.',
     'form.quoteNumber': 'Quote number',
     'form.quoteDate': 'Quote date',
     'form.validUntil': 'Valid until',

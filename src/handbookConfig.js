@@ -1,10 +1,10 @@
 /**
- * Feature-Handbuch für KlemDesk — bei Prozessänderungen aktualisieren.
+ * Feature-Handbuch für Quotavo — bei Prozessänderungen aktualisieren.
  */
 export const HANDBOOK = {
   lastUpdated: '22.07.2026',
   intro:
-    'Dieses Handbuch beschreibt alle wesentlichen Abläufe in KlemDesk — von der Registrierung bis zum PDF-Versand. Die App ist für Dienstleister gedacht: Angebote, Rechnungen, Katalog und Kunden ohne Voll-CRM.',
+    'Dieses Handbuch beschreibt alle wesentlichen Abläufe in Quotavo — von der Registrierung bis zum PDF-Versand. Die App ist für Dienstleister gedacht: Angebote, Rechnungen, Katalog und Kunden ohne Voll-CRM.',
   sections: [
     {
       title: 'Registrierung & Anmeldung',

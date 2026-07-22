@@ -27,5 +27,25 @@ export function createAngeboteProzessRouter() {
     }
   });
 
+  router.post('/:id/confirmation-link', requireAuth, (req, res) => {
+    try {
+      const angebot = angeboteRepo.getAngebot(req.tenantId, req.params.id);
+      if (!angebot) {
+        res.status(404).json({ error: 'Angebot nicht gefunden.' });
+        return;
+      }
+      const token = angeboteRepo.ensureConfirmationToken(req.tenantId, req.params.id);
+      const origin = String(req.headers.origin || '').trim();
+      const baseUrl = origin || `${req.protocol}://${req.get('host')}`;
+      res.json({
+        token,
+        url: `${baseUrl.replace(/\/$/, '')}/angebot/${token}`,
+      });
+    } catch (err) {
+      console.error('confirmation-link:', err);
+      res.status(500).json({ error: 'Bestätigungslink konnte nicht erzeugt werden.' });
+    }
+  });
+
   return router;
 }

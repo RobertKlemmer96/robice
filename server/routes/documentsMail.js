@@ -35,11 +35,8 @@ export function createDocumentsMailRouter() {
       }
 
       const user = findUserById(req.userId);
-      const bcc = String(user?.email || '').trim().toLowerCase();
-      if (!bcc || !EMAIL_RE.test(bcc)) {
-        res.status(400).json({ error: 'Profil-E-Mail für die BCC-Kopie fehlt.' });
-        return;
-      }
+      const bccCandidate = String(user?.email || '').trim().toLowerCase();
+      const bcc = EMAIL_RE.test(bccCandidate) ? bccCandidate : undefined;
 
       let pdfBuffer;
       try {
@@ -66,7 +63,7 @@ export function createDocumentsMailRouter() {
       res.json({
         ok: true,
         to: recipient,
-        bcc,
+        bcc: bcc || null,
         previewUrl: mailResult.previewUrl,
       });
     } catch (err) {

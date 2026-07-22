@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS angebote (
   angebotsdatum TEXT,
   gueltig_bis TEXT,
   prozess_status TEXT NOT NULL DEFAULT 'gespeichert',
+  confirmation_token TEXT,
+  confirmation_responded_at TEXT,
   kunde_json TEXT NOT NULL,
   posten_json TEXT NOT NULL
 );

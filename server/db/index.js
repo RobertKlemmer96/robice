@@ -132,6 +132,15 @@ function runMigrations(database) {
   if (!angebotNames.has('prozess_status')) {
     database.exec(`ALTER TABLE angebote ADD COLUMN prozess_status TEXT NOT NULL DEFAULT 'gespeichert'`);
   }
+  if (!angebotNames.has('confirmation_token')) {
+    database.exec(`ALTER TABLE angebote ADD COLUMN confirmation_token TEXT`);
+  }
+  if (!angebotNames.has('confirmation_responded_at')) {
+    database.exec(`ALTER TABLE angebote ADD COLUMN confirmation_responded_at TEXT`);
+  }
+  database.exec(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_angebote_confirmation_token ON angebote(confirmation_token) WHERE confirmation_token IS NOT NULL`
+  );
 
   const tenantCols = database.prepare('PRAGMA table_info(tenants)').all();
   const tenantNames = new Set(tenantCols.map((c) => c.name));

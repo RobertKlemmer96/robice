@@ -1,5 +1,5 @@
 /**
- * Produkt-Roadmap für KlemDesk — bei Meilenstein-Updates anpassen.
+ * Produkt-Roadmap für Quotavo — bei Meilenstein-Updates anpassen.
  */
 export const ROADMAP = {
   lastUpdated: '22.07.2026',

@@ -8,7 +8,12 @@ import {
   clearAdresseFieldPair,
 } from './adresse.js';
 import { loadDashboardData, renderDashboard } from './dashboard.js';
-import { renderProzesseView } from './prozesse.js';
+import { renderProzesseView, updateAngebotProzessStatus } from './prozesse.js';
+import {
+  angebotProzessStatusBadgeHtml,
+  angebotProzessStatusLabelKey,
+  normalizeAngebotProzessStatus,
+} from './angebotProzessStatus.js';
 import { formatPlanLabel, normalizeRegistrationPlan, PLAN_LABELS, PLAN_PRICES, PLAN_TAGLINES, REGISTRATION_PLANS } from './plans.js';
 import { formatPostenArt, normalizePostenArt } from './data.js';
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isImpersonating, getImpersonation, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
@@ -31,7 +36,9 @@ import {
   saveAngebot,
   deleteAngebot,
   createAngebotId,
+  fetchConfirmationLink,
 } from './angebote.js';
+import { initAngebotConfirm, parseAngebotConfirmTokenFromPath } from './angebotConfirm.js';
 import {
   getAllKunden,
   getKunde,
@@ -179,7 +186,7 @@ function createRechnungMeta() {
 
 let pendingRegistrationPlan = 'free';
 
-const BEREICH_STORAGE_KEY = 'klemdesk_bereich';
+const BEREICH_STORAGE_KEY = 'quotavo_bereich';
 
 function loadSavedBereich() {
   return localStorage.getItem(BEREICH_STORAGE_KEY) === 'rechnungen' ? 'rechnungen' : 'angebote';
@@ -929,10 +936,17 @@ function renderKundenAngeboteListHtml(angebote) {
       const posten = resolvePostenDetails(a.posten);
       const { brutto } = berechneSummenAusPosten(posten);
       const datum = formatDatum(new Date(a.aktualisiertAm || a.erstelltAm));
+      const statusBadge = angebotProzessStatusBadgeHtml(
+        a.prozessStatus,
+        escapeHtml(t(angebotProzessStatusLabelKey(a.prozessStatus)))
+      );
       return `
       <li class="kunden-dokumente__row">
         <div class="kunden-dokumente__info">
-          <span class="kunden-dokumente__nr">${escapeHtml(a.angebotNr)}</span>
+          <span class="kunden-dokumente__nr-row">
+            <span class="kunden-dokumente__nr">${escapeHtml(a.angebotNr)}</span>
+            ${statusBadge}
+          </span>
           <span class="kunden-dokumente__meta">${escapeHtml(datum)} · ${formatEuro(brutto)} · ${posten.length} Posten</span>
         </div>
         <span class="kunden-dokumente__actions">
@@ -999,7 +1013,13 @@ function renderKundenDokumenteHtml(angebote, rechnungen) {
     .map(
       (a) => `
       <li class="kunden-dokumente__row">
-        <span class="kunden-dokumente__nr">${a.angebotNr}</span>
+        <span class="kunden-dokumente__nr-row">
+          <span class="kunden-dokumente__nr">${escapeHtml(a.angebotNr)}</span>
+          ${angebotProzessStatusBadgeHtml(
+            a.prozessStatus,
+            escapeHtml(t(angebotProzessStatusLabelKey(a.prozessStatus)))
+          )}
+        </span>
         <span class="kunden-dokumente__actions">
           <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-pdf" data-id="${a.id}">PDF</button>
           <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-edit" data-id="${a.id}">Öffnen</button>
@@ -2268,7 +2288,7 @@ const NAV_VIEW_GROUPS = {
   'pdf-vorlage-rechnung': 'einstellungen',
 };
 
-const SIDEBAR_COLLAPSED_KEY = 'klemdesk.sidebarCollapsed';
+const SIDEBAR_COLLAPSED_KEY = 'quotavo.sidebarCollapsed';
 
 function isDesktopSidebarLayout() {
   return window.matchMedia('(min-width: 921px)').matches;
@@ -3510,7 +3530,7 @@ function mountStaticActionIcons() {
   mountIconButton(els.katalogNeuBtn, {
     type: 'add',
     label: t('form.newCatalogItem'),
-    variant: 'ghost',
+    variant: 'primary',
   });
   mountIconButton(els.kundenNeuBtn, {
     type: 'add',
@@ -3937,6 +3957,12 @@ async function openDocumentPreviewModal(kind) {
 
   documentPreviewKind = previewData.type;
   documentPreviewData = previewData;
+  if (previewData.type === 'angebot' && !state.angebot.editingId && previewData.document?.id) {
+    state.angebot.editingId = previewData.document.id;
+  }
+  if (previewData.type === 'rechnung' && !state.rechnung.editingId && previewData.document?.id) {
+    state.rechnung.editingId = previewData.document.id;
+  }
   els.documentPreviewContent.innerHTML = '';
 
   els.documentPreviewModal.classList.remove('hidden');
@@ -4001,7 +4027,8 @@ async function openDocumentPreviewPdfTab() {
     if (type === 'rechnung') {
       await openRechnungPdfPreview(document, posten);
     } else {
-      openPdfPreview(document, posten);
+      const confirmationUrl = document.id ? await resolveAngebotConfirmationUrl(document.id) : '';
+      openPdfPreview(document, posten, { confirmationUrl });
     }
   } catch (err) {
     alert(`PDF konnte nicht geöffnet werden: ${err.message}`);
@@ -4020,12 +4047,14 @@ function closeDocumentPreviewModal() {
 async function sendDocumentFromPreviewModal() {
   const kind = documentPreviewKind;
   if (!kind) return;
-  closeDocumentPreviewModal();
+
+  let sent = false;
   if (kind === 'rechnung') {
-    await speichernUndRechnungPdfAnKundenSenden();
+    sent = await speichernUndRechnungPdfAnKundenSenden();
   } else {
-    await speichernUndPdfAnKundenSenden();
+    sent = await speichernUndPdfAnKundenSenden();
   }
+  if (sent) closeDocumentPreviewModal();
 }
 
 function arrayBufferToBase64(buffer) {
@@ -4073,20 +4102,44 @@ async function ensureDocumentMailReady(selectedKundeId, formEmailEl) {
   return kundeEmail;
 }
 
+async function resolveAngebotConfirmationUrl(angebotId) {
+  if (!angebotId) return '';
+  try {
+    const { url } = await fetchConfirmationLink(angebotId);
+    return url || '';
+  } catch {
+    return '';
+  }
+}
+
 async function sendAngebotPdfByMail(angebot, posten) {
   const kundeEmail = await ensureDocumentMailReady(state.angebot.selectedKundeId, els.kundeEmail);
 
   const firmaName = withProfileFirma(getPdfTemplate(), getSession()).firma?.name || 'Ihr Unternehmen';
-  const { filename, content } = getAngebotPdfAttachment(angebot, posten);
+  const confirmationUrl = await resolveAngebotConfirmationUrl(angebot.id);
+  const { filename, content } = getAngebotPdfAttachment(angebot, posten, { confirmationUrl });
+  const mailText = confirmationUrl
+    ? `Guten Tag,\n\nanbei erhalten Sie unser Angebot ${angebot.angebotNr}.\n\nOnline bestätigen oder ablehnen:\n${confirmationUrl}\n\nMit freundlichen Grüßen\n${firmaName}`
+    : `Guten Tag,\n\nanbei erhalten Sie unser Angebot ${angebot.angebotNr}.\n\nMit freundlichen Grüßen\n${firmaName}`;
 
   const sendResult = await sendDocumentPdf({
     type: 'angebot',
     to: kundeEmail,
     subject: `Angebot ${angebot.angebotNr} – ${firmaName}`,
-    text: `Guten Tag,\n\nanbei erhalten Sie unser Angebot ${angebot.angebotNr}.\n\nMit freundlichen Grüßen\n${firmaName}`,
+    text: mailText,
     filename,
     pdfBase64: arrayBufferToBase64(content),
   });
+
+  try {
+    const current = await getAngebot(angebot.id);
+    const currentStatus = normalizeAngebotProzessStatus(current?.prozessStatus);
+    if (currentStatus !== 'bestaetigt' && currentStatus !== 'abgelehnt') {
+      await updateAngebotProzessStatus(angebot.id, 'versendet');
+    }
+  } catch {
+    /* Status-Update optional */
+  }
 
   return { kundeEmail, sendResult };
 }
@@ -4099,7 +4152,15 @@ function formatDocumentSendSuccess(kind, kundeEmail, sendResult) {
     return `${docLabel} im Test-Modus erstellt — keine echte E-Mail im Postfach.\n\nVorschau im neuen Tab geöffnet.\nGeplanter Empfänger: ${kundeEmail}`;
   }
 
-  return `${docLabel} wurde an ${kundeEmail} gesendet. Eine Kopie geht an ${getSession()?.user?.email}.`;
+  const userEmail = getSession()?.user?.email?.trim();
+  const copyNote =
+    sendResult?.bcc && userEmail
+      ? ` Eine Kopie geht an ${userEmail}.`
+      : userEmail && !sendResult?.bcc
+        ? `\n\nHinweis: Keine Kopie — Profil-E-Mail (${userEmail}) ist keine gültige Adresse.`
+        : '';
+
+  return `${docLabel} wurde an ${kundeEmail} gesendet.${copyNote}`;
 }
 
 async function refreshMailSendHints() {
@@ -4170,30 +4231,38 @@ async function speichernUndPdf() {
   try {
     const result = await persistAngebotFromForm();
     if (!result) return;
-    downloadPdf(result.angebot, result.posten);
+    const confirmationUrl = await resolveAngebotConfirmationUrl(result.angebot.id);
+    downloadPdf(result.angebot, result.posten, { confirmationUrl });
   } catch (err) {
     alert(`Speichern fehlgeschlagen: ${err.message}`);
   } finally {
+    setAngebotFooterBusy(false);
     angebotPostenEditor.render();
   }
 }
 
 async function speichernUndPdfAnKundenSenden() {
   setAngebotFooterBusy(true);
+  let sent = false;
   try {
     await ensureDocumentMailReady(state.angebot.selectedKundeId, els.kundeEmail);
     const result = await persistAngebotFromForm();
     if (!result) {
       alert(getPersistIncompleteMessage('angebot'));
-      return;
+      return false;
     }
     const { kundeEmail, sendResult } = await sendAngebotPdfByMail(result.angebot, result.posten);
     alert(formatDocumentSendSuccess('angebot', kundeEmail, sendResult));
+    const saved = await getAngebot(result.angebot.id);
+    if (saved) await loadAngebotIntoForm(saved);
+    sent = true;
   } catch (err) {
     alert(`Versand fehlgeschlagen: ${err.message}`);
   } finally {
+    setAngebotFooterBusy(false);
     angebotPostenEditor.render();
   }
+  return sent;
 }
 
 async function speichernRechnung() {
@@ -4236,20 +4305,26 @@ async function speichernUndRechnungPdf() {
 
 async function speichernUndRechnungPdfAnKundenSenden() {
   setRechnungFooterBusy(true);
+  let sent = false;
   try {
     await ensureDocumentMailReady(state.rechnung.selectedKundeId, els.rechnungKundeEmail);
     const result = await persistRechnungFromForm();
     if (!result) {
       alert(getPersistIncompleteMessage('rechnung'));
-      return;
+      return false;
     }
     const { kundeEmail, sendResult } = await sendRechnungPdfByMail(result.rechnung, result.posten);
     alert(formatDocumentSendSuccess('rechnung', kundeEmail, sendResult));
+    const saved = await getRechnung(result.rechnung.id);
+    if (saved) await loadRechnungIntoForm(saved);
+    sent = true;
   } catch (err) {
     alert(`Versand fehlgeschlagen: ${err.message}`);
   } finally {
+    setRechnungFooterBusy(false);
     rechnungPostenEditor.render();
   }
+  return sent;
 }
 
 let appFlowGeneration = 0;
@@ -4266,6 +4341,7 @@ function isActiveAppFlow(flowId) {
 function showLanding() {
   invalidateAppFlow();
   pendingRegistrationPlan = 'free';
+  document.getElementById('angebot-confirm-screen')?.classList.add('hidden');
   els.landing?.classList.remove('hidden');
   els.loginScreen.classList.add('hidden');
   els.app.classList.add('hidden');
@@ -4862,6 +4938,16 @@ function bindAppEvents() {
     e.preventDefault();
     info.click();
   });
+
+  if (!document.documentElement.dataset.prozesseRefreshBound) {
+    document.documentElement.dataset.prozesseRefreshBound = '1';
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      if (state.view === 'prozesse') void renderProzesse();
+      else if (state.view === 'kunden') void renderKundenView();
+      else if (state.detailKundeId) void refreshKundenDetail();
+    });
+  }
 }
 
 function bindAuthEvents() {
@@ -5002,6 +5088,13 @@ async function bootstrap() {
     },
   });
   bindAuthEvents();
+
+  const confirmToken = parseAngebotConfirmTokenFromPath();
+  if (confirmToken) {
+    await initAngebotConfirm(confirmToken, { showLanding });
+    return;
+  }
+
   const session = await refreshSession();
   if (session) await showApp();
   else showLanding();

@@ -1,4 +1,4 @@
-# KlemDesk
+# Quotavo
 
 Web-App für Angebote und Rechnungen mit PDF-Export, **Multi-Tenant-fähiger** Speicherung (jede Firma/Mandant hat eigene Daten).
 

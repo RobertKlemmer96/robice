@@ -1,8 +1,8 @@
 /** Öffentliche Site-URL — bei Domain-Umzug hier und in public/sitemap.xml anpassen. */
 export const SEO_CONFIG = {
   siteUrl: 'https://robice.onrender.com',
-  siteName: 'KlemDesk',
-  ogImagePath: '/klemdesk-logo.svg',
+  siteName: 'Quotavo',
+  ogImagePath: '/quotavo-logo.svg',
 };
 
 export function getAbsoluteUrl(path = '/') {

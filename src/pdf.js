@@ -57,6 +57,22 @@ function writeKundeAdressBlock(doc, kunde, startY) {
   return y;
 }
 
+function renderAngebotConfirmationBlock(doc, confirmationUrl, startY) {
+  if (!confirmationUrl) return;
+  const left = 20;
+  const y = startY + 6;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(37, 99, 235);
+  const label = 'Angebot online bestätigen oder ablehnen';
+  doc.textWithLink(label, left, y, { url: confirmationUrl });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  const lines = doc.splitTextToSize(confirmationUrl, 170);
+  doc.text(lines, left, y + 5);
+}
+
 function renderPdfFooter(doc, tpl, { fuss1 = '', fuss2 = '' } = {}) {
   const lineRgb = hexToRgb(tpl.farben.trennlinie);
   const fussRgb = hexToRgb(tpl.farben.fusszeile);
@@ -379,7 +395,7 @@ function renderPostenTable(doc, startY, tableBody, variant, tpl) {
   });
 }
 
-function buildAngebotPdfV2(angebot, postenDetails, tpl) {
+function buildAngebotPdfV2(angebot, postenDetails, tpl, confirmationUrl = '') {
   const { netto, mwst, brutto } = berechneSummenAusPosten(postenDetails);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const erstelltAm = angebot.angebotsdatum
@@ -454,12 +470,14 @@ function buildAngebotPdfV2(angebot, postenDetails, tpl) {
   }
 
   renderPostenTable(doc, y + 8, buildPostenTableBody(postenDetails), 2, tpl);
-  renderPdfTotalsBlock(doc, { netto, mwst, brutto }, doc.lastAutoTable.finalY + 10, 2, primaerRgb);
+  const totalsY = doc.lastAutoTable.finalY + 10;
+  renderPdfTotalsBlock(doc, { netto, mwst, brutto }, totalsY, 2, primaerRgb);
+  renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY + 22);
   renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
   return doc;
 }
 
-function buildAngebotPdfV3(angebot, postenDetails, tpl) {
+function buildAngebotPdfV3(angebot, postenDetails, tpl, confirmationUrl = '') {
   const { netto, mwst, brutto } = berechneSummenAusPosten(postenDetails);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const erstelltAm = angebot.angebotsdatum
@@ -522,12 +540,14 @@ function buildAngebotPdfV3(angebot, postenDetails, tpl) {
   }
 
   renderPostenTable(doc, y + 16, buildPostenTableBody(postenDetails), 3, tpl);
-  renderPdfTotalsBlock(doc, { netto, mwst, brutto }, doc.lastAutoTable.finalY + 10, 3, primaerRgb);
+  const totalsY = doc.lastAutoTable.finalY + 10;
+  renderPdfTotalsBlock(doc, { netto, mwst, brutto }, totalsY, 3, primaerRgb);
+  renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY + 22);
   renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
   return doc;
 }
 
-function buildAngebotPdfV1(angebot, postenDetails, tpl) {
+function buildAngebotPdfV1(angebot, postenDetails, tpl, confirmationUrl = '') {
   const { netto, mwst, brutto } = berechneSummenAusPosten(postenDetails);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
@@ -693,26 +713,27 @@ function buildAngebotPdfV1(angebot, postenDetails, tpl) {
 
   renderPostenTable(doc, y + 18, tableBody, 1, tpl);
 
-  renderPdfTotalsBlock(doc, { netto, mwst, brutto }, doc.lastAutoTable.finalY + 10, 1, primaerRgb);
-
+  const totalsY = doc.lastAutoTable.finalY + 10;
+  renderPdfTotalsBlock(doc, { netto, mwst, brutto }, totalsY, 1, primaerRgb);
+  renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY + 22);
   renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
 
   return doc;
 }
 
-export function buildPdfDoc(angebot, postenDetails) {
+export function buildPdfDoc(angebot, postenDetails, { confirmationUrl = '' } = {}) {
   const tpl = getDocumentPdfTemplate();
   const variant = normalizePdfLayoutVariant(tpl.layout?.angebotVariant);
-  if (variant === 2) return buildAngebotPdfV2(angebot, postenDetails, tpl);
-  if (variant === 3) return buildAngebotPdfV3(angebot, postenDetails, tpl);
-  return buildAngebotPdfV1(angebot, postenDetails, tpl);
+  if (variant === 2) return buildAngebotPdfV2(angebot, postenDetails, tpl, confirmationUrl);
+  if (variant === 3) return buildAngebotPdfV3(angebot, postenDetails, tpl, confirmationUrl);
+  return buildAngebotPdfV1(angebot, postenDetails, tpl, confirmationUrl);
 }
 
 
 
-export function downloadPdf(angebot, postenDetails) {
+export function downloadPdf(angebot, postenDetails, { confirmationUrl = '' } = {}) {
 
-  const doc = buildPdfDoc(angebot, postenDetails);
+  const doc = buildPdfDoc(angebot, postenDetails, { confirmationUrl });
 
   const dateiname = `Angebot_${angebot.angebotNr.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`;
 
@@ -720,17 +741,17 @@ export function downloadPdf(angebot, postenDetails) {
 
 }
 
-export function getAngebotPdfAttachment(angebot, postenDetails) {
-  const doc = buildPdfDoc(angebot, postenDetails);
+export function getAngebotPdfAttachment(angebot, postenDetails, { confirmationUrl = '' } = {}) {
+  const doc = buildPdfDoc(angebot, postenDetails, { confirmationUrl });
   const filename = `Angebot_${angebot.angebotNr.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`;
   return { filename, content: doc.output('arraybuffer') };
 }
 
 
 
-export function openPdfPreview(angebot, postenDetails) {
+export function openPdfPreview(angebot, postenDetails, { confirmationUrl = '' } = {}) {
 
-  const doc = buildPdfDoc(angebot, postenDetails);
+  const doc = buildPdfDoc(angebot, postenDetails, { confirmationUrl });
 
   const url = doc.output('bloburl');
 

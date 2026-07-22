@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>KlemDesk</title>
+    <title>Quotavo</title>
     <meta
       name="description"
-      content="KlemDesk: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister."
+      content="Quotavo: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister."
     />
     <meta
       name="keywords"
@@ -14,26 +14,26 @@
     />
     <meta name="author" content="Robert Klemmer" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="application-name" content="KlemDesk" />
+    <meta name="application-name" content="Quotavo" />
     <link rel="canonical" href="https://robice.onrender.com/" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="KlemDesk" />
+    <meta property="og:site_name" content="Quotavo" />
     <meta property="og:url" content="https://robice.onrender.com/" />
-    <meta property="og:title" content="KlemDesk – Angebote &amp; Rechnungen als PDF" />
+    <meta property="og:title" content="Quotavo – Angebote &amp; Rechnungen als PDF" />
     <meta
       property="og:description"
-      content="KlemDesk: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister."
+      content="Quotavo: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister."
     />
     <meta property="og:locale" content="de_DE" />
     <meta property="og:locale:alternate" content="en_GB" />
-    <meta property="og:image" content="https://robice.onrender.com/klemdesk-logo.svg" />
+    <meta property="og:image" content="https://robice.onrender.com/quotavo-logo.svg" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="KlemDesk – Angebote &amp; Rechnungen als PDF" />
+    <meta name="twitter:title" content="Quotavo – Angebote &amp; Rechnungen als PDF" />
     <meta
       name="twitter:description"
-      content="KlemDesk: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister."
+      content="Quotavo: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister."
     />
-    <meta name="twitter:image" content="https://robice.onrender.com/klemdesk-logo.svg" />
+    <meta name="twitter:image" content="https://robice.onrender.com/quotavo-logo.svg" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="theme-color" content="#121820" media="(prefers-color-scheme: dark)" />
@@ -42,7 +42,7 @@
       (function () {
         var theme = localStorage.getItem('angebot_theme') || 'dark';
         document.documentElement.setAttribute('data-theme', theme);
-        var locale = localStorage.getItem('klem_desk_locale') || 'de';
+        var locale = localStorage.getItem('quotavo_locale') || 'de';
         document.documentElement.lang = locale;
       })();
     </script>
@@ -54,7 +54,7 @@
         <div class="landing-alpha-banner__inner">
           <strong data-i18n="landing.alpha">Alpha-Vorschau</strong>
           <span data-i18n="landing.alphaText">
-            KlemDesk befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können
+            Quotavo befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können
             sich noch ändern.
           </span>
         </div>
@@ -62,8 +62,8 @@
       <header class="landing-header">
         <div class="landing-header__inner">
           <div class="landing-brand">
-            <img src="/klemdesk-logo.svg" alt="" class="brand-logo" width="40" height="40" decoding="async" />
-            <strong class="landing-brand__name">KlemDesk</strong>
+            <img src="/quotavo-logo.svg" alt="" class="brand-logo" width="40" height="40" decoding="async" />
+            <strong class="landing-brand__name">Quotavo</strong>
           </div>
           <div class="landing-header__actions">
             <div class="lang-switcher" id="landing-lang-switcher-wrap">
@@ -239,7 +239,7 @@
               <span class="landing-hero__accent" data-i18n="landing.heroAccent">professionell als PDF</span>
             </h1>
             <p class="landing-hero__lead" data-i18n="landing.heroLead">
-              KlemDesk bündelt Kunden, Katalog und Dokumente in einer Oberfläche.
+              Quotavo bündelt Kunden, Katalog und Dokumente in einer Oberfläche.
               Registrieren, einloggen und in wenigen Minuten das erste Angebot versenden.
             </p>
             <div class="landing-hero__actions">
@@ -361,7 +361,7 @@
         <section class="landing-cta">
           <div class="landing-cta__card">
             <h2 data-i18n="landing.ctaTitle">Bereit für das erste Angebot?</h2>
-            <p data-i18n="landing.ctaLead">Registrierung dauert unter einer Minute. KlemDesk ist aktuell kostenlos nutzbar.</p>
+            <p data-i18n="landing.ctaLead">Registrierung dauert unter einer Minute. Quotavo ist aktuell kostenlos nutzbar.</p>
             <div class="landing-cta__actions">
               <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free" data-i18n="landing.registerFree">Kostenlos registrieren</button>
               <button type="button" class="btn btn-ghost" data-landing-action="login" data-i18n="landing.login">Anmelden</button>
@@ -385,6 +385,64 @@
           <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
         </nav>
       </footer>
+    </div>
+
+    <div id="angebot-confirm-screen" class="angebot-confirm-screen hidden" aria-hidden="true">
+      <div class="angebot-confirm-screen__inner">
+        <div class="angebot-confirm card">
+          <div class="angebot-confirm__brand">
+            <img src="/quotavo-logo.svg" alt="" class="brand-logo brand-logo--auth" width="52" height="52" decoding="async" />
+            <strong class="angebot-confirm__brand-name">Quotavo</strong>
+          </div>
+          <h1 id="angebot-confirm-title" class="angebot-confirm__title">Angebot bestätigen</h1>
+          <p id="angebot-confirm-lead" class="angebot-confirm__lead">Bitte bestätigen oder lehnen Sie das Angebot ab.</p>
+          <p id="angebot-confirm-meta" class="angebot-confirm__meta hidden"></p>
+          <p id="angebot-confirm-status-badge" class="angebot-confirm__status-badge hidden" aria-live="polite"></p>
+
+          <div data-confirm-step="loading" class="angebot-confirm__step">
+            <p class="angebot-confirm__hint">Angebot wird geladen…</p>
+          </div>
+
+          <div data-confirm-step="error" class="angebot-confirm__step hidden">
+            <p class="angebot-confirm__hint">Der Link ist ungültig oder abgelaufen.</p>
+          </div>
+
+          <div data-confirm-step="plz" class="angebot-confirm__step hidden">
+            <p class="angebot-confirm__hint">Zur Verifizierung geben Sie bitte die Postleitzahl aus dem Angebot ein.</p>
+            <form id="angebot-confirm-plz-form" class="angebot-confirm__form">
+              <label class="angebot-confirm__label" for="angebot-confirm-plz">Postleitzahl</label>
+              <input
+                type="text"
+                id="angebot-confirm-plz"
+                class="angebot-confirm__input"
+                inputmode="numeric"
+                autocomplete="postal-code"
+                maxlength="5"
+                pattern="[0-9]{5}"
+                placeholder="12345"
+                required
+              />
+              <button type="submit" id="angebot-confirm-plz-submit" class="btn btn-primary angebot-confirm__submit">
+                Weiter
+              </button>
+            </form>
+          </div>
+
+          <div data-confirm-step="action" class="angebot-confirm__step hidden">
+            <p class="angebot-confirm__hint">Möchten Sie dieses Angebot annehmen oder ablehnen?</p>
+            <div class="angebot-confirm__actions">
+              <button type="button" id="angebot-confirm-reject" class="btn btn-ghost">Ablehnen</button>
+              <button type="button" id="angebot-confirm-accept" class="btn btn-primary">Angebot bestätigen</button>
+            </div>
+          </div>
+
+          <div data-confirm-step="done" class="angebot-confirm__step hidden">
+            <p class="angebot-confirm__hint">Vielen Dank — Sie werden gleich weitergeleitet.</p>
+          </div>
+
+          <p id="angebot-confirm-status" class="angebot-confirm__status hidden" role="status"></p>
+        </div>
+      </div>
     </div>
 
     <div id="login-screen" class="login-screen hidden">
@@ -418,8 +476,8 @@
         </div>
         <div class="login-card">
           <div class="login-brand">
-            <img src="/klemdesk-logo.svg" alt="" class="brand-logo brand-logo--auth" width="52" height="52" decoding="async" />
-            <strong class="login-brand__name">KlemDesk</strong>
+            <img src="/quotavo-logo.svg" alt="" class="brand-logo brand-logo--auth" width="52" height="52" decoding="async" />
+            <strong class="login-brand__name">Quotavo</strong>
           </div>
           <div class="login-header">
             <h1 id="auth-title" data-i18n="auth.login">Anmelden</h1>
@@ -475,7 +533,7 @@
         <div class="landing-alpha-banner__inner">
           <strong data-i18n="landing.alpha">Alpha-Vorschau</strong>
           <span data-i18n="landing.alphaText">
-            KlemDesk befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können
+            Quotavo befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können
             sich noch ändern.
           </span>
         </div>
@@ -1534,7 +1592,7 @@
         <main class="main">
           <section class="card">
             <h2>Administration</h2>
-            <p class="settings-lead">Übersicht aller Nutzer, Mandanten und Dokumente auf KlemDesk.</p>
+            <p class="settings-lead">Übersicht aller Nutzer, Mandanten und Dokumente auf Quotavo.</p>
             <div id="admin-overview" class="admin-overview" aria-live="polite"></div>
             <div id="admin-user-list" class="admin-user-list" aria-live="polite"></div>
           </section>
@@ -1586,7 +1644,7 @@
               <h2 data-i18n="form.catalogItemsTitle">Ihre Katalog-Posten</h2>
               <div class="katalog-liste-toolbar">
                 <input type="search" id="katalog-suche" class="search" data-i18n-placeholder="form.searchCatalogItems" placeholder="Posten suchen…" />
-                <button type="button" id="katalog-neu-btn" class="btn btn-icon btn-ghost btn-sm"></button>
+                <button type="button" id="katalog-neu-btn" class="btn btn-icon btn-primary btn-sm"></button>
               </div>
             </div>
             <div id="katalog-liste" class="katalog-posten-liste"></div>
@@ -1842,7 +1900,7 @@
       <div id="onboarding-screen" class="onboarding-screen hidden" aria-hidden="true">
         <div class="onboarding-shell card">
           <header class="onboarding-header">
-            <p class="onboarding-eyebrow">Willkommen bei KlemDesk</p>
+            <p class="onboarding-eyebrow">Willkommen bei Quotavo</p>
             <h1 class="onboarding-title">Kurz einrichten</h1>
             <p class="onboarding-lead">Damit Ihre PDFs, Nummern und Layout von Anfang an passen.</p>
           </header>

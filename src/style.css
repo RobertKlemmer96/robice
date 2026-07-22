@@ -595,6 +595,93 @@ body:has(#app:not(.hidden)) {
   padding: 24px 20px;
 }
 
+.angebot-confirm-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+}
+
+.angebot-confirm-screen__inner {
+  width: 100%;
+  max-width: 440px;
+}
+
+.angebot-confirm {
+  padding: 32px;
+}
+
+.angebot-confirm__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.angebot-confirm__brand-name {
+  font-size: 1.15rem;
+}
+
+.angebot-confirm__title {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+}
+
+.angebot-confirm__lead,
+.angebot-confirm__meta,
+.angebot-confirm__hint {
+  margin: 0 0 16px;
+  color: var(--text-muted, #8b949e);
+  line-height: 1.5;
+}
+
+.angebot-confirm__meta {
+  font-size: 0.92rem;
+}
+
+.angebot-confirm__status-badge {
+  margin: 0 0 1rem;
+}
+
+.angebot-confirm__form {
+  display: grid;
+  gap: 10px;
+}
+
+.angebot-confirm__label {
+  font-size: 0.9rem;
+}
+
+.angebot-confirm__input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  background: #0d1117;
+  color: inherit;
+}
+
+.angebot-confirm__submit {
+  margin-top: 4px;
+}
+
+.angebot-confirm__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.angebot-confirm__status {
+  margin-top: 16px;
+  font-size: 0.92rem;
+}
+
+.angebot-confirm__status--error {
+  color: #f85149;
+}
+
 .login-screen__inner {
   display: flex;
   flex-direction: column;
@@ -3221,6 +3308,20 @@ body:has(#app:not(.hidden)) {
   filter: brightness(1.05);
 }
 
+#katalog-neu-btn.btn-primary {
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #6366f1));
+  border-color: transparent;
+  color: #fff;
+}
+
+#katalog-neu-btn.btn-primary:hover:not(:disabled):not(.is-disabled) {
+  filter: brightness(1.06);
+}
+
+#app.app--rechnungen #katalog-neu-btn.btn-primary {
+  background: linear-gradient(135deg, var(--rechnungen), var(--rechnungen-dark));
+}
+
 .app-nav__group {
   position: relative;
   border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
@@ -3585,6 +3686,17 @@ body:has(#app:not(.hidden)) {
   border: 1px solid transparent;
   font-size: 0.76rem;
   font-weight: 700;
+}
+
+.prozess-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .prozess-status--gespeichert {
@@ -3994,6 +4106,13 @@ body:has(#app:not(.hidden)) {
 .kunden-dokumente__nr {
   font-size: 0.88rem;
   font-weight: 600;
+}
+
+.kunden-dokumente__nr-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .kunden-dokumente__actions {

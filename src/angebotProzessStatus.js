@@ -26,3 +26,8 @@ export function angebotProzessStatusLabelKey(status) {
 export function angebotProzessStatusCssClass(status) {
   return `prozess-status--${normalizeAngebotProzessStatus(status)}`;
 }
+
+export function angebotProzessStatusBadgeHtml(status, label) {
+  const normalized = normalizeAngebotProzessStatus(status);
+  return `<span class="prozess-status-badge ${angebotProzessStatusCssClass(normalized)}">${label}</span>`;
+}

@@ -27,7 +27,7 @@ async function main() {
   envContent = upsertEnvValue(envContent, 'SMTP_SECURE', 'false');
   envContent = upsertEnvValue(envContent, 'SMTP_USER', testAccount.user);
   envContent = upsertEnvValue(envContent, 'SMTP_PASS', testAccount.pass);
-  envContent = upsertEnvValue(envContent, 'SMTP_FROM', `"KlemDesk Dev" <${testAccount.user}>`);
+  envContent = upsertEnvValue(envContent, 'SMTP_FROM', `"Quotavo Dev" <${testAccount.user}>`);
 
   fs.writeFileSync(envPath, envContent.endsWith('\n') ? envContent : `${envContent}\n`);
 

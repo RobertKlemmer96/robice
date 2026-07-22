@@ -1,10 +1,16 @@
 services:
   - type: web
-    name: klemdesk
+    name: quotavo
     runtime: node
     buildCommand: npm install --include=dev && npm run build
     startCommand: NODE_ENV=production npm run start
+    disk:
+      name: quotavo-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
+      - key: DATA_DIR
+        value: /var/data
       - key: SESSION_SECRET
         generateValue: true
       - key: ADMIN_PASSWORD
