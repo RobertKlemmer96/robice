@@ -1,4 +1,6 @@
 import { LEGAL_CONFIG, getCompanyLine } from './legalConfig.js';
+import { applySeoMeta } from './seo.js';
+import { getLocale, t } from './i18n.js';
 import { ROADMAP, ROADMAP_STATUS_LABELS } from './roadmapConfig.js';
 import { HANDBOOK } from './handbookConfig.js';
 import { FAQ } from './faqConfig.js';
@@ -387,6 +389,17 @@ export function initLegal({ onClose } = {}) {
   });
 }
 
+function restoreSeoMeta() {
+  applySeoMeta({
+    locale: getLocale(),
+    title: t('meta.title'),
+    description: t('meta.description'),
+    ogTitle: t('meta.ogTitle'),
+    keywords: t('meta.keywords'),
+    author: t('meta.author'),
+  });
+}
+
 export function openLegalPage(pageId, returnTo = 'login') {
   if (!legalScreenEl || !legalContentEl) return;
   returnContext = returnTo;
@@ -402,7 +415,7 @@ export function closeLegalPage() {
   if (!legalScreenEl) return;
   legalScreenEl.classList.add('hidden');
   legalScreenEl.setAttribute('aria-hidden', 'true');
-  document.title = LEGAL_CONFIG.productName;
+  restoreSeoMeta();
   onCloseCallback?.(returnContext);
 }
 

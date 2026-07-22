@@ -1,3 +1,4 @@
+import { applySeoMeta as applySeoMetaTags } from './seo.js';
 import { mountAllFlags, mountFlag } from './flags.js';
 
 const LOCALE_KEY = 'klem_desk_locale';
@@ -11,6 +12,12 @@ export const LOCALES = {
 const MESSAGES = {
   de: {
     'meta.title': 'KlemDesk',
+    'meta.description':
+      'KlemDesk: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister.',
+    'meta.ogTitle': 'KlemDesk – Angebote & Rechnungen als PDF',
+    'meta.keywords':
+      'Angebote, Rechnungen, PDF, Angebot erstellen, Rechnung schreiben, Kundenverwaltung, Dienstleister, Kleinunternehmen',
+    'meta.author': 'Robert Klemmer',
     'lang.choose': 'Sprache wählen',
     'lang.menu': 'Sprache',
     'nav.main': 'Hauptnavigation',
@@ -368,6 +375,12 @@ const MESSAGES = {
   },
   en: {
     'meta.title': 'KlemDesk',
+    'meta.description':
+      'KlemDesk: Create quotes and invoices online, manage customers and your service catalog, and export professional PDFs — free for service businesses.',
+    'meta.ogTitle': 'KlemDesk – Quotes & Invoices as PDF',
+    'meta.keywords':
+      'quotes, invoices, PDF, quote software, invoicing, customer management, service business, freelancers',
+    'meta.author': 'Robert Klemmer',
     'lang.choose': 'Choose language',
     'lang.menu': 'Language',
     'nav.main': 'Main navigation',
@@ -755,7 +768,14 @@ export function onLocaleChange(listener) {
 
 export function applyI18n(root = document) {
   document.documentElement.lang = getLocale();
-  document.title = t('meta.title');
+  applySeoMetaTags({
+    locale: getLocale(),
+    title: t('meta.title'),
+    description: t('meta.description'),
+    ogTitle: t('meta.ogTitle'),
+    keywords: t('meta.keywords'),
+    author: t('meta.author'),
+  });
 
   root.querySelectorAll('[data-i18n]').forEach((el) => {
     if (el.dataset.i18nParams) {
