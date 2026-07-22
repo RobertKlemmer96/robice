@@ -391,7 +391,7 @@ export function openLegalPage(pageId, returnTo = 'login') {
   if (!legalScreenEl || !legalContentEl) return;
   returnContext = returnTo;
   legalContentEl.innerHTML = renderLegalPage(pageId);
-  document.title = `${PAGE_TITLES[pageId] || 'Rechtliches'} – ${LEGAL_CONFIG.productName}`;
+  document.title = LEGAL_CONFIG.productName;
   legalScreenEl.classList.remove('hidden');
   legalScreenEl.setAttribute('aria-hidden', 'false');
   legalScreenEl.scrollTop = 0;
@@ -402,7 +402,7 @@ export function closeLegalPage() {
   if (!legalScreenEl) return;
   legalScreenEl.classList.add('hidden');
   legalScreenEl.setAttribute('aria-hidden', 'true');
-  document.title = `${LEGAL_CONFIG.productName} erstellen`;
+  document.title = LEGAL_CONFIG.productName;
   onCloseCallback?.(returnContext);
 }
 

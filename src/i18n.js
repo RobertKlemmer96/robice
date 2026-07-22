@@ -10,7 +10,7 @@ export const LOCALES = {
 
 const MESSAGES = {
   de: {
-    'meta.title': 'KlemDesk – Angebote & Rechnungen',
+    'meta.title': 'KlemDesk',
     'lang.choose': 'Sprache wählen',
     'lang.menu': 'Sprache',
     'nav.main': 'Hauptnavigation',
@@ -367,7 +367,7 @@ const MESSAGES = {
     'pdfTpl.colText': 'Text Spalte {n}',
   },
   en: {
-    'meta.title': 'KlemDesk – Quotes & Invoices',
+    'meta.title': 'KlemDesk',
     'lang.choose': 'Choose language',
     'lang.menu': 'Language',
     'nav.main': 'Main navigation',
