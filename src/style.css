@@ -1834,7 +1834,7 @@ body:has(#app:not(.hidden)) {
 .dashboard-hero {
   position: relative;
   overflow: hidden;
-  padding: 22px 24px;
+  padding: 14px 18px;
   border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
   background:
     radial-gradient(ellipse 80% 120% at 100% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 55%),
@@ -1842,8 +1842,20 @@ body:has(#app:not(.hidden)) {
     var(--surface);
 }
 
+.dashboard-hero__plan {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+.dashboard-hero__content {
+  padding-right: 5.5rem;
+}
+
 .dashboard-hero__eyebrow {
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -1851,31 +1863,19 @@ body:has(#app:not(.hidden)) {
 }
 
 .dashboard-hero__title {
-  margin: 0 0 6px;
-  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  margin: 0;
+  font-size: clamp(1.45rem, 2.6vw, 1.85rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
-}
-
-.dashboard-hero__meta {
-  margin: 0 0 12px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.84rem;
-  color: var(--text-muted);
-}
-
-.dashboard-hero__sep {
-  opacity: 0.5;
+  min-width: 0;
 }
 
 .dashboard-plan {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  flex-shrink: 0;
+  padding: 3px 9px;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 700;
@@ -1886,21 +1886,12 @@ body:has(#app:not(.hidden)) {
   border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
-.dashboard-hero__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.dashboard-hero.card {
+  padding: 14px 18px;
 }
 
-.dashboard-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  background: color-mix(in srgb, var(--text) 4%, var(--surface));
-  border: 1px solid var(--border);
+.dashboard-hero.card .dashboard-hero__title {
+  margin: 0;
 }
 
 /* Stats grid */
@@ -2308,8 +2299,16 @@ body:has(#app:not(.hidden)) {
 }
 
 @media (max-width: 560px) {
-  .dashboard-hero {
-    padding: 18px 16px;
+  .dashboard-hero.card {
+    padding: 12px 14px;
+  }
+
+  .dashboard-hero__plan {
+    right: 14px;
+  }
+
+  .dashboard-hero__content {
+    padding-right: 4.75rem;
   }
 
   .dashboard-stats {

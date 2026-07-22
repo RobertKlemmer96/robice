@@ -58,7 +58,6 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
 
   const session = getSession();
   const tenant = session?.tenant;
-  const user = session?.user;
   const companyName = tenant?.name?.trim() || t('dashboard.noCompanyName');
   const stats = data?.stats ?? {
     kunden: 0,
@@ -71,8 +70,6 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
   };
   const recentDocuments = data?.recentDocuments ?? [];
   const setupMissing = data?.setupMissing ?? [];
-  const totalDocuments = stats.angebote + stats.rechnungen;
-
   const statCards = [
     {
       key: 'angebote',
@@ -201,22 +198,10 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
   root.innerHTML = `
     <div class="dashboard-layout">
       <section class="dashboard-hero card">
+        <span class="dashboard-plan dashboard-hero__plan">${escapeHtml(formatPlanLabel(tenant?.plan))}</span>
         <div class="dashboard-hero__content">
           <p class="dashboard-hero__eyebrow">${escapeHtml(t(greetingKey()))}</p>
           <h2 class="dashboard-hero__title">${escapeHtml(companyName)}</h2>
-          <p class="dashboard-hero__meta">
-            <span>${escapeHtml(user?.email || '—')}</span>
-            <span class="dashboard-hero__sep" aria-hidden="true">·</span>
-            <span class="dashboard-plan">${escapeHtml(formatPlanLabel(tenant?.plan))}</span>
-          </p>
-          <div class="dashboard-hero__chips">
-            <span class="dashboard-chip">${escapeHtml(t('dashboard.totalDocuments', { count: totalDocuments }))}</span>
-            ${
-              data?.lastActivityAt
-                ? `<span class="dashboard-chip">${escapeHtml(t('dashboard.lastActivity'))}: ${escapeHtml(formatActivityDate(data.lastActivityAt))}</span>`
-                : ''
-            }
-          </div>
         </div>
       </section>
 
