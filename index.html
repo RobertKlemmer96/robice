@@ -1256,153 +1256,170 @@
       </div>
 
       <div id="view-profil" class="hidden">
-        <main class="main">
-          <section class="card">
-            <h2>Mein Profil</h2>
-            <p class="settings-lead">Ihre Kontodetails und Sicherheitseinstellungen.</p>
-            <form id="profil-account-form" class="form-grid">
-              <label class="full">
-                Firma
-                <input type="text" id="profil-tenant-name" autocomplete="organization" required />
-              </label>
-              <div class="profil-field profil-field--static full">
-                <span class="profil-field__label">E-Mail</span>
-                <span id="profil-email" class="profil-field__value">—</span>
-              </div>
-              <div class="profil-field profil-field--static full">
-                <span class="profil-field__label">Tarif</span>
-                <div class="profil-plan-row">
-                  <span id="profil-plan" class="profil-field__value">—</span>
-                  <button type="button" id="profil-plan-change-btn" class="btn btn-ghost btn-sm">
-                    Tarif wechseln
+        <main class="main main--profil">
+          <section class="card profil-card">
+            <div class="profil-card__head">
+              <h2>Mein Profil</h2>
+              <div class="profil-card__actions">
+                <button type="submit" form="profil-account-form" class="btn btn-primary btn-sm">
+                  Speichern
+                </button>
+                <div class="lang-switcher lang-switcher--profil" id="lang-switcher-wrap">
+                <button
+                  type="button"
+                  class="lang-switcher__trigger lang-switcher__trigger--profil"
+                  id="lang-switcher"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  aria-controls="lang-switcher-menu"
+                  data-i18n-aria-label="lang.choose"
+                  data-i18n-title="lang.choose"
+                >
+                  <span class="lang-switcher__flag" aria-hidden="true"></span>
+                </button>
+                <div
+                  class="lang-switcher__menu hidden"
+                  id="lang-switcher-menu"
+                  role="menu"
+                  data-i18n-aria-label="lang.menu"
+                >
+                  <button
+                    type="button"
+                    class="lang-switcher__option is-active"
+                    role="menuitemradio"
+                    data-locale="de"
+                    aria-checked="true"
+                  >
+                    <span class="lang-switcher__option-flag" data-flag-locale="de" aria-hidden="true"></span>
+                    <span>Deutsch</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="lang-switcher__option"
+                    role="menuitemradio"
+                    data-locale="en"
+                    aria-checked="false"
+                  >
+                    <span class="lang-switcher__option-flag" data-flag-locale="en" aria-hidden="true"></span>
+                    <span>English</span>
                   </button>
                 </div>
+                </div>
               </div>
-              <div class="profil-field full">
-                <span class="profil-field__label" data-i18n="lang.menu">Sprache</span>
-                <div class="lang-switcher lang-switcher--inline" id="lang-switcher-wrap">
-                  <div
-                    class="lang-switcher__inline-options"
-                    role="radiogroup"
-                    data-i18n-aria-label="lang.menu"
-                    aria-label="Sprache"
-                  >
-                    <button
-                      type="button"
-                      class="lang-switcher__option lang-switcher__option--inline is-active"
-                      role="radio"
-                      data-locale="de"
-                      aria-checked="true"
-                    >
-                      <span class="lang-switcher__option-flag" data-flag-locale="de" aria-hidden="true"></span>
-                      <span>Deutsch</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="lang-switcher__option lang-switcher__option--inline"
-                      role="radio"
-                      data-locale="en"
-                      aria-checked="false"
-                    >
-                      <span class="lang-switcher__option-flag" data-flag-locale="en" aria-hidden="true"></span>
-                      <span>English</span>
+            </div>
+
+            <div class="profil-block">
+              <form id="profil-account-form" class="form-grid form-grid--profil">
+                <label class="full">
+                  Firma
+                  <input type="text" id="profil-tenant-name" autocomplete="organization" required />
+                </label>
+                <div class="profil-field profil-field--static">
+                  <span class="profil-field__label">E-Mail</span>
+                  <span id="profil-email" class="profil-field__value">—</span>
+                </div>
+                <div class="profil-field profil-field--static">
+                  <span class="profil-field__label">Tarif</span>
+                  <div class="profil-plan-row">
+                    <span id="profil-plan" class="profil-field__value">—</span>
+                    <button type="button" id="profil-plan-change-btn" class="btn btn-ghost btn-sm">
+                      Tarif wechseln
                     </button>
                   </div>
                 </div>
-              </div>
-              <div class="form-actions full">
-                <button type="submit" class="btn btn-primary">Speichern</button>
-              </div>
-            </form>
-            <p id="profil-account-status" class="settings-status hidden" role="status"></p>
-          </section>
+              </form>
+              <p id="profil-account-status" class="settings-status hidden" role="status"></p>
 
-          <section class="card">
-            <div class="profil-section-head">
-              <h2>Dokumentnummern</h2>
-              <span class="info-tip info-tip--desktop">
-                <button
-                  type="button"
-                  class="info-tip__btn"
-                  aria-describedby="profil-schema-tip"
-                >
-                  i
-                </button>
-                <span id="profil-schema-tip" class="info-tip__flyout" role="tooltip">
-                  Die Nummernschemas werden bei der Einrichtung festgelegt und können im Profil nicht
-                  geändert werden.
+              <div class="profil-subsection">
+                <h3 class="profil-block__title">Passwort ändern</h3>
+                <form id="profil-password-form" class="form-grid form-grid--profil form-grid--profil-password">
+                  <label>
+                    Aktuelles Passwort
+                    <input
+                      type="password"
+                      id="profil-current-password"
+                      autocomplete="current-password"
+                      required
+                    />
+                  </label>
+                  <label>
+                    Neues Passwort
+                    <input
+                      type="password"
+                      id="profil-new-password"
+                      autocomplete="new-password"
+                      required
+                      minlength="8"
+                    />
+                  </label>
+                  <label>
+                    Bestätigen
+                    <input
+                      type="password"
+                      id="profil-confirm-password"
+                      autocomplete="new-password"
+                      required
+                      minlength="8"
+                    />
+                  </label>
+                  <div class="form-actions full">
+                    <button type="submit" class="btn btn-primary btn-sm">Passwort speichern</button>
+                  </div>
+                </form>
+                <p id="profil-password-status" class="settings-status hidden" role="status"></p>
+              </div>
+            </div>
+
+            <div class="profil-divider" aria-hidden="true"></div>
+
+            <div class="profil-block">
+              <div class="profil-section-head">
+                <h3 class="profil-block__title">Dokumentnummern</h3>
+                <span class="info-tip info-tip--desktop">
+                  <button
+                    type="button"
+                    class="info-tip__btn"
+                    aria-describedby="profil-schema-tip"
+                  >
+                    i
+                  </button>
+                  <span id="profil-schema-tip" class="info-tip__flyout" role="tooltip">
+                    Die Nummernschemas werden bei der Einrichtung festgelegt und können im Profil nicht
+                    geändert werden.
+                  </span>
                 </span>
-              </span>
+              </div>
+              <div id="profil-nummern-form" class="profil-nummern-grid">
+                <div class="profil-field profil-field--static">
+                  <span class="profil-field__label">Angebotsnummer</span>
+                  <span id="profil-angebot-nummer-schema" class="profil-field__value profil-field__value--mono">—</span>
+                  <span class="profil-schema-preview">
+                    Vorschau: <strong id="profil-angebot-schema-preview">—</strong>
+                  </span>
+                </div>
+                <div class="profil-field profil-field--static">
+                  <span class="profil-field__label">Rechnungsnummer</span>
+                  <span id="profil-rechnung-nummer-schema" class="profil-field__value profil-field__value--mono">—</span>
+                  <span class="profil-schema-preview">
+                    Vorschau: <strong id="profil-rechnung-schema-preview">—</strong>
+                  </span>
+                </div>
+              </div>
             </div>
-            <p class="settings-lead profil-nummern-note">
-              Festgelegt bei der Einrichtung — hier nur zur Ansicht.
-            </p>
-            <div id="profil-nummern-form" class="form-grid">
-              <div class="profil-field profil-field--static full">
-                <span class="profil-field__label">Angebotsnummer-Schema</span>
-                <span id="profil-angebot-nummer-schema" class="profil-field__value profil-field__value--mono">—</span>
-              </div>
-              <p class="schema-hint">
-                Vorschau: <strong id="profil-angebot-schema-preview">—</strong>
-              </p>
 
-              <div class="profil-field profil-field--static full">
-                <span class="profil-field__label">Rechnungsnummer-Schema</span>
-                <span id="profil-rechnung-nummer-schema" class="profil-field__value profil-field__value--mono">—</span>
+            <div class="profil-divider profil-divider--danger" aria-hidden="true"></div>
+
+            <div class="profil-block profil-block--danger">
+              <div class="profil-danger-row">
+                <div>
+                  <h3 class="profil-block__title">Konto löschen</h3>
+                  <p class="profil-danger-note">Alle Daten werden unwiderruflich entfernt.</p>
+                </div>
+                <button type="button" id="profil-delete-account-btn" class="btn btn-ghost btn-sm profil-delete-btn">
+                  Konto löschen
+                </button>
               </div>
-              <p class="schema-hint">
-                Vorschau: <strong id="profil-rechnung-schema-preview">—</strong>
-              </p>
             </div>
-          </section>
-
-          <section class="card">
-            <h2>Passwort ändern</h2>
-            <form id="profil-password-form" class="form-grid">
-              <label class="full">
-                Aktuelles Passwort
-                <input
-                  type="password"
-                  id="profil-current-password"
-                  autocomplete="current-password"
-                  required
-                />
-              </label>
-              <label class="full">
-                Neues Passwort (min. 8 Zeichen)
-                <input
-                  type="password"
-                  id="profil-new-password"
-                  autocomplete="new-password"
-                  required
-                  minlength="8"
-                />
-              </label>
-              <label class="full">
-                Neues Passwort bestätigen
-                <input
-                  type="password"
-                  id="profil-confirm-password"
-                  autocomplete="new-password"
-                  required
-                  minlength="8"
-                />
-              </label>
-              <div class="form-actions full">
-                <button type="submit" class="btn btn-primary">Passwort speichern</button>
-              </div>
-            </form>
-            <p id="profil-password-status" class="settings-status hidden" role="status"></p>
-          </section>
-
-          <section class="card profil-danger-zone">
-            <h2>Konto löschen</h2>
-            <p class="settings-lead">
-              Ihr Konto und alle zugehörigen Daten werden unwiderruflich entfernt.
-            </p>
-            <button type="button" id="profil-delete-account-btn" class="btn btn-ghost profil-delete-btn">
-              Konto löschen
-            </button>
           </section>
         </main>
       </div>
