@@ -16,6 +16,7 @@ import * as rechnungenRepo from './server/repositories/rechnungen.js';
 import * as katalogPostenRepo from './server/repositories/katalogPosten.js';
 import { createRechnungenExportRouter } from './server/routes/rechnungenExport.js';
 import { createDocumentsMailRouter } from './server/routes/documentsMail.js';
+import { createAngeboteProzessRouter } from './server/routes/angeboteProzess.js';
 import {
   getPdfTemplate,
   savePdfTemplate,
@@ -64,8 +65,9 @@ kundenRouter.use(
 );
 app.use('/api/kunden', kundenRouter);
 
-app.use(
-  '/api/angebote',
+const angeboteRouter = express.Router();
+angeboteRouter.use(createAngeboteProzessRouter());
+angeboteRouter.use(
   createEntityRouter({
     label: 'Angebote',
     list: angeboteRepo.listAngebote,
@@ -74,6 +76,7 @@ app.use(
     remove: angeboteRepo.deleteAngebot,
   })
 );
+app.use('/api/angebote', angeboteRouter);
 
 app.use(
   '/api/rechnungen',

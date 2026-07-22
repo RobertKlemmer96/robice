@@ -2,7 +2,7 @@
  * Feature-Handbuch für KlemDesk — bei Prozessänderungen aktualisieren.
  */
 export const HANDBOOK = {
-  lastUpdated: '21.07.2026',
+  lastUpdated: '22.07.2026',
   intro:
     'Dieses Handbuch beschreibt alle wesentlichen Abläufe in KlemDesk — von der Registrierung bis zum PDF-Versand. Die App ist für Dienstleister gedacht: Angebote, Rechnungen, Katalog und Kunden ohne Voll-CRM.',
   sections: [
@@ -11,7 +11,7 @@ export const HANDBOOK = {
       steps: [
         'Auf der Startseite „Kostenlos registrieren“ wählen oder „Anmelden“, falls bereits ein Konto besteht.',
         'Bei der Registrierung Firmenname, E-Mail und Passwort angeben. Jede Registrierung erhält einen eigenen Mandanten (getrennte Daten).',
-        'Nach dem Login führt das Onboarding durch Firmendaten, Nummernschemata und die PDF-Vorlage.',
+        'Nach dem Login führt das Onboarding durch Firmendaten, Nummernschemata und die PDF-Vorlage — danach starten Sie im Dashboard.',
       ],
     },
     {
@@ -24,11 +24,20 @@ export const HANDBOOK = {
       ],
     },
     {
+      title: 'Dashboard',
+      steps: [
+        'Nach dem Login und beim Wechsel zwischen Angebote/Rechnungen landen Sie im Dashboard.',
+        'Überblick: Anzahl Angebote, Rechnungen, Kunden und Katalog-Posten; Hinweis auf neu erstellte Dokumente im laufenden Monat.',
+        'Schnellzugriff auf neues Angebot, neue Rechnung, Kunden und PDF-Vorlage; zuletzt bearbeitete Dokumente mit Direktlink ins Archiv.',
+        'Seitenleiste: fällige Rechnungen (nächste 14 Tage), Profil-Checkliste für fehlende Briefkopf-Daten, E-Mail-Versand-Status.',
+      ],
+    },
+    {
       title: 'Bereich wechseln: Angebote & Rechnungen',
       steps: [
-        'Oben links wechseln Sie zwischen den Bereichen Angebote und Rechnungen.',
+        'Oben links wechseln Sie zwischen den Bereichen Angebote und Rechnungen — danach öffnet sich wieder das Dashboard.',
         'Jeder Bereich hat eigene Navigation (Neu, Archiv), eigene Nummernkreise und eigene PDF-Vorlagen.',
-        'Stammdaten (Katalog, Kunden) und Einstellungen (Vorlage, Admin) sind in beiden Bereichen gleich.',
+        'Stammdaten (Katalog, Kunden), Dashboard und Einstellungen (Profil, Vorlage, Admin) sind in beiden Bereichen gleich.',
       ],
     },
     {
@@ -87,15 +96,16 @@ export const HANDBOOK = {
     {
       title: 'PDF-Vorlage anpassen',
       steps: [
-        'Navigation: Einstellungen → Vorlage.',
-        'Getrennte Vorlagen für Angebote und Rechnungen: Firmenblock, Farben, Logo, Header-Bild, Fußtexte, Layout-Variante.',
+        'Navigation: Einstellungen → Vorlage (oder Schnellzugriff im Dashboard).',
+        'Getrennte Vorlagen für Angebote und Rechnungen: Farben, Logo, Header-Bild, Fußtexte, Layout-Variante.',
+        'Firmendaten für den Briefkopf kommen aus dem Profil — dort Name, Adresse, Telefon, E-Mail, USt-IdNr. und IBAN pflegen.',
         'Live-Vorschau zeigt Änderungen. Speichern wirkt auf alle künftigen PDFs.',
       ],
     },
     {
       title: 'Profil & Konto',
       steps: [
-        'Profil-Icon oben rechts: Tarif, Nummernschemata, Passwort ändern, Konto löschen.',
+        'Profil-Icon oben rechts: Firmendaten, Tarif, Nummernschemata, Passwort ändern, Konto löschen.',
         'Sprache über die Flagge umschalten (Deutsch/English) — Oberfläche und Formularlabels werden angepasst.',
         'Design (Hell/Dunkel) über das Theme-Toggle im Header.',
       ],
@@ -105,6 +115,7 @@ export const HANDBOOK = {
       steps: [
         'Navigation: Einstellungen → Admin.',
         'Übersicht aller registrierten Nutzer und Mandanten im System.',
+        'Mandant impersonieren: Daten und Archiv des Kunden einsehen oder Support leisten (Banner oben zum Beenden).',
       ],
     },
   ],

@@ -436,6 +436,15 @@
     </div>
 
     <div id="app" class="app hidden">
+      <div class="landing-alpha-banner app-alpha-banner" role="status" aria-live="polite">
+        <div class="landing-alpha-banner__inner">
+          <strong data-i18n="landing.alpha">Alpha-Vorschau</strong>
+          <span data-i18n="landing.alphaText">
+            KlemDesk befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können
+            sich noch ändern.
+          </span>
+        </div>
+      </div>
       <div class="app-shell">
         <aside class="app-sidebar" id="app-sidebar">
           <div class="app-sidebar__head">
@@ -545,12 +554,10 @@
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="neu">
                     <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.offersNew">Neues Angebot</span>
                     <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.offersNewShort">Neu</span>
-                    <span class="app-nav__link-desc" data-i18n="nav.offersNewDesc">Angebot &amp; PDF erstellen</span>
                   </button>
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="archiv">
                     <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.offersArchive">Alle Angebote</span>
                     <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.offersArchiveShort">Archiv</span>
-                    <span class="app-nav__link-desc" data-i18n="nav.offersArchiveDesc">Archiv durchsuchen</span>
                   </button>
                 </div>
               </li>
@@ -578,12 +585,39 @@
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-neu">
                     <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.invoicesNew">Neue Rechnung</span>
                     <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.invoicesNewShort">Neu</span>
-                    <span class="app-nav__link-desc" data-i18n="nav.invoicesNewDesc">Rechnung &amp; PDF erstellen</span>
                   </button>
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-archiv">
                     <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.invoicesArchive">Alle Rechnungen</span>
                     <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.invoicesArchiveShort">Archiv</span>
-                    <span class="app-nav__link-desc" data-i18n="nav.invoicesArchiveDesc">Archiv durchsuchen</span>
+                  </button>
+                </div>
+              </li>
+              <li class="app-nav__group is-open" data-nav-group="prozesse">
+                <button
+                  type="button"
+                  class="app-nav__trigger"
+                  aria-expanded="true"
+                  aria-haspopup="true"
+                  data-nav-trigger
+                  data-i18n-title="nav.processes"
+                >
+                  <span class="app-nav__trigger-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                      <circle cx="6" cy="7" r="2.25" fill="none" stroke="currentColor" stroke-width="1.75"/>
+                      <circle cx="12" cy="12" r="2.25" fill="none" stroke="currentColor" stroke-width="1.75"/>
+                      <circle cx="18" cy="17" r="2.25" fill="none" stroke="currentColor" stroke-width="1.75"/>
+                      <path d="M8 7.5h8M8.5 12.8l5 2.2" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                    </svg>
+                  </span>
+                  <span class="app-nav__trigger-label" data-i18n="nav.processes">Prozesse</span>
+                  <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <div class="app-nav__menu" role="menu">
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="prozesse">
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.processes">Prozesse</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.processesShort">Prozesse</span>
                   </button>
                 </div>
               </li>
@@ -611,12 +645,10 @@
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="katalog">
                     <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.catalog">Katalog</span>
                     <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.catalog">Katalog</span>
-                    <span class="app-nav__link-desc" data-i18n="nav.catalogDesc">Leistungen &amp; Preise</span>
                   </button>
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="kunden">
                     <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.customers">Kunden</span>
                     <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.customers">Kunden</span>
-                    <span class="app-nav__link-desc" data-i18n="nav.customersDesc">Kunden verwalten</span>
                   </button>
                 </div>
               </li>
@@ -642,9 +674,8 @@
                 </button>
                 <div class="app-nav__menu" role="menu">
                   <button type="button" class="app-nav__link" role="menuitem" data-nav-view="pdf-vorlage">
-                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.template">Vorlage</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.template">Vorlage</span>
-                    <span class="app-nav__link-desc" data-i18n="nav.templateDesc">PDF-Vorlage anpassen</span>
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.template">PDF-Vorlagen</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.template">PDF-Vorlagen</span>
                   </button>
                 </div>
               </li>
@@ -765,7 +796,8 @@
             <span class="app-nav-toggle__bar" aria-hidden="true"></span>
           </button>
 
-          <div class="app-content">
+          <div class="app-content-scroll">
+            <div class="app-content">
       <div id="view-dashboard" class="hidden">
         <main class="main main--dashboard">
           <div id="dashboard-root" class="dashboard-root" aria-live="polite"></div>
@@ -930,58 +962,6 @@
             </div>
           </section>
 
-          <div id="rechnung-sticky-footer" class="angebot-sticky-footer">
-            <section class="card summary-card">
-              <div class="totals">
-                <div class="total-row">
-                  <span data-i18n="form.totalNet">Gesamt netto</span>
-                  <span id="rechnung-summe-netto">0,00 €</span>
-                </div>
-                <div class="total-row">
-                  <span data-i18n="form.vat">19 % Umsatzsteuer</span>
-                  <span id="rechnung-summe-mwst">0,00 €</span>
-                </div>
-                <div class="total-row total-row--bold">
-                  <span data-i18n="form.totalGross">Gesamtbetrag</span>
-                  <span id="rechnung-summe-brutto">0,00 €</span>
-                </div>
-              </div>
-            </section>
-
-            <div id="rechnung-pdf-footer" class="pdf-footer">
-              <div class="pdf-footer__actions">
-                <button
-                  type="button"
-                  id="rechnung-reset-btn"
-                  class="btn btn-ghost is-disabled"
-                  disabled
-                  aria-disabled="true"
-                >
-                  <span data-i18n="common.reset">Zurücksetzen</span>
-                </button>
-                <button
-                  type="button"
-                  id="rechnung-save-btn"
-                  class="btn btn-ghost is-disabled"
-                  aria-disabled="true"
-                >
-                  <span data-i18n="pdf.save">Speichern</span>
-                </button>
-                <button type="button" id="rechnung-pdf-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
-                  <span data-i18n="pdf.create">PDF erstellen</span>
-                </button>
-                <button
-                  type="button"
-                  id="rechnung-preview-btn"
-                  class="btn btn-primary pdf-footer__preview-btn is-disabled"
-                  aria-disabled="true"
-                >
-                  <span data-i18n="pdf.preview">Vorschau &amp; Senden</span>
-                </button>
-              </div>
-              <p id="rechnung-pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
-            </div>
-          </div>
         </main>
       </div>
 
@@ -1155,42 +1135,6 @@
             </div>
           </section>
 
-          <div id="angebot-sticky-footer" class="angebot-sticky-footer">
-            <section class="card summary-card">
-              <div class="totals">
-                <div class="total-row">
-                  <span data-i18n="form.totalNet">Gesamt netto</span>
-                  <span id="summe-netto">0,00 €</span>
-                </div>
-                <div class="total-row">
-                  <span data-i18n="form.vat">19 % Umsatzsteuer</span>
-                  <span id="summe-mwst">0,00 €</span>
-                </div>
-                <div class="total-row total-row--bold">
-                  <span data-i18n="form.totalGross">Gesamtbetrag</span>
-                  <span id="summe-brutto">0,00 €</span>
-                </div>
-              </div>
-            </section>
-
-            <div id="pdf-footer" class="pdf-footer">
-              <div class="pdf-footer__actions">
-                <button type="button" id="reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true">
-                  <span data-i18n="common.reset">Zurücksetzen</span>
-                </button>
-                <button type="button" id="save-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
-                  <span data-i18n="pdf.save">Speichern</span>
-                </button>
-                <button type="button" id="pdf-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
-                  <span data-i18n="pdf.create">PDF erstellen</span>
-                </button>
-                <button type="button" id="preview-btn" class="btn btn-primary pdf-footer__preview-btn is-disabled" aria-disabled="true">
-                  <span data-i18n="pdf.preview">Vorschau &amp; Senden</span>
-                </button>
-              </div>
-              <p id="pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
-            </div>
-          </div>
         </main>
       </div>
 
@@ -1202,6 +1146,24 @@
               <input type="search" id="archiv-suche" class="search" data-i18n-placeholder="form.searchQuotes" placeholder="Angebote suchen (Nr., Kunde, Datum)…" />
             </div>
             <div id="archiv-liste" class="archiv-liste"></div>
+          </section>
+        </main>
+      </div>
+
+      <div id="view-prozesse" class="hidden">
+        <main class="main">
+          <section class="card">
+            <div class="card-header">
+              <h2 data-i18n="prozesse.title">Prozesse</h2>
+              <input
+                type="search"
+                id="prozesse-suche"
+                class="search"
+                data-i18n-placeholder="prozesse.search"
+                placeholder="Angebote suchen (Nr., Kunde)…"
+              />
+            </div>
+            <div id="prozesse-liste" class="prozesse-root" aria-live="polite"></div>
           </section>
         </main>
       </div>
@@ -1441,41 +1403,55 @@
 
               <div class="profil-subsection">
                 <h3 class="profil-block__title">Passwort ändern</h3>
-                <form id="profil-password-form" class="form-grid form-grid--profil form-grid--profil-password">
-                  <label>
-                    Aktuelles Passwort
-                    <input
-                      type="password"
-                      id="profil-current-password"
-                      autocomplete="current-password"
-                      required
-                    />
-                  </label>
-                  <label>
-                    Neues Passwort
-                    <input
-                      type="password"
-                      id="profil-new-password"
-                      autocomplete="new-password"
-                      required
-                      minlength="8"
-                    />
-                  </label>
-                  <label>
-                    Bestätigen
-                    <input
-                      type="password"
-                      id="profil-confirm-password"
-                      autocomplete="new-password"
-                      required
-                      minlength="8"
-                    />
-                  </label>
-                  <div class="form-actions full">
+                <form id="profil-password-form" class="profil-password-form">
+                  <div class="profil-password-row">
+                    <label>
+                      Aktuelles Passwort
+                      <input
+                        type="password"
+                        id="profil-current-password"
+                        autocomplete="current-password"
+                        required
+                      />
+                    </label>
+                    <label>
+                      Neues Passwort
+                      <input
+                        type="password"
+                        id="profil-new-password"
+                        autocomplete="new-password"
+                        required
+                        minlength="8"
+                      />
+                    </label>
+                    <label>
+                      Bestätigen
+                      <input
+                        type="password"
+                        id="profil-confirm-password"
+                        autocomplete="new-password"
+                        required
+                        minlength="8"
+                      />
+                    </label>
+                  </div>
+                  <div class="form-actions">
                     <button type="submit" class="btn btn-primary btn-sm">Passwort speichern</button>
                   </div>
                 </form>
                 <p id="profil-password-status" class="settings-status hidden" role="status"></p>
+              </div>
+
+              <div class="profil-subsection profil-subsection--danger">
+                <div class="profil-danger-row">
+                  <div>
+                    <h3 class="profil-block__title">Konto löschen</h3>
+                    <p class="profil-danger-note">Alle Daten werden unwiderruflich entfernt.</p>
+                  </div>
+                  <button type="button" id="profil-delete-account-btn" class="btn btn-ghost btn-sm profil-delete-btn">
+                    Konto löschen
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1513,20 +1489,6 @@
                     Vorschau: <strong id="profil-rechnung-schema-preview">—</strong>
                   </span>
                 </div>
-              </div>
-            </div>
-
-            <div class="profil-divider profil-divider--danger" aria-hidden="true"></div>
-
-            <div class="profil-block profil-block--danger">
-              <div class="profil-danger-row">
-                <div>
-                  <h3 class="profil-block__title">Konto löschen</h3>
-                  <p class="profil-danger-note">Alle Daten werden unwiderruflich entfernt.</p>
-                </div>
-                <button type="button" id="profil-delete-account-btn" class="btn btn-ghost btn-sm profil-delete-btn">
-                  Konto löschen
-                </button>
               </div>
             </div>
           </section>
@@ -1727,21 +1689,115 @@
         </main>
       </div>
 
-      <footer class="app-footer">
-        <nav class="legal-nav" data-i18n-aria-label="legal.nav" aria-label="Rechtliches">
-          <button type="button" class="legal-nav__link" data-legal-page="impressum" data-i18n="legal.imprint">Impressum</button>
-          <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
-          <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
-          <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="handbook" data-i18n="legal.handbook">Handbuch</button>
-          <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="faq" data-i18n="legal.faq">FAQ</button>
-          <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
-        </nav>
-      </footer>
+            </div>
+          </div>
+
+          <div class="app-body__footers">
+            <div id="angebot-sticky-footer" class="angebot-sticky-footer hidden">
+              <section class="card summary-card">
+                <div class="totals">
+                  <div class="total-row">
+                    <span data-i18n="form.totalNet">Gesamt netto</span>
+                    <span id="summe-netto">0,00 €</span>
+                  </div>
+                  <div class="total-row">
+                    <span data-i18n="form.vat">19 % Umsatzsteuer</span>
+                    <span id="summe-mwst">0,00 €</span>
+                  </div>
+                  <div class="total-row total-row--bold">
+                    <span data-i18n="form.totalGross">Gesamtbetrag</span>
+                    <span id="summe-brutto">0,00 €</span>
+                  </div>
+                </div>
+              </section>
+
+              <div id="pdf-footer" class="pdf-footer">
+                <div class="pdf-footer__actions">
+                  <button type="button" id="reset-btn" class="btn btn-ghost is-disabled" disabled aria-disabled="true">
+                    <span data-i18n="common.reset">Zurücksetzen</span>
+                  </button>
+                  <button type="button" id="save-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
+                    <span data-i18n="pdf.save">Speichern</span>
+                  </button>
+                  <button type="button" id="pdf-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
+                    <span data-i18n="pdf.create">PDF erstellen</span>
+                  </button>
+                  <button type="button" id="preview-btn" class="btn btn-primary pdf-footer__preview-btn is-disabled" aria-disabled="true">
+                    <span data-i18n="pdf.preview">Vorschau &amp; Senden</span>
+                  </button>
+                </div>
+                <p id="pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
+              </div>
+            </div>
+
+            <div id="rechnung-sticky-footer" class="angebot-sticky-footer hidden">
+              <section class="card summary-card">
+                <div class="totals">
+                  <div class="total-row">
+                    <span data-i18n="form.totalNet">Gesamt netto</span>
+                    <span id="rechnung-summe-netto">0,00 €</span>
+                  </div>
+                  <div class="total-row">
+                    <span data-i18n="form.vat">19 % Umsatzsteuer</span>
+                    <span id="rechnung-summe-mwst">0,00 €</span>
+                  </div>
+                  <div class="total-row total-row--bold">
+                    <span data-i18n="form.totalGross">Gesamtbetrag</span>
+                    <span id="rechnung-summe-brutto">0,00 €</span>
+                  </div>
+                </div>
+              </section>
+
+              <div id="rechnung-pdf-footer" class="pdf-footer">
+                <div class="pdf-footer__actions">
+                  <button
+                    type="button"
+                    id="rechnung-reset-btn"
+                    class="btn btn-ghost is-disabled"
+                    disabled
+                    aria-disabled="true"
+                  >
+                    <span data-i18n="common.reset">Zurücksetzen</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="rechnung-save-btn"
+                    class="btn btn-ghost is-disabled"
+                    aria-disabled="true"
+                  >
+                    <span data-i18n="pdf.save">Speichern</span>
+                  </button>
+                  <button type="button" id="rechnung-pdf-btn" class="btn btn-ghost is-disabled" aria-disabled="true">
+                    <span data-i18n="pdf.create">PDF erstellen</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="rechnung-preview-btn"
+                    class="btn btn-primary pdf-footer__preview-btn is-disabled"
+                    aria-disabled="true"
+                  >
+                    <span data-i18n="pdf.preview">Vorschau &amp; Senden</span>
+                  </button>
+                </div>
+                <p id="rechnung-pdf-send-hint" class="pdf-footer__mail-hint hidden"></p>
+              </div>
+            </div>
+
+            <footer class="app-footer">
+              <nav class="legal-nav" data-i18n-aria-label="legal.nav" aria-label="Rechtliches">
+                <button type="button" class="legal-nav__link" data-legal-page="impressum" data-i18n="legal.imprint">Impressum</button>
+                <span class="legal-nav__sep" aria-hidden="true">·</span>
+                <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
+                <span class="legal-nav__sep" aria-hidden="true">·</span>
+                <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
+                <span class="legal-nav__sep" aria-hidden="true">·</span>
+                <button type="button" class="legal-nav__link" data-legal-page="handbook" data-i18n="legal.handbook">Handbuch</button>
+                <span class="legal-nav__sep" aria-hidden="true">·</span>
+                <button type="button" class="legal-nav__link" data-legal-page="faq" data-i18n="legal.faq">FAQ</button>
+                <span class="legal-nav__sep" aria-hidden="true">·</span>
+                <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
+              </nav>
+            </footer>
           </div>
         </div>
       </div>

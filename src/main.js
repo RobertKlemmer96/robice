@@ -8,6 +8,7 @@ import {
   clearAdresseFieldPair,
 } from './adresse.js';
 import { loadDashboardData, renderDashboard } from './dashboard.js';
+import { renderProzesseView } from './prozesse.js';
 import { formatPlanLabel, normalizeRegistrationPlan, PLAN_LABELS, PLAN_PRICES, PLAN_TAGLINES, REGISTRATION_PLANS } from './plans.js';
 import { formatPostenArt, normalizePostenArt } from './data.js';
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isImpersonating, getImpersonation, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
@@ -249,6 +250,9 @@ const els = {
   dashboardRoot: document.getElementById('dashboard-root'),
   viewNeu: document.getElementById('view-neu'),
   viewArchiv: document.getElementById('view-archiv'),
+  viewProzesse: document.getElementById('view-prozesse'),
+  prozesseListe: document.getElementById('prozesse-liste'),
+  prozesseSuche: document.getElementById('prozesse-suche'),
   viewKunden: document.getElementById('view-kunden'),
   viewKatalog: document.getElementById('view-katalog'),
   pdfAngebotForm: document.getElementById('pdf-angebot-form'),
@@ -1058,6 +1062,7 @@ async function getFormAngebot() {
       els.kundeTelefon?.value.trim()
     ),
     posten: angebotPostenEditor.getPostenForSave(),
+    prozessStatus: bestehend?.prozessStatus || 'gespeichert',
   };
 }
 
@@ -2118,6 +2123,7 @@ async function reloadAfterTenantSwitch() {
   syncProfileButton();
   syncImpersonationBanner();
   if (state.view === 'archiv') await renderArchiv();
+  else if (state.view === 'prozesse') await renderProzesse();
   else if (state.view === 'rechnung-archiv') await renderRechnungArchiv();
   else if (state.view === 'kunden') await renderKundenView();
   else if (state.view === 'katalog') await renderKatalogView();
@@ -2252,6 +2258,7 @@ const NAV_VIEW_GROUPS = {
   dashboard: 'dashboard',
   neu: 'angebote',
   archiv: 'angebote',
+  prozesse: 'prozesse',
   'rechnung-neu': 'rechnungen',
   'rechnung-archiv': 'rechnungen',
   kunden: 'stammdaten',
@@ -2385,6 +2392,7 @@ function resolveNavBarView(view) {
   if (
     resolved === 'neu' ||
     resolved === 'archiv' ||
+    resolved === 'prozesse' ||
     resolved === 'katalog' ||
     resolved === 'kunden' ||
     resolved === 'rechnung-neu' ||
@@ -2690,6 +2698,7 @@ function showView(view) {
     state.view = view;
     els.viewNeu.classList.add('hidden');
     els.viewArchiv.classList.add('hidden');
+    els.viewProzesse?.classList.toggle('hidden', view !== 'prozesse');
     els.viewRechnungNeu.classList.toggle('hidden', view !== 'rechnung-neu');
     els.viewRechnungArchiv.classList.toggle('hidden', view !== 'rechnung-archiv');
     els.viewDashboard?.classList.toggle('hidden', view !== 'dashboard');
@@ -2717,6 +2726,8 @@ function showView(view) {
       renderProfilView();
     } else if (view === 'dashboard') {
       void renderDashboardView();
+    } else if (view === 'prozesse') {
+      void renderProzesse();
     } else if (view === 'rechnung-neu') {
       updateRechnungPageHeader();
     }
@@ -2729,6 +2740,7 @@ function showView(view) {
   els.rechnungStickyFooter?.classList.add('hidden');
   els.viewNeu.classList.toggle('hidden', view !== 'neu');
   els.viewArchiv.classList.toggle('hidden', view !== 'archiv');
+  els.viewProzesse?.classList.toggle('hidden', view !== 'prozesse');
   els.viewDashboard?.classList.toggle('hidden', view !== 'dashboard');
   els.viewKunden.classList.toggle('hidden', view !== 'kunden');
   els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
@@ -2741,6 +2753,9 @@ function showView(view) {
   if (view === 'archiv') {
     els.angebotStickyFooter.classList.add('hidden');
     renderArchiv();
+  } else if (view === 'prozesse') {
+    els.angebotStickyFooter.classList.add('hidden');
+    void renderProzesse();
   } else if (view === 'kunden') {
     els.angebotStickyFooter.classList.add('hidden');
     renderKundenView();
@@ -3308,6 +3323,21 @@ async function renderArchiv() {
   } catch (err) {
     els.archivListe.innerHTML = `<p class="empty">${t('archiv.loadError', { message: err.message })}</p>`;
   }
+}
+
+async function renderProzesse() {
+  if (!els.prozesseListe) return;
+  await renderProzesseView(els.prozesseListe, {
+    sucheInput: els.prozesseSuche,
+    onOpenAngebot: async (id) => {
+      try {
+        const angebot = await getAngebot(id);
+        if (angebot) await loadAngebotIntoForm(angebot);
+      } catch (err) {
+        alert(`Fehler: ${err.message}`);
+      }
+    },
+  });
 }
 
 async function renderRechnungArchiv() {
@@ -4738,6 +4768,7 @@ function bindAppEvents() {
   });
 
   els.archivSuche?.addEventListener('input', renderArchiv);
+  els.prozesseSuche?.addEventListener('input', renderProzesse);
   els.rechnungArchivSuche?.addEventListener('input', renderRechnungArchiv);
 
   els.archivListe.addEventListener('click', async (e) => {
@@ -4944,6 +4975,7 @@ async function refreshLocaleUi() {
   if (els.app?.classList.contains('hidden')) return;
 
   if (state.view === 'archiv') await renderArchiv();
+  else if (state.view === 'prozesse') await renderProzesse();
   else if (state.view === 'rechnung-archiv') await renderRechnungArchiv();
   else if (state.view === 'kunden') await renderKundenView();
   else if (state.view === 'katalog') await renderKatalogView();

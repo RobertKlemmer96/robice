@@ -255,13 +255,17 @@ function renderAgb() {
 
 function renderRoadmapPhase(phase) {
   const statusLabel = ROADMAP_STATUS_LABELS[phase.status] || phase.status;
-  const periodLabel = phase.quarter ? `${phase.period} · ${phase.quarter}` : phase.period;
+  const periodLabel = phase.period
+    ? phase.quarter
+      ? `${phase.period} · ${phase.quarter}`
+      : phase.period
+    : '';
 
   return `
     <li class="roadmap-timeline__item roadmap-timeline__item--${escapeHtml(phase.status)}">
       <div class="roadmap-timeline__marker" aria-hidden="true"></div>
       <div class="roadmap-timeline__stripe">
-        <span class="roadmap-timeline__period">${escapeHtml(periodLabel)}</span>
+        ${periodLabel ? `<span class="roadmap-timeline__period">${escapeHtml(periodLabel)}</span>` : ''}
         <span class="roadmap-timeline__status">${escapeHtml(statusLabel)}</span>
       </div>
       <div class="roadmap-timeline__body">

@@ -2,7 +2,7 @@
  * FAQ für KlemDesk — bei häufigen Nutzerfragen ergänzen.
  */
 export const FAQ = {
-  lastUpdated: '21.07.2026',
+  lastUpdated: '22.07.2026',
   intro: 'Antworten auf die häufigsten Fragen zur Nutzung von KlemDesk.',
   items: [
     {
@@ -51,7 +51,7 @@ export const FAQ = {
     },
     {
       q: 'Was passiert bei Updates?',
-      a: 'KlemDesk befindet sich in aktiver Entwicklung. Geplante Meilensteine stehen in der Roadmap. Bestehende Daten bleiben beim Update erhalten.',
+      a: 'KlemDesk befindet sich in aktiver Entwicklung. Als Nächstes sind Zahlungsstatus und Übersichten geplant — Details in der Roadmap. Bestehende Daten bleiben beim Update erhalten.',
     },
   ],
 };

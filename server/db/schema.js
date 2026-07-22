@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS angebote (
   aktualisiert_am TEXT NOT NULL,
   angebotsdatum TEXT,
   gueltig_bis TEXT,
+  prozess_status TEXT NOT NULL DEFAULT 'gespeichert',
   kunde_json TEXT NOT NULL,
   posten_json TEXT NOT NULL
 );

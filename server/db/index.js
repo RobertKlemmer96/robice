@@ -129,6 +129,9 @@ function runMigrations(database) {
       WHERE angebotsdatum IS NULL AND erstellt_am IS NOT NULL AND erstellt_am != ''
     `);
   }
+  if (!angebotNames.has('prozess_status')) {
+    database.exec(`ALTER TABLE angebote ADD COLUMN prozess_status TEXT NOT NULL DEFAULT 'gespeichert'`);
+  }
 
   const tenantCols = database.prepare('PRAGMA table_info(tenants)').all();
   const tenantNames = new Set(tenantCols.map((c) => c.name));

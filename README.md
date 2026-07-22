@@ -63,4 +63,16 @@ npm run db:backup
 
 - Posten-Katalog: `src/data.js`
 - MwSt.: `src/pdf.js` (`MWST_SATZ`)
-- Kunden-Roadmap: [docs/KUNDEN-ROADMAP.md](docs/KUNDEN-ROADMAP.md)
+- Produkt-Roadmap (öffentlich): `src/roadmapConfig.js`
+- Kunden-Roadmap (intern): [docs/KUNDEN-ROADMAP.md](docs/KUNDEN-ROADMAP.md)
+
+## Aktueller Stand (22.07.2026)
+
+| Bereich | Status |
+|---------|--------|
+| Angebote, Rechnungen, Archiv, Katalog, Kunden inkl. Objekte | ✅ |
+| PDF-Vorlagen, ZUGFeRD, E-Mail-Versand (SMTP) | ✅ |
+| Dashboard, Sidebar, DE/EN, Handbuch/FAQ | ✅ |
+| Admin & Mandanten-Impersonation | ✅ |
+| Rechnungsstatus (offen/bezahlt), offene Posten am Kunden | ⏳ geplant Q3 2026 |
+| Export, erweiterte Stammdaten, Tags/Import | 📋 geplant ab Q4 2026 |

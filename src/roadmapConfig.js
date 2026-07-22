@@ -2,11 +2,9 @@
  * Produkt-Roadmap für KlemDesk — bei Meilenstein-Updates anpassen.
  */
 export const ROADMAP = {
-  lastUpdated: '20.07.2026',
+  lastUpdated: '22.07.2026',
   phases: [
     {
-      period: '2025',
-      quarter: 'Q3',
       title: 'Angebote & Rechnungen',
       status: 'done',
       points: [
@@ -16,41 +14,48 @@ export const ROADMAP = {
       ],
     },
     {
-      period: '2025',
-      quarter: 'Q4',
-      title: 'Mandanten & Vorlagen',
+      title: 'Mandanten & Einstieg',
       status: 'done',
       points: [
-        'Registrierung mit getrennten Mandantendaten',
+        'Registrierung mit getrennten Mandantendaten, Tarifpläne und Onboarding',
         'PDF-Vorlagen für Angebot und Rechnung getrennt pflegen',
-        'Landingpage und kostenloser Einstieg',
+        'Landingpage, kostenloser Einstieg und Marketing-Seiten',
       ],
     },
     {
-      period: '2026',
-      quarter: 'Q1',
       title: 'Kunden & Mobile',
       status: 'done',
       points: [
         'Kundenverwaltung mit Kontakt, Notiz und Dokumentenübersicht',
-        'Objekte und Einsatzorte pro Kunde',
+        'Objekte und Einsatzorte pro Kunde (Leistungsort im PDF)',
         'Mobile Oberfläche mit kompakter Navigation',
       ],
     },
     {
+      title: 'Plattform & PDF',
+      status: 'done',
+      points: [
+        'Dashboard nach Login: Kennzahlen, Schnellzugriff, Profil-Checkliste',
+        'Sidebar-Navigation, DE/EN-Oberfläche, Handbuch und FAQ',
+        'PDF per E-Mail (SMTP), ZUGFeRD-Export, mehrere Layout-Varianten',
+        'Admin-Bereich mit Mandanten-Impersonation; Firmendaten zentral im Profil',
+      ],
+    },
+    {
       period: '2026',
-      quarter: 'Q2',
+      quarter: 'Q3',
       title: 'Zahlungen & Übersicht',
       status: 'active',
       points: [
         'Rechnungsstatus: offen, bezahlt, optional gemahnt',
         'Offene Posten und Zahlungsübersicht im Kunden-Detail',
         'Status-Badges in Kunden- und Archivlisten',
+        'Basis vorhanden: Fälligkeitsdatum an Rechnungen, Dashboard-Zähler „bald fällig“ (14 Tage)',
       ],
     },
     {
       period: '2026',
-      quarter: 'Q3',
+      quarter: 'Q4',
       title: 'Stammdaten & Export',
       status: 'planned',
       points: [
@@ -60,8 +65,8 @@ export const ROADMAP = {
       ],
     },
     {
-      period: '2026',
-      quarter: 'Q4',
+      period: '2027',
+      quarter: 'Q1',
       title: 'Alltag & Integration',
       status: 'planned',
       points: [
