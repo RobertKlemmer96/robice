@@ -35,6 +35,9 @@
     />
     <meta name="twitter:image" content="https://robice.onrender.com/quotavo-logo.svg" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+    <noscript>
+      <style>.noscript-nav { padding: 1rem; font-family: system-ui, sans-serif; }</style>
+    </noscript>
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="theme-color" content="#121820" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
@@ -49,6 +52,19 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
+    <noscript>
+      <nav class="noscript-nav" aria-label="Seitenübersicht">
+        <p><strong>Quotavo</strong> — Angebote &amp; Rechnungen online</p>
+        <p>
+          <a href="/">Startseite</a> ·
+          <a href="/angebot-erstellen">Angebot erstellen</a> ·
+          <a href="/rechnung-schreiben">Rechnung schreiben</a> ·
+          <a href="/faq">FAQ</a> ·
+          <a href="/handbuch">Handbuch</a> ·
+          <a href="/ressourcen">Ressourcen</a>
+        </p>
+      </nav>
+    </noscript>
     <div id="landing" class="landing">
       <div class="landing-alpha-banner" role="status" aria-live="polite">
         <div class="landing-alpha-banner__inner">
@@ -358,6 +374,31 @@
           </ol>
         </section>
 
+        <section class="landing-section landing-section--guides" aria-labelledby="landing-guides-title">
+          <div class="landing-section__head">
+            <h2 id="landing-guides-title">Ratgeber &amp; Hilfe</h2>
+            <p>Praxisnahe Anleitungen für Angebote, Rechnungen und Handwerk — ohne Marketing-Floskeln.</p>
+          </div>
+          <div class="landing-guides">
+            <a href="/angebot-erstellen" class="landing-guide card">
+              <h3>Angebot erstellen als PDF</h3>
+              <p>Kunde, Katalog, MwSt. und PDF-Versand — Schritt für Schritt erklärt.</p>
+            </a>
+            <a href="/rechnung-schreiben" class="landing-guide card">
+              <h3>Rechnung schreiben online</h3>
+              <p>Pflichtangaben, ZUGFeRD-E-Rechnung und Übergang vom Angebot.</p>
+            </a>
+            <a href="/angebot-handwerker" class="landing-guide card">
+              <h3>Angebot für Handwerker</h3>
+              <p>Katalog, Einsatzorte und mobile Nutzung im Alltag.</p>
+            </a>
+            <a href="/ressourcen" class="landing-guide card landing-guide--hub">
+              <h3>Alle Ressourcen</h3>
+              <p>FAQ, Handbuch, Roadmap und Link-Übersicht zum Teilen.</p>
+            </a>
+          </div>
+        </section>
+
         <section class="landing-cta">
           <div class="landing-cta__card">
             <h2 data-i18n="landing.ctaTitle">Bereit für das erste Angebot?</h2>
@@ -372,17 +413,19 @@
 
       <footer class="landing-footer">
         <nav class="legal-nav" data-i18n-aria-label="legal.nav" aria-label="Rechtliches">
-          <button type="button" class="legal-nav__link" data-legal-page="impressum" data-i18n="legal.imprint">Impressum</button>
+          <a href="/impressum" class="legal-nav__link" data-i18n="legal.imprint">Impressum</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
+          <a href="/datenschutz" class="legal-nav__link" data-i18n="legal.privacy">Datenschutz</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
+          <a href="/agb" class="legal-nav__link" data-i18n="legal.terms">AGB</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="handbook" data-i18n="legal.handbook">Handbuch</button>
+          <a href="/handbuch" class="legal-nav__link" data-i18n="legal.handbook">Handbuch</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="faq" data-i18n="legal.faq">FAQ</button>
+          <a href="/faq" class="legal-nav__link" data-i18n="legal.faq">FAQ</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
+          <a href="/roadmap" class="legal-nav__link" data-i18n="legal.roadmap">Roadmap</a>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <a href="/ressourcen" class="legal-nav__link">Ressourcen</a>
         </nav>
       </footer>
     </div>
@@ -513,17 +556,19 @@
           </form>
         </div>
         <nav class="legal-nav" data-i18n-aria-label="legal.nav" aria-label="Rechtliches">
-          <button type="button" class="legal-nav__link" data-legal-page="impressum" data-i18n="legal.imprint">Impressum</button>
+          <a href="/impressum" class="legal-nav__link" data-i18n="legal.imprint">Impressum</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
+          <a href="/datenschutz" class="legal-nav__link" data-i18n="legal.privacy">Datenschutz</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
+          <a href="/agb" class="legal-nav__link" data-i18n="legal.terms">AGB</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="handbook" data-i18n="legal.handbook">Handbuch</button>
+          <a href="/handbuch" class="legal-nav__link" data-i18n="legal.handbook">Handbuch</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="faq" data-i18n="legal.faq">FAQ</button>
+          <a href="/faq" class="legal-nav__link" data-i18n="legal.faq">FAQ</a>
           <span class="legal-nav__sep" aria-hidden="true">·</span>
-          <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
+          <a href="/roadmap" class="legal-nav__link" data-i18n="legal.roadmap">Roadmap</a>
+          <span class="legal-nav__sep" aria-hidden="true">·</span>
+          <a href="/ressourcen" class="legal-nav__link">Ressourcen</a>
         </nav>
       </div>
     </div>
@@ -1878,17 +1923,19 @@
 
             <footer class="app-footer">
               <nav class="legal-nav" data-i18n-aria-label="legal.nav" aria-label="Rechtliches">
-                <button type="button" class="legal-nav__link" data-legal-page="impressum" data-i18n="legal.imprint">Impressum</button>
+                <a href="/impressum" class="legal-nav__link" data-i18n="legal.imprint">Impressum</a>
                 <span class="legal-nav__sep" aria-hidden="true">·</span>
-                <button type="button" class="legal-nav__link" data-legal-page="datenschutz" data-i18n="legal.privacy">Datenschutz</button>
+                <a href="/datenschutz" class="legal-nav__link" data-i18n="legal.privacy">Datenschutz</a>
                 <span class="legal-nav__sep" aria-hidden="true">·</span>
-                <button type="button" class="legal-nav__link" data-legal-page="agb" data-i18n="legal.terms">AGB</button>
+                <a href="/agb" class="legal-nav__link" data-i18n="legal.terms">AGB</a>
                 <span class="legal-nav__sep" aria-hidden="true">·</span>
-                <button type="button" class="legal-nav__link" data-legal-page="handbook" data-i18n="legal.handbook">Handbuch</button>
+                <a href="/handbuch" class="legal-nav__link" data-i18n="legal.handbook">Handbuch</a>
                 <span class="legal-nav__sep" aria-hidden="true">·</span>
-                <button type="button" class="legal-nav__link" data-legal-page="faq" data-i18n="legal.faq">FAQ</button>
+                <a href="/faq" class="legal-nav__link" data-i18n="legal.faq">FAQ</a>
                 <span class="legal-nav__sep" aria-hidden="true">·</span>
-                <button type="button" class="legal-nav__link" data-legal-page="roadmap" data-i18n="legal.roadmap">Roadmap</button>
+                <a href="/roadmap" class="legal-nav__link" data-i18n="legal.roadmap">Roadmap</a>
+                <span class="legal-nav__sep" aria-hidden="true">·</span>
+                <a href="/ressourcen" class="legal-nav__link">Ressourcen</a>
               </nav>
             </footer>
           </div>
@@ -1936,6 +1983,14 @@
                 <label>
                   Webseite
                   <input type="text" name="firma-web" autocomplete="url" placeholder="www.beispiel.de" />
+                </label>
+                <label class="full">
+                  USt-IdNr.
+                  <input type="text" name="firma-ustId" autocomplete="off" placeholder="DE123456789" />
+                </label>
+                <label class="full">
+                  IBAN (ZUGFeRD)
+                  <input type="text" name="firma-iban" autocomplete="off" placeholder="DE89 3704 0044 0532 0130 00" />
                 </label>
               </form>
             </section>

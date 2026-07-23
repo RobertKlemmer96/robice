@@ -1,9 +1,12 @@
 import { LEGAL_CONFIG, getCompanyLine } from './legalConfig.js';
-import { applySeoMeta } from './seo.js';
+import { applyPublicPageSeo, applySeoMeta } from './seo.js';
 import { getLocale, t } from './i18n.js';
 import { ROADMAP, ROADMAP_STATUS_LABELS } from './roadmapConfig.js';
 import { HANDBOOK } from './handbookConfig.js';
 import { FAQ } from './faqConfig.js';
+import { getSeoForPublicRoute } from './seoPagesConfig.js';
+import { parsePublicPath, getPathForLegalPage } from './publicRoutes.js';
+import { renderSeoGuide, renderSeoHub } from './seoGuides.js';
 
 const PAGE_TITLES = {
   impressum: 'Impressum',
@@ -19,6 +22,8 @@ let legalScreenEl = null;
 let legalContentEl = null;
 let legalBackEl = null;
 let onCloseCallback = null;
+let currentPublicPath = null;
+let routingInitialized = false;
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -365,28 +370,128 @@ export function renderLegalPage(pageId) {
   return render();
 }
 
+function bindPublicNavLinks() {
+  document.querySelectorAll('a.legal-nav__link[href^="/"], a.landing-guide[href^="/"]').forEach((link) => {
+    if (link.dataset.publicNavBound) return;
+    link.dataset.publicNavBound = '1';
+    link.addEventListener('click', (event) => {
+      const route = parsePublicPath(link.getAttribute('href'));
+      if (!route) return;
+      event.preventDefault();
+      const appVisible = !document.getElementById('app')?.classList.contains('hidden');
+      const loginVisible = !document.getElementById('login-screen')?.classList.contains('hidden');
+      const returnTo = appVisible ? 'app' : loginVisible ? 'login' : 'landing';
+      navigateToPublicRoute(route, { returnTo });
+    });
+  });
+}
+
+export function renderPublicPageContent(route) {
+  if (!route) return '<p>Seite nicht gefunden.</p>';
+  if (route.kind === 'legal') return renderLegalPage(route.pageId);
+  if (route.kind === 'guide') return renderSeoGuide(route.slug);
+  if (route.kind === 'hub') return renderSeoHub();
+  return '<p>Seite nicht gefunden.</p>';
+}
+
+function hideAppShells() {
+  document.getElementById('landing')?.classList.add('hidden');
+  document.getElementById('login-screen')?.classList.add('hidden');
+  document.getElementById('app')?.classList.add('hidden');
+  document.getElementById('angebot-confirm-screen')?.classList.add('hidden');
+}
+
+function showPublicScreen(html, route) {
+  if (!legalScreenEl || !legalContentEl) return;
+  hideAppShells();
+  legalContentEl.innerHTML = html;
+  currentPublicPath = route.path;
+
+  const seo = getSeoForPublicRoute(route);
+  if (seo) applyPublicPageSeo(seo, getLocale());
+
+  legalScreenEl.classList.remove('hidden');
+  legalScreenEl.setAttribute('aria-hidden', 'false');
+  legalScreenEl.scrollTop = 0;
+  legalBackEl?.focus();
+}
+
+export function navigateToPublicRoute(route, { replace = false, returnTo = 'landing' } = {}) {
+  if (!route) return false;
+  returnContext = returnTo;
+  showPublicScreen(renderPublicPageContent(route), route);
+
+  const url = route.path;
+  if (replace) window.history.replaceState({ publicRoute: route.path }, '', url);
+  else window.history.pushState({ publicRoute: route.path }, '', url);
+  return true;
+}
+
+export function openPublicRouteFromPath(pathname, options = {}) {
+  const route = parsePublicPath(pathname);
+  if (!route) return false;
+  return navigateToPublicRoute(route, { replace: true, ...options });
+}
+
+export function isPublicRouteOpen() {
+  return legalScreenEl && !legalScreenEl.classList.contains('hidden') && currentPublicPath;
+}
+
 export function initLegal({ onClose } = {}) {
   legalScreenEl = document.getElementById('legal-screen');
   legalContentEl = document.getElementById('legal-content');
   legalBackEl = document.getElementById('legal-back');
   onCloseCallback = onClose;
 
-  legalBackEl?.addEventListener('click', closeLegalPage);
-
-  document.querySelectorAll('[data-legal-page]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const appVisible = !document.getElementById('app')?.classList.contains('hidden');
-      const loginVisible = !document.getElementById('login-screen')?.classList.contains('hidden');
-      const returnTo = appVisible ? 'app' : loginVisible ? 'login' : 'landing';
-      openLegalPage(btn.dataset.legalPage, returnTo);
-    });
-  });
+  legalBackEl?.addEventListener('click', () => closeLegalPage());
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && legalScreenEl && !legalScreenEl.classList.contains('hidden')) {
       closeLegalPage();
     }
   });
+
+  legalContentEl?.addEventListener('click', (event) => {
+    const link = event.target.closest('a[href^="/"]');
+    if (!link || link.getAttribute('href')?.startsWith('//')) return;
+    const route = parsePublicPath(link.getAttribute('href'));
+    if (!route) return;
+    event.preventDefault();
+    navigateToPublicRoute(route, { returnTo: returnContext });
+  });
+
+  document.querySelectorAll('[data-legal-page]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const pageId = btn.dataset.legalPage;
+      const path = getPathForLegalPage(pageId);
+      const route = path ? parsePublicPath(path) : null;
+      const appVisible = !document.getElementById('app')?.classList.contains('hidden');
+      const loginVisible = !document.getElementById('login-screen')?.classList.contains('hidden');
+      const returnTo = appVisible ? 'app' : loginVisible ? 'login' : 'landing';
+
+      if (route) {
+        navigateToPublicRoute(route, { returnTo });
+        return;
+      }
+
+      openLegalPage(pageId, returnTo);
+    });
+  });
+
+  bindPublicNavLinks();
+
+  if (!routingInitialized) {
+    routingInitialized = true;
+    window.addEventListener('popstate', () => {
+      const route = parsePublicPath(window.location.pathname);
+      if (route) {
+        showPublicScreen(renderPublicPageContent(route), route);
+        return;
+      }
+      if (isLegalOpen()) closeLegalPage({ skipHistory: true });
+      else onCloseCallback?.('landing');
+    });
+  }
 }
 
 function restoreSeoMeta() {
@@ -401,22 +506,35 @@ function restoreSeoMeta() {
 }
 
 export function openLegalPage(pageId, returnTo = 'login') {
+  const path = getPathForLegalPage(pageId);
+  const route = path ? parsePublicPath(path) : null;
+  if (route) {
+    navigateToPublicRoute(route, { returnTo });
+    return;
+  }
+
   if (!legalScreenEl || !legalContentEl) return;
   returnContext = returnTo;
   legalContentEl.innerHTML = renderLegalPage(pageId);
-  document.title = LEGAL_CONFIG.productName;
+  currentPublicPath = null;
   legalScreenEl.classList.remove('hidden');
   legalScreenEl.setAttribute('aria-hidden', 'false');
   legalScreenEl.scrollTop = 0;
   legalBackEl?.focus();
 }
 
-export function closeLegalPage() {
+export function closeLegalPage({ skipHistory = false, skipCallback = false } = {}) {
   if (!legalScreenEl) return;
   legalScreenEl.classList.add('hidden');
   legalScreenEl.setAttribute('aria-hidden', 'true');
+  currentPublicPath = null;
   restoreSeoMeta();
-  onCloseCallback?.(returnContext);
+
+  if (!skipHistory && window.location.pathname !== '/') {
+    window.history.pushState({}, '', '/');
+  }
+
+  if (!skipCallback) onCloseCallback?.(returnContext);
 }
 
 export function isLegalOpen() {

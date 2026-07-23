@@ -171,6 +171,8 @@ function fillFirmaStep() {
   firmaFormEl.elements['firma-plzOrt'].value = tpl.firma.plzOrt || '';
   firmaFormEl.elements['firma-telefon'].value = tpl.firma.telefon || '';
   firmaFormEl.elements['firma-web'].value = tpl.firma.web || '';
+  firmaFormEl.elements['firma-ustId'].value = tpl.firma.ustId || '';
+  firmaFormEl.elements['firma-iban'].value = tpl.firma.iban || '';
 }
 
 function fillNummernStep() {

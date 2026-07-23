@@ -1,5 +1,6 @@
 import { initLanding } from './landing.js';
-import { initLegal } from './legal.js';
+import { initLegal, openPublicRouteFromPath, closeLegalPage } from './legal.js';
+import { parsePublicPath } from './publicRoutes.js';
 import {
   normalizeAdresse,
   adresseToLines,
@@ -4342,9 +4343,24 @@ function showLanding() {
   invalidateAppFlow();
   pendingRegistrationPlan = 'free';
   document.getElementById('angebot-confirm-screen')?.classList.add('hidden');
+  closeLegalPage({ skipHistory: true, skipCallback: true });
   els.landing?.classList.remove('hidden');
   els.loginScreen.classList.add('hidden');
   els.app.classList.add('hidden');
+}
+
+function handlePublicPageClose(returnContext) {
+  if (returnContext === 'app' && isLoggedIn()) {
+    els.landing?.classList.add('hidden');
+    els.loginScreen.classList.add('hidden');
+    els.app.classList.remove('hidden');
+    return;
+  }
+  if (returnContext === 'login') {
+    showLogin('login');
+    return;
+  }
+  showLanding();
 }
 
 function setAuthTab(mode) {
@@ -5078,7 +5094,7 @@ async function bootstrap() {
     void refreshLocaleUi();
   });
   syncBereichMarks();
-  initLegal();
+  initLegal({ onClose: handlePublicPageClose });
   initLanding();
   initDatePickers();
   initOnboarding({
@@ -5092,6 +5108,16 @@ async function bootstrap() {
   const confirmToken = parseAngebotConfirmTokenFromPath();
   if (confirmToken) {
     await initAngebotConfirm(confirmToken, { showLanding });
+    return;
+  }
+
+  const publicRoute = parsePublicPath(window.location.pathname);
+  if (publicRoute) {
+    openPublicRouteFromPath(window.location.pathname);
+    const session = await refreshSession();
+    if (session) {
+      /* Öffentliche Seite bleibt sichtbar; Nutzer kann zurück navigieren */
+    }
     return;
   }
 

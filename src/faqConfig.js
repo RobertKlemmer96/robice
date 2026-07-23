@@ -2,7 +2,7 @@
  * FAQ für Quotavo — bei häufigen Nutzerfragen ergänzen.
  */
 export const FAQ = {
-  lastUpdated: '22.07.2026',
+  lastUpdated: '2026-07-23',
   intro: 'Antworten auf die häufigsten Fragen zur Nutzung von Quotavo.',
   items: [
     {
@@ -48,6 +48,18 @@ export const FAQ = {
     {
       q: 'Kann ich mein Konto löschen?',
       a: 'Ja, im Profil unter „Konto löschen“. Gespeicherte Geschäftsdaten werden entfernt, sofern keine gesetzlichen Aufbewahrungspflichten entgegenstehen.',
+    },
+    {
+      q: 'Kann der Kunde ein Angebot online bestätigen?',
+      a: 'Ja. Beim Versand oder im PDF ist ein Bestätigungslink enthalten. Der Kunde gibt die Postleitzahl aus dem Angebot ein und bestätigt oder lehnt ab — der Status erscheint unter Prozesse.',
+    },
+    {
+      q: 'Unterstützt Quotavo E-Rechnungen (ZUGFeRD)?',
+      a: 'Beim Rechnungs-PDF-Export wird zusätzlich eine ZUGFeRD-XML erzeugt, wenn IBAN und USt-IdNr. im Profil hinterlegt sind.',
+    },
+    {
+      q: 'Ist Quotavo für Handwerker geeignet?',
+      a: 'Ja. Katalog mit Stundensätzen, Kunden mit Einsatzorten, mobile Oberfläche und PDF-Vorlagen — ohne Disposition oder Lagerhaltung.',
     },
     {
       q: 'Was passiert bei Updates?',
