@@ -5042,7 +5042,6 @@ body:has(#app:not(.hidden)) {
   }
 
   .profil-card--firma,
-  .profil-card--datev,
   .profil-card--nummern,
   .profil-card--danger {
     grid-column: 1 / -1;
@@ -5257,6 +5256,11 @@ body:has(#app:not(.hidden)) {
   gap: 5px 8px;
 }
 
+.form-grid--profil-firma-pairs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 8px;
+}
+
 .form-grid--profil-firma-compact .full {
   grid-column: 1 / -1;
 }
@@ -5324,6 +5328,52 @@ body:has(#app:not(.hidden)) {
   color: var(--text);
 }
 
+.main--settings {
+  max-width: 720px;
+}
+
+.datev-settings-card {
+  padding: 12px 14px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.datev-settings-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.datev-settings-card__head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+#view-datev .form-grid--profil label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+#view-datev .form-grid--profil input,
+#view-datev .form-grid--profil select {
+  font-size: 0.85rem;
+}
+
+#view-datev .settings-lead {
+  margin: 0;
+}
+
+#view-datev .settings-status {
+  margin: 0;
+}
+
 .profil-section-head {
   display: flex;
   align-items: center;
@@ -5368,7 +5418,8 @@ body:has(#app:not(.hidden)) {
 }
 
 @media (max-width: 720px) {
-  .form-grid--profil-firma-compact {
+  .form-grid--profil-firma-compact,
+  .form-grid--profil-firma-pairs {
     grid-template-columns: 1fr;
   }
 

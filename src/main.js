@@ -273,6 +273,7 @@ const els = {
   pdfPreviewAngebot: document.getElementById('pdf-preview-angebot'),
   pdfPreviewRechnung: document.getElementById('pdf-preview-rechnung'),
   viewProfil: document.getElementById('view-profil'),
+  viewDatev: document.getElementById('view-datev'),
   viewAdmin: document.getElementById('view-admin'),
   adminOverview: document.getElementById('admin-overview'),
   adminUserList: document.getElementById('admin-user-list'),
@@ -424,8 +425,8 @@ const els = {
   datevExportBis: document.getElementById('datev-export-bis'),
   datevExportBtn: document.getElementById('datev-export-btn'),
   datevExportHint: document.getElementById('datev-export-hint'),
-  profilDatevForm: document.getElementById('profil-datev-form'),
-  profilDatevStatus: document.getElementById('profil-datev-status'),
+  datevSettingsForm: document.getElementById('datev-settings-form'),
+  datevSettingsStatus: document.getElementById('datev-settings-status'),
   datevSkrSelect: document.getElementById('datev-skr'),
   katalogOeffnenBtn: document.getElementById('katalog-oeffnen-btn'),
   rechnungKatalogOeffnenBtn: document.getElementById('rechnung-katalog-oeffnen-btn'),
@@ -612,17 +613,17 @@ function applyDatevSkrPreset(form, skr) {
   }
 }
 
-function setProfilDatevStatus(message, isError = false) {
-  if (!els.profilDatevStatus) return;
+function setDatevSettingsStatus(message, isError = false) {
+  if (!els.datevSettingsStatus) return;
   if (!message) {
-    els.profilDatevStatus.classList.add('hidden');
-    els.profilDatevStatus.textContent = '';
-    els.profilDatevStatus.classList.remove('settings-status--error');
+    els.datevSettingsStatus.classList.add('hidden');
+    els.datevSettingsStatus.textContent = '';
+    els.datevSettingsStatus.classList.remove('settings-status--error');
     return;
   }
-  els.profilDatevStatus.textContent = message;
-  els.profilDatevStatus.classList.toggle('settings-status--error', isError);
-  els.profilDatevStatus.classList.remove('hidden');
+  els.datevSettingsStatus.textContent = message;
+  els.datevSettingsStatus.classList.toggle('settings-status--error', isError);
+  els.datevSettingsStatus.classList.remove('hidden');
 }
 
 async function generiereAngebotsnummer() {
@@ -661,6 +662,21 @@ function setKundeSaveButtonEnabled(btn, enabled) {
 
 function isDocumentKundeEmailValid(email) {
   return (email || '').trim().includes('@');
+}
+
+function isDocumentKundeFieldsComplete(scope = 'angebot') {
+  const isRechnung = scope === 'rechnung';
+  const nameEl = isRechnung ? els.rechnungKundeName : els.kundeName;
+  const emailEl = isRechnung ? els.rechnungKundeEmail : els.kundeEmail;
+  const strasseEl = isRechnung ? els.rechnungKundeStrasse : els.kundeStrasse;
+  const plzOrtEl = isRechnung ? els.rechnungKundePlzOrt : els.kundePlzOrt;
+
+  return !!(
+    nameEl?.value.trim() &&
+    isDocumentKundeEmailValid(emailEl?.value) &&
+    strasseEl?.value.trim() &&
+    plzOrtEl?.value.trim()
+  );
 }
 
 function updateKundeSaveButtonState(scope = 'angebot') {
@@ -1719,9 +1735,7 @@ function isAngebotKopfComplete() {
     els.angebotNr?.value.trim() &&
     els.angebotDatum?.value &&
     els.gueltigBis?.value &&
-    els.kundeName?.value.trim() &&
-    els.kundeStrasse?.value.trim() &&
-    els.kundePlzOrt?.value.trim()
+    isDocumentKundeFieldsComplete('angebot')
   );
 }
 
@@ -1730,9 +1744,7 @@ function isRechnungKopfComplete() {
     els.rechnungNr?.value.trim() &&
     els.rechnungDatum?.value &&
     els.rechnungFaellig?.value &&
-    els.rechnungKundeName?.value.trim() &&
-    els.rechnungKundeStrasse?.value.trim() &&
-    els.rechnungKundePlzOrt?.value.trim()
+    isDocumentKundeFieldsComplete('rechnung')
   );
 }
 
@@ -1803,6 +1815,37 @@ function isMobileLayout() {
   return window.matchMedia('(max-width: 768px)').matches;
 }
 
+const HOVER_EXPAND_MS = 500;
+
+function bindHoverExpandOnCollapsed(container, expand) {
+  if (!container || container.dataset.hoverExpandBound === 'true') return;
+  container.dataset.hoverExpandBound = 'true';
+
+  const hoverTarget =
+    container.querySelector('.angebot-kopf__bar, .posten-kopf__bar, .pdf-form-section__toggle') ||
+    container;
+
+  let hoverTimer = null;
+
+  const clearHoverTimer = () => {
+    if (hoverTimer !== null) {
+      clearTimeout(hoverTimer);
+      hoverTimer = null;
+    }
+  };
+
+  hoverTarget.addEventListener('mouseenter', () => {
+    if (!container.classList.contains('is-collapsed')) return;
+    clearHoverTimer();
+    hoverTimer = window.setTimeout(() => {
+      hoverTimer = null;
+      expand();
+    }, HOVER_EXPAND_MS);
+  });
+
+  hoverTarget.addEventListener('mouseleave', clearHoverTimer);
+}
+
 function setAngebotKopfCollapsed(collapsed) {
   els.angebotKopf?.classList.toggle('is-collapsed', collapsed);
   els.angebotKopfToggle?.setAttribute('aria-expanded', String(!collapsed));
@@ -1857,6 +1900,7 @@ function bindAngebotKopfToggle() {
   if (!els.angebotKopfToggle) return;
 
   setAngebotKopfCollapsed(isMobileLayout());
+  bindHoverExpandOnCollapsed(els.angebotKopf, () => setAngebotKopfCollapsed(false));
 
   els.angebotKopfToggle.addEventListener('click', () => {
     const collapsed = !els.angebotKopf?.classList.contains('is-collapsed');
@@ -1873,6 +1917,7 @@ function bindPostenKopfToggle() {
   if (!els.postenKopfToggle) return;
 
   setPostenKopfCollapsed(false);
+  bindHoverExpandOnCollapsed(els.postenKopf, () => setPostenKopfCollapsed(false));
 
   els.postenKopfToggle.addEventListener('click', () => {
     const collapsed = !els.postenKopf?.classList.contains('is-collapsed');
@@ -1899,6 +1944,7 @@ function bindRechnungKopfToggle() {
   if (!els.rechnungKopfToggle) return;
 
   setRechnungKopfCollapsed(isMobileLayout());
+  bindHoverExpandOnCollapsed(els.rechnungKopf, () => setRechnungKopfCollapsed(false));
 
   els.rechnungKopfToggle.addEventListener('click', () => {
     const collapsed = !els.rechnungKopf?.classList.contains('is-collapsed');
@@ -1915,6 +1961,7 @@ function bindRechnungPostenKopfToggle() {
   if (!els.rechnungPostenKopfToggle) return;
 
   setRechnungPostenKopfCollapsed(false);
+  bindHoverExpandOnCollapsed(els.rechnungPostenKopf, () => setRechnungPostenKopfCollapsed(false));
 
   els.rechnungPostenKopfToggle.addEventListener('click', () => {
     const collapsed = !els.rechnungPostenKopf?.classList.contains('is-collapsed');
@@ -2020,11 +2067,16 @@ async function renderProfilView() {
 
   await loadPdfTemplate();
   fillProfileFirmaForm(els.profilAccountForm, getPdfTemplate(), session);
-  fillProfileDatevForm(els.profilDatevForm, getPdfTemplate());
   updateProfilSchemaPreviews(getPdfTemplate());
   syncProfilNummernAccess();
   syncProfilPlanAccess();
   updateDocumentPlanUi();
+}
+
+async function renderDatevView() {
+  await loadPdfTemplate();
+  fillProfileDatevForm(els.datevSettingsForm, getPdfTemplate());
+  setDatevSettingsStatus('');
 }
 
 function refreshPdfTemplatePreviewsFromProfile() {
@@ -2468,6 +2520,7 @@ const NAV_VIEW_GROUPS = {
   'pdf-vorlage': 'einstellungen',
   'pdf-vorlage-angebot': 'einstellungen',
   'pdf-vorlage-rechnung': 'einstellungen',
+  datev: 'einstellungen',
 };
 
 const SIDEBAR_COLLAPSED_KEY = 'quotavo.sidebarCollapsed';
@@ -2948,6 +3001,7 @@ function showView(view) {
     els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
     syncPdfVorlageViews(view);
     els.viewProfil?.classList.toggle('hidden', view !== 'profil');
+    els.viewDatev?.classList.toggle('hidden', view !== 'datev');
     els.viewAdmin?.classList.toggle('hidden', view !== 'admin');
     els.angebotStickyFooter?.classList.add('hidden');
     els.rechnungStickyFooter?.classList.toggle('hidden', view !== 'rechnung-neu');
@@ -2966,6 +3020,8 @@ function showView(view) {
       renderPdfTemplateView(view, { syncLayoutFromTemplate: true });
     } else if (view === 'profil') {
       renderProfilView();
+    } else if (view === 'datev') {
+      void renderDatevView();
     } else if (view === 'dashboard') {
       void renderDashboardView();
     } else if (view === 'prozesse') {
@@ -2989,6 +3045,7 @@ function showView(view) {
   els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
   syncPdfVorlageViews(view);
   els.viewProfil?.classList.toggle('hidden', view !== 'profil');
+  els.viewDatev?.classList.toggle('hidden', view !== 'datev');
   els.viewAdmin?.classList.toggle('hidden', view !== 'admin');
   syncNavState(view);
   syncProfileButton(view);
@@ -3014,6 +3071,9 @@ function showView(view) {
   } else if (view === 'profil') {
     els.angebotStickyFooter.classList.add('hidden');
     renderProfilView();
+  } else if (view === 'datev') {
+    els.angebotStickyFooter.classList.add('hidden');
+    void renderDatevView();
   } else if (view === 'dashboard') {
     els.angebotStickyFooter.classList.add('hidden');
     void renderDashboardView();
@@ -3178,6 +3238,10 @@ function enhancePdfTemplateCollapsibleSections(form) {
       const region = fieldset.dataset.previewRegion;
       const collapsed = !fieldset.classList.contains('is-collapsed');
       setPdfTemplateSectionCollapsed(form, region, collapsed);
+    });
+
+    bindHoverExpandOnCollapsed(fieldset, () => {
+      setPdfTemplateSectionCollapsed(form, fieldset.dataset.previewRegion, false);
     });
   });
 }
@@ -4811,12 +4875,12 @@ function bindAppEvents() {
       setProfilAccountStatus(err.message || 'Profil konnte nicht gespeichert werden.', true);
     }
   });
-  els.profilDatevForm?.addEventListener('submit', async (e) => {
+  els.datevSettingsForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    setProfilDatevStatus('');
+    setDatevSettingsStatus('');
 
     try {
-      const patch = templatePatchFromForm(els.profilDatevForm, 'datev');
+      const patch = templatePatchFromForm(els.datevSettingsForm, 'datev');
       const current = getPdfTemplate();
       await savePdfTemplate({
         ...current,
@@ -4825,14 +4889,14 @@ function bindAppEvents() {
           ...patch.datev,
         },
       });
-      fillProfileDatevForm(els.profilDatevForm, getPdfTemplate());
-      setProfilDatevStatus(t('datev.settingsSaved'));
+      fillProfileDatevForm(els.datevSettingsForm, getPdfTemplate());
+      setDatevSettingsStatus(t('datev.settingsSaved'));
     } catch (err) {
-      setProfilDatevStatus(err.message || t('datev.settingsSaveFailed'), true);
+      setDatevSettingsStatus(err.message || t('datev.settingsSaveFailed'), true);
     }
   });
   els.datevSkrSelect?.addEventListener('change', () => {
-    applyDatevSkrPreset(els.profilDatevForm, els.datevSkrSelect.value);
+    applyDatevSkrPreset(els.datevSettingsForm, els.datevSkrSelect.value);
   });
   els.datevExportBtn?.addEventListener('click', async () => {
     setDatevExportHint('');

@@ -836,6 +836,10 @@
                     <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.template">PDF-Vorlagen</span>
                     <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.template">PDF-Vorlagen</span>
                   </button>
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="datev">
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.datev">DATEV</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.datev">DATEV</span>
+                  </button>
                 </div>
               </li>
             </ul>
@@ -1468,6 +1472,65 @@
         </main>
       </div>
 
+      <div id="view-datev" class="hidden">
+        <main class="main main--settings">
+          <section class="card datev-settings-card">
+            <div class="datev-settings-card__head">
+              <h2 data-i18n="datev.settingsTitle">DATEV-Export</h2>
+              <button type="submit" form="datev-settings-form" class="btn btn-primary btn-sm" data-i18n="common.save">
+                Speichern
+              </button>
+            </div>
+            <p class="settings-lead" data-i18n="datev.settingsHint">
+              Werte für den Buchungsstapel-Export — Berater- und Mandantennummer erhalten Sie von Ihrem Steuerberater.
+            </p>
+            <form id="datev-settings-form" class="form-grid form-grid--profil form-grid--profil-firma form-grid--profil-firma-compact">
+              <label>
+                <span data-i18n="datev.advisorNumber">Beraternummer</span>
+                <input type="text" name="datev-berater-nr" inputmode="numeric" autocomplete="off" required />
+              </label>
+              <label>
+                <span data-i18n="datev.clientNumber">Mandantennummer</span>
+                <input type="text" name="datev-mandanten-nr" inputmode="numeric" autocomplete="off" required />
+              </label>
+              <label>
+                <span data-i18n="datev.chartOfAccounts">Kontenrahmen</span>
+                <select name="datev-skr" id="datev-skr">
+                  <option value="SKR04">SKR04</option>
+                  <option value="SKR03">SKR03</option>
+                </select>
+              </label>
+              <label>
+                <span data-i18n="datev.accountLength">Kontenlänge</span>
+                <select name="datev-kontenlaenge">
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="8">8</option>
+                </select>
+              </label>
+              <label>
+                <span data-i18n="datev.fiscalYearStart">Wirtschaftsjahresbeginn</span>
+                <input type="date" name="datev-wj-beginn" required />
+              </label>
+              <label>
+                <span data-i18n="datev.receivablesAccount">Forderungskonto</span>
+                <input type="text" name="datev-konto-forderungen" inputmode="numeric" autocomplete="off" required />
+              </label>
+              <label>
+                <span data-i18n="datev.revenueAccount19">Erlöskonto 19&nbsp;%</span>
+                <input type="text" name="datev-konto-erloese19" inputmode="numeric" autocomplete="off" required />
+              </label>
+              <label>
+                <span data-i18n="datev.taxKey19">BU-Schlüssel 19&nbsp;%</span>
+                <input type="text" name="datev-bu-schluessel19" inputmode="numeric" autocomplete="off" required />
+              </label>
+            </form>
+            <p id="datev-settings-status" class="settings-status hidden" role="status"></p>
+          </section>
+        </main>
+      </div>
+
       <div id="view-profil" class="hidden">
         <main class="main main--profil">
           <div class="profil-layout">
@@ -1583,12 +1646,16 @@
                   Speichern
                 </button>
               </div>
-              <form id="profil-account-form" class="form-grid form-grid--profil form-grid--profil-firma form-grid--profil-firma-compact">
-                <label class="full">
+              <form id="profil-account-form" class="form-grid form-grid--profil form-grid--profil-firma form-grid--profil-firma-pairs">
+                <label>
                   <span data-i18n="pdfTpl.companyName">Firmenname</span>
                   <input type="text" id="profil-tenant-name" name="firma-name" autocomplete="organization" required />
                 </label>
-                <label class="full">
+                <label>
+                  <span data-i18n="pdfTpl.website">Webseite</span>
+                  <input type="text" name="firma-web" autocomplete="url" />
+                </label>
+                <label>
                   <span data-i18n="pdfTpl.street">Straße</span>
                   <input type="text" name="firma-strasse" autocomplete="street-address" />
                 </label>
@@ -1604,15 +1671,11 @@
                   <span data-i18n="pdfTpl.email">E-Mail</span>
                   <input type="email" name="firma-email" autocomplete="email" />
                 </label>
-                <label class="span-2">
-                  <span data-i18n="pdfTpl.website">Webseite</span>
-                  <input type="text" name="firma-web" autocomplete="url" />
-                </label>
                 <label>
                   <span data-i18n="pdfTpl.vatId">USt-IdNr.</span>
                   <input type="text" name="firma-ustId" />
                 </label>
-                <label class="full">
+                <label>
                   <span data-i18n="pdfTpl.iban">IBAN (ZUGFeRD)</span>
                   <input type="text" name="firma-iban" autocomplete="off" placeholder="DE89 3704 0044 0532 0130 00" />
                 </label>
@@ -1626,61 +1689,6 @@
                 </label>
               </form>
               <p id="profil-account-status" class="settings-status hidden" role="status"></p>
-            </section>
-
-            <section class="card profil-card profil-card--datev">
-              <div class="profil-card__head">
-                <h2 data-i18n="datev.settingsTitle">DATEV-Export</h2>
-                <button type="submit" form="profil-datev-form" class="btn btn-primary btn-sm" data-i18n="common.save">
-                  Speichern
-                </button>
-              </div>
-              <p class="settings-lead" data-i18n="datev.settingsHint">
-                Werte für den Buchungsstapel-Export — Berater- und Mandantennummer erhalten Sie von Ihrem Steuerberater.
-              </p>
-              <form id="profil-datev-form" class="form-grid form-grid--profil form-grid--profil-firma form-grid--profil-firma-compact">
-                <label>
-                  <span data-i18n="datev.advisorNumber">Beraternummer</span>
-                  <input type="text" name="datev-berater-nr" inputmode="numeric" autocomplete="off" />
-                </label>
-                <label>
-                  <span data-i18n="datev.clientNumber">Mandantennummer</span>
-                  <input type="text" name="datev-mandanten-nr" inputmode="numeric" autocomplete="off" />
-                </label>
-                <label>
-                  <span data-i18n="datev.chartOfAccounts">Kontenrahmen</span>
-                  <select name="datev-skr" id="datev-skr">
-                    <option value="SKR04">SKR04</option>
-                    <option value="SKR03">SKR03</option>
-                  </select>
-                </label>
-                <label>
-                  <span data-i18n="datev.accountLength">Kontenlänge</span>
-                  <select name="datev-kontenlaenge">
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="8">8</option>
-                  </select>
-                </label>
-                <label>
-                  <span data-i18n="datev.fiscalYearStart">Wirtschaftsjahresbeginn</span>
-                  <input type="date" name="datev-wj-beginn" />
-                </label>
-                <label>
-                  <span data-i18n="datev.receivablesAccount">Forderungskonto</span>
-                  <input type="text" name="datev-konto-forderungen" inputmode="numeric" autocomplete="off" />
-                </label>
-                <label>
-                  <span data-i18n="datev.revenueAccount19">Erlöskonto 19&nbsp;%</span>
-                  <input type="text" name="datev-konto-erloese19" inputmode="numeric" autocomplete="off" />
-                </label>
-                <label>
-                  <span data-i18n="datev.taxKey19">BU-Schlüssel 19&nbsp;%</span>
-                  <input type="text" name="datev-bu-schluessel19" inputmode="numeric" autocomplete="off" />
-                </label>
-              </form>
-              <p id="profil-datev-status" class="settings-status hidden" role="status"></p>
             </section>
 
             <section class="card profil-card profil-card--nummern">
