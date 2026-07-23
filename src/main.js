@@ -8,14 +8,14 @@ import {
   readAdresseFieldPair,
   clearAdresseFieldPair,
 } from './adresse.js';
-import { loadDashboardData, renderDashboard } from './dashboard.js';
+import { loadDashboardData, renderDashboard, loadNotificationSummary, markNotificationsSeen } from './dashboard.js';
 import { renderProzesseView, updateAngebotProzessStatus } from './prozesse.js';
 import {
   angebotProzessStatusBadgeHtml,
   angebotProzessStatusLabelKey,
   normalizeAngebotProzessStatus,
 } from './angebotProzessStatus.js';
-import { formatPlanLabel, normalizeRegistrationPlan, PLAN_LABELS, PLAN_PRICES, PLAN_TAGLINES, REGISTRATION_PLANS } from './plans.js';
+import { formatPlanLabel, normalizeRegistrationPlan, PLAN_LABELS, PLAN_PRICES, PLAN_TAGLINES, REGISTRATION_PLANS, canSendMail, isFreePlan, FREE_DOCUMENT_LIMIT } from './plans.js';
 import { formatPostenArt, normalizePostenArt } from './data.js';
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isImpersonating, getImpersonation, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
 import {
@@ -23,6 +23,7 @@ import {
   loadAdminTenantDocuments,
   startAdminImpersonation,
   stopAdminImpersonation,
+  updateAdminTenantPlan,
 } from './adminUsers.js';
 import { initOnboarding, openOnboarding, closeOnboarding } from './onboarding.js';
 import { initKatalogModal } from './katalogModal.js';
@@ -256,6 +257,7 @@ const els = {
   viewRechnungArchiv: document.getElementById('view-rechnung-archiv'),
   viewDashboard: document.getElementById('view-dashboard'),
   dashboardRoot: document.getElementById('dashboard-root'),
+  dashboardNotificationsBadge: document.getElementById('dashboard-notifications-badge'),
   viewNeu: document.getElementById('view-neu'),
   viewArchiv: document.getElementById('view-archiv'),
   viewProzesse: document.getElementById('view-prozesse'),
@@ -424,7 +426,75 @@ const els = {
   documentPreviewViewport: document.querySelector('.document-preview-modal__viewport'),
   documentPreviewContent: document.getElementById('document-preview-content'),
   documentPreviewSendBtn: document.getElementById('document-preview-send-btn'),
+  documentPreviewTitle: document.getElementById('document-preview-title'),
+  documentPreviewPlanHint: document.getElementById('document-preview-plan-hint'),
 };
+
+let cachedPlanLimits = null;
+
+function isDocumentCreateBlocked(kind) {
+  const editingId = kind === 'angebot' ? state.angebot.editingId : state.rechnung.editingId;
+  if (editingId) return false;
+  const bucket = kind === 'angebot' ? cachedPlanLimits?.angebote : cachedPlanLimits?.rechnungen;
+  if (bucket?.max == null) return false;
+  return (bucket.remaining ?? 0) <= 0;
+}
+
+function getDocumentCreateBlockedMessage(kind) {
+  const max = cachedPlanLimits?.angebote?.max ?? FREE_DOCUMENT_LIMIT;
+  return kind === 'rechnung'
+    ? t('planLimits.createBlockedRechnung', { max })
+    : t('planLimits.createBlockedAngebot', { max });
+}
+
+async function refreshPlanLimitsCache() {
+  try {
+    await refreshSession();
+    const data = await loadDashboardData();
+    cachedPlanLimits = data?.planLimits ?? null;
+  } catch {
+    cachedPlanLimits = null;
+  }
+  updateDocumentPlanUi();
+}
+
+function canCurrentTenantSendMail() {
+  if (cachedPlanLimits && typeof cachedPlanLimits.canSendMail === 'boolean') {
+    return cachedPlanLimits.canSendMail;
+  }
+  return canSendMail(getSession()?.tenant?.plan);
+}
+
+function updatePreviewButtonLabels() {
+  const canSend = canCurrentTenantSendMail();
+  const previewLabel = canSend ? t('pdf.preview') : t('pdf.previewOnly');
+  [els.previewBtn, els.rechnungPreviewBtn].forEach((btn) => {
+    const label = btn?.querySelector('span');
+    if (label) label.textContent = previewLabel;
+  });
+}
+
+function updateDocumentPreviewModalPlanState() {
+  const canSend = canCurrentTenantSendMail();
+  const titleEl = els.documentPreviewTitle;
+  const sendBtn = els.documentPreviewSendBtn;
+  const hintEl = els.documentPreviewPlanHint;
+
+  if (titleEl) {
+    titleEl.textContent = canSend ? t('pdf.preview') : t('pdf.previewTitleOnly');
+  }
+  if (sendBtn) {
+    sendBtn.disabled = !canSend;
+    sendBtn.setAttribute('aria-disabled', String(!canSend));
+    sendBtn.classList.toggle('is-disabled', !canSend);
+    sendBtn.textContent = canSend ? t('pdf.send') : t('pdf.sendLocked');
+    sendBtn.title = canSend ? '' : t('pdf.sendLockedHint');
+  }
+  if (hintEl) {
+    hintEl.textContent = canSend ? '' : t('pdf.sendLockedHint');
+    hintEl.classList.toggle('hidden', canSend);
+  }
+}
 
 const angebotPostenEditor = createPostenEditor(angebotPostenState, {
   postenListe: els.postenListe,
@@ -436,7 +506,7 @@ const angebotPostenEditor = createPostenEditor(angebotPostenState, {
   pdfBtn: els.pdfBtn,
   previewBtn: els.previewBtn,
   saveBtn: els.saveBtn,
-  canSave: () => isAngebotKopfComplete(),
+  canSave: () => isAngebotKopfComplete() && !isDocumentCreateBlocked('angebot'),
   onKatalogSaved: refreshPostenEditors,
   onUpdate: () => {
     updatePostenKopfSummary();
@@ -453,13 +523,20 @@ const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
   pdfBtn: els.rechnungPdfBtn,
   previewBtn: els.rechnungPreviewBtn,
   saveBtn: els.rechnungSaveBtn,
-  canSave: () => isRechnungKopfComplete(),
+  canSave: () => isRechnungKopfComplete() && !isDocumentCreateBlocked('rechnung'),
   onKatalogSaved: refreshPostenEditors,
   onUpdate: () => {
     updateRechnungPostenKopfSummary();
     updateRechnungPageHeader();
   },
 });
+
+function updateDocumentPlanUi() {
+  updatePreviewButtonLabels();
+  updateDocumentPreviewModalPlanState();
+  angebotPostenEditor.refreshSummary();
+  rechnungPostenEditor.refreshSummary();
+}
 
 async function generiereAngebotsnummer() {
   return erzeugeAngebotsnummer(getAllAngebote);
@@ -1676,12 +1753,14 @@ function setRechnungPostenKopfCollapsed(collapsed) {
 }
 
 function collapseAngebotWhenEnteringPosten() {
+  if (!isMobileLayout()) return;
   if (!isAngebotKopfComplete()) return;
   setAngebotKopfCollapsed(true);
   setPostenKopfCollapsed(false);
 }
 
 function collapseRechnungWhenEnteringPosten() {
+  if (!isMobileLayout()) return;
   if (!isRechnungKopfComplete()) return;
   setRechnungKopfCollapsed(true);
   setRechnungPostenKopfCollapsed(false);
@@ -1857,6 +1936,7 @@ async function renderProfilView() {
   updateProfilSchemaPreviews(getPdfTemplate());
   syncProfilNummernAccess();
   syncProfilPlanAccess();
+  updateDocumentPlanUi();
 }
 
 function refreshPdfTemplatePreviewsFromProfile() {
@@ -2000,6 +2080,19 @@ function formatUserRole(role) {
 
 function formatAdminPlan(plan) {
   return formatPlanLabel(plan);
+}
+
+function renderAdminPlanSelect(user) {
+  const tenantId = user.tenant?.id || '';
+  const plan = normalizeRegistrationPlan(user.tenant?.plan);
+  if (user.tenant?.plan === 'admin') {
+    return escapeHtml(formatAdminPlan(user.tenant.plan));
+  }
+  const options = REGISTRATION_PLANS.map(
+    (planId) =>
+      `<option value="${escapeHtml(planId)}"${planId === plan ? ' selected' : ''}>${escapeHtml(PLAN_LABELS[planId] || planId)}</option>`
+  ).join('');
+  return `<select class="admin-plan-select" data-admin-plan-select="${escapeHtml(tenantId)}" data-admin-plan-current="${escapeHtml(plan)}" aria-label="Tarif ändern">${options}</select>`;
 }
 
 function formatAdminYesNo(value) {
@@ -2215,7 +2308,7 @@ async function renderAdminView() {
                 <td>${escapeHtml(user.email)}</td>
                 <td>${escapeHtml(user.tenant?.name || '—')}</td>
                 <td><span class="admin-user-role admin-user-role--${escapeHtml(user.role || 'owner')}">${escapeHtml(formatUserRole(user.role))}</span></td>
-                <td>${escapeHtml(formatAdminPlan(user.tenant?.plan))}</td>
+                <td>${renderAdminPlanSelect(user)}</td>
                 <td>${escapeHtml(formatAdminYesNo(user.tenant?.onboardingCompleted))}</td>
                 <td>${escapeHtml(String(stats.kunden ?? 0))}</td>
                 <td>${escapeHtml(String(stats.angebote ?? 0))}</td>
@@ -2686,15 +2779,55 @@ function bindMainNav() {
   });
 }
 
+async function syncNotificationBadge(count = null) {
+  if (!els.dashboardNotificationsBadge) return;
+  let unread = count;
+  if (unread == null) {
+    try {
+      const summary = await loadNotificationSummary();
+      unread = summary?.unreadCount ?? 0;
+    } catch {
+      unread = 0;
+    }
+  }
+  const value = Math.max(0, Number(unread) || 0);
+  els.dashboardNotificationsBadge.textContent = String(value);
+  els.dashboardNotificationsBadge.classList.toggle('hidden', value <= 0);
+  els.dashboardNotificationsBadge.setAttribute('aria-hidden', value <= 0 ? 'true' : 'false');
+}
+
+async function handleDashboardNotificationsSeen() {
+  try {
+    await markNotificationsSeen();
+    await syncNotificationBadge(0);
+    await renderDashboardView();
+  } catch (err) {
+    alert(err.message || t('dashboard.notificationsMarkReadError'));
+  }
+}
+
 async function renderDashboardView() {
   if (!els.dashboardRoot) return;
   els.dashboardRoot.innerHTML = `<p class="settings-lead">${escapeHtml(t('common.loading'))}</p>`;
   try {
-    const [data, mailStatus] = await Promise.all([
-      loadDashboardData(),
-      fetchMailStatus().catch(() => null),
-    ]);
-    renderDashboard(els.dashboardRoot, data, { onNavigate: navigateFromDashboard, mailStatus });
+    const data = await loadDashboardData();
+    const unreadCount = data?.notifications?.unreadCount ?? 0;
+    await syncNotificationBadge(unreadCount);
+    renderDashboard(els.dashboardRoot, data, {
+      onNavigate: navigateFromDashboard,
+      onNotificationsSeen: () => void handleDashboardNotificationsSeen(),
+    });
+    cachedPlanLimits = data?.planLimits ?? null;
+    updateDocumentPlanUi();
+    if (unreadCount > 0) {
+      await markNotificationsSeen();
+      await syncNotificationBadge(0);
+      els.dashboardRoot
+        ?.querySelectorAll('.dashboard-notifications__item--unread')
+        .forEach((el) => el.classList.remove('dashboard-notifications__item--unread'));
+      els.dashboardRoot?.querySelector('[data-dashboard-mark-notifications-read]')?.remove();
+      els.dashboardRoot?.querySelector('.dashboard-panel__badge')?.remove();
+    }
   } catch (err) {
     els.dashboardRoot.innerHTML = `<p class="settings-status settings-status--error">${escapeHtml(err.message || t('dashboard.loadError'))}</p>`;
   }
@@ -2750,6 +2883,7 @@ function showView(view) {
     } else if (view === 'prozesse') {
       void renderProzesse();
     } else if (view === 'rechnung-neu') {
+      void refreshPlanLimitsCache();
       updateRechnungPageHeader();
     }
     return;
@@ -2797,6 +2931,9 @@ function showView(view) {
     void renderDashboardView();
   } else {
     els.angebotStickyFooter.classList.remove('hidden');
+    if (view === 'neu') {
+      void refreshPlanLimitsCache();
+    }
     updatePageHeader();
   }
 }
@@ -3872,6 +4009,9 @@ async function saveKundenForm(e) {
 }
 
 async function persistAngebotFromForm() {
+  if (isDocumentCreateBlocked('angebot')) {
+    throw new Error(getDocumentCreateBlockedMessage('angebot'));
+  }
   angebotPostenEditor.flushEntwurfIfComplete();
   const posten = angebotPostenEditor.getAusgewaehltePosten();
   if (posten.length === 0 || !isAngebotKopfComplete()) return null;
@@ -3890,10 +4030,14 @@ async function persistAngebotFromForm() {
   await saveAngebot(angebot);
   state.angebot.editingId = angebot.id;
   updatePageHeader();
+  void refreshPlanLimitsCache();
   return { angebot, posten };
 }
 
 async function persistRechnungFromForm() {
+  if (isDocumentCreateBlocked('rechnung')) {
+    throw new Error(getDocumentCreateBlockedMessage('rechnung'));
+  }
   rechnungPostenEditor.flushEntwurfIfComplete();
   const posten = rechnungPostenEditor.getAusgewaehltePosten();
   if (posten.length === 0 || !isRechnungKopfComplete()) return null;
@@ -3912,6 +4056,7 @@ async function persistRechnungFromForm() {
   await saveRechnung(rechnung);
   state.rechnung.editingId = rechnung.id;
   updateRechnungPageHeader();
+  void refreshPlanLimitsCache();
   return { rechnung, posten };
 }
 
@@ -3976,6 +4121,8 @@ async function openDocumentPreviewModal(kind) {
     previewData.posten,
     getPdfTemplate()
   );
+
+  updateDocumentPreviewModalPlanState();
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -4049,6 +4196,11 @@ async function sendDocumentFromPreviewModal() {
   const kind = documentPreviewKind;
   if (!kind) return;
 
+  if (!canCurrentTenantSendMail()) {
+    alert(t('planLimits.mailLocked'));
+    return;
+  }
+
   let sent = false;
   if (kind === 'rechnung') {
     sent = await speichernUndRechnungPdfAnKundenSenden();
@@ -4120,7 +4272,7 @@ async function sendAngebotPdfByMail(angebot, posten) {
   const confirmationUrl = await resolveAngebotConfirmationUrl(angebot.id);
   const { filename, content } = getAngebotPdfAttachment(angebot, posten, { confirmationUrl });
   const mailText = confirmationUrl
-    ? `Guten Tag,\n\nanbei erhalten Sie unser Angebot ${angebot.angebotNr}.\n\nOnline bestätigen oder ablehnen:\n${confirmationUrl}\n\nMit freundlichen Grüßen\n${firmaName}`
+    ? `Guten Tag,\n\nanbei erhalten Sie unser Angebot ${angebot.angebotNr}.\n\nIm PDF können Sie das Angebot online bestätigen oder ablehnen.\n\nMit freundlichen Grüßen\n${firmaName}`
     : `Guten Tag,\n\nanbei erhalten Sie unser Angebot ${angebot.angebotNr}.\n\nMit freundlichen Grüßen\n${firmaName}`;
 
   const sendResult = await sendDocumentPdf({
@@ -4243,6 +4395,10 @@ async function speichernUndPdf() {
 }
 
 async function speichernUndPdfAnKundenSenden() {
+  if (!canCurrentTenantSendMail()) {
+    alert(t('planLimits.mailLocked'));
+    return false;
+  }
   setAngebotFooterBusy(true);
   let sent = false;
   try {
@@ -4305,6 +4461,10 @@ async function speichernUndRechnungPdf() {
 }
 
 async function speichernUndRechnungPdfAnKundenSenden() {
+  if (!canCurrentTenantSendMail()) {
+    alert(t('planLimits.mailLocked'));
+    return false;
+  }
   setRechnungFooterBusy(true);
   let sent = false;
   try {
@@ -4431,6 +4591,9 @@ async function showApp() {
   if (!isActiveAppFlow(flowId)) return;
   await refreshMailSendHints();
   if (!isActiveAppFlow(flowId)) return;
+  void refreshPlanLimitsCache();
+  void syncNotificationBadge();
+  if (!isActiveAppFlow(flowId)) return;
 
   if (needsOnboarding()) {
     await openOnboarding();
@@ -4476,6 +4639,30 @@ function bindAppEvents() {
     syncBereichSwitcher();
     syncBereichNav();
     showView('rechnung-archiv');
+  });
+  els.adminUserList?.addEventListener('change', async (e) => {
+    const select = e.target.closest('[data-admin-plan-select]');
+    if (!select) return;
+
+    const tenantId = select.dataset.adminPlanSelect;
+    const previous = select.dataset.adminPlanCurrent || 'free';
+    const plan = select.value;
+    if (!tenantId || plan === previous) return;
+
+    select.disabled = true;
+    try {
+      await updateAdminTenantPlan(tenantId, plan);
+      select.dataset.adminPlanCurrent = plan;
+      if (getImpersonation()?.tenantId === tenantId) {
+        await refreshSession();
+        await refreshPlanLimitsCache();
+      }
+    } catch (err) {
+      alert(err.message || 'Tarif konnte nicht geändert werden.');
+      select.value = previous;
+    } finally {
+      select.disabled = false;
+    }
   });
   els.adminUserList?.addEventListener('click', (e) => {
     const openBtn = e.target.closest('[data-admin-open-tenant]');
@@ -4880,6 +5067,7 @@ function bindAppEvents() {
           if (confirm(`Angebot „${angebot.angebotNr}" wirklich löschen?`)) {
             await deleteAngebot(id);
             if (state.angebot.editingId === id) await resetForm();
+            void refreshPlanLimitsCache();
             renderArchiv();
           }
         }
@@ -4925,6 +5113,7 @@ function bindAppEvents() {
           if (confirm(`Rechnung „${rechnung.rechnungNr}" wirklich löschen?`)) {
             await deleteRechnung(id);
             if (state.rechnung.editingId === id) await resetRechnungForm();
+            void refreshPlanLimitsCache();
             renderRechnungArchiv();
           }
         }
@@ -4962,6 +5151,7 @@ function bindAppEvents() {
       if (state.view === 'prozesse') void renderProzesse();
       else if (state.view === 'kunden') void renderKundenView();
       else if (state.detailKundeId) void refreshKundenDetail();
+      void syncNotificationBadge();
     });
   }
 }
@@ -5030,6 +5220,7 @@ async function refreshLocaleUi() {
   updateRechnungKopfSummary();
   updatePostenKopfSummary();
   updateRechnungPostenKopfSummary();
+  updateDocumentPlanUi();
 
   if (els.authTitle && els.loginScreen && !els.loginScreen.classList.contains('hidden')) {
     const isLogin = els.loginForm && !els.loginForm.classList.contains('hidden');

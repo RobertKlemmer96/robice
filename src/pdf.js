@@ -57,20 +57,32 @@ function writeKundeAdressBlock(doc, kunde, startY) {
   return y;
 }
 
-function renderAngebotConfirmationBlock(doc, confirmationUrl, startY) {
+const TOTALS_LABEL_X = 130;
+const TOTALS_VALUE_X = 190;
+
+function renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY, tpl) {
   if (!confirmationUrl) return;
-  const left = 20;
-  const y = startY + 6;
+  const bruttoY = totalsY + 14;
+  const boxLeft = TOTALS_LABEL_X;
+  const boxWidth = TOTALS_VALUE_X - TOTALS_LABEL_X;
+  const label = 'Angebot bestätigen oder ablehnen';
+  const primaerRgb = hexToRgb(tpl?.farben?.primaer || '#2563eb');
+  const padY = 2;
+
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(37, 99, 235);
-  const label = 'Angebot online bestätigen oder ablehnen';
-  doc.textWithLink(label, left, y, { url: confirmationUrl });
-  doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139);
-  const lines = doc.splitTextToSize(confirmationUrl, 170);
-  doc.text(lines, left, y + 5);
+  const lineHeight = 3.6;
+  const boxH = lineHeight + padY * 2;
+  const boxTop = bruttoY + 14;
+
+  doc.setFillColor(239, 246, 255);
+  doc.setDrawColor(...primaerRgb);
+  doc.setLineWidth(0.45);
+  doc.roundedRect(boxLeft, boxTop, boxWidth, boxH, 2, 2, 'FD');
+
+  doc.setTextColor(...primaerRgb);
+  doc.text(label, boxLeft + boxWidth / 2, boxTop + boxH / 2 + 1.1, { align: 'center' });
+  doc.link(boxLeft, boxTop, boxWidth, boxH, { url: confirmationUrl });
 }
 
 function renderPdfFooter(doc, tpl, { fuss1 = '', fuss2 = '' } = {}) {
@@ -264,7 +276,6 @@ function buildPostenTableBody(postenDetails) {
     String(index + 1),
     p.bezeichnung,
     formatPostenArt(p.art),
-    p.beschreibung,
     String(formatMenge(p.menge)),
     p.einheit,
     formatEuro(p.preis),
@@ -273,12 +284,19 @@ function buildPostenTableBody(postenDetails) {
 }
 
 const TABLE_COLUMN_STYLES = {
-  0: { cellWidth: 12, halign: 'center' },
-  2: { cellWidth: 16, halign: 'center' },
-  4: { cellWidth: 16, halign: 'center' },
-  5: { cellWidth: 18, halign: 'center' },
+  0: { cellWidth: 12, halign: 'left' },
+  1: { cellWidth: 56, halign: 'left' },
+  2: { cellWidth: 16, halign: 'left' },
+  3: { cellWidth: 16, halign: 'left' },
+  4: { cellWidth: 18, halign: 'left' },
+  5: { cellWidth: 26, halign: 'right' },
   6: { cellWidth: 26, halign: 'right' },
-  7: { cellWidth: 26, halign: 'right' },
+};
+
+const TABLE_BASE_STYLES = {
+  styles: { fontSize: 9, cellPadding: 3, halign: 'left', valign: 'middle' },
+  headStyles: { halign: 'left', cellPadding: 3, valign: 'middle' },
+  bodyStyles: { halign: 'left', cellPadding: 3, valign: 'middle' },
 };
 
 function renderPdfTotalsBlock(
@@ -319,9 +337,9 @@ function renderPostenTable(doc, startY, tableBody, variant, tpl) {
   const lineRgb = hexToRgb(farben.trennlinie);
   const tableOptions = {
     startY,
-    head: [['Pos', 'Bezeichnung', 'Art', 'Beschreibung', 'Menge', 'Einheit', 'Einzelpreis', 'Gesamt']],
+    head: [['Pos', 'Tätigkeit', 'Art', 'Menge', 'Einheit', 'Einzelpreis', 'Gesamt']],
     body: tableBody,
-    styles: { fontSize: 9, cellPadding: 3 },
+    ...TABLE_BASE_STYLES,
     columnStyles: TABLE_COLUMN_STYLES,
     margin: { left: 20, right: 20, bottom: 38 },
   };
@@ -331,12 +349,13 @@ function renderPostenTable(doc, startY, tableBody, variant, tpl) {
       ...tableOptions,
       theme: 'plain',
       headStyles: {
+        ...TABLE_BASE_STYLES.headStyles,
         fillColor: [255, 255, 255],
         textColor: primaerRgb,
         lineWidth: { bottom: 0.6 },
         lineColor: primaerRgb,
       },
-      bodyStyles: { lineColor: lineRgb },
+      bodyStyles: { ...TABLE_BASE_STYLES.bodyStyles, lineColor: lineRgb },
     });
     return;
   }
@@ -346,12 +365,14 @@ function renderPostenTable(doc, startY, tableBody, variant, tpl) {
       ...tableOptions,
       theme: 'plain',
       headStyles: {
+        ...TABLE_BASE_STYLES.headStyles,
         fillColor: [255, 255, 255],
         textColor: [55, 65, 81],
         lineWidth: { bottom: 0.4 },
         lineColor: lineRgb,
       },
       bodyStyles: {
+        ...TABLE_BASE_STYLES.bodyStyles,
         lineWidth: { bottom: 0.2 },
         lineColor: lineRgb,
       },
@@ -370,11 +391,13 @@ function renderPostenTable(doc, startY, tableBody, variant, tpl) {
   const klassischOptions = {
     theme: stil,
     headStyles: {
+      ...TABLE_BASE_STYLES.headStyles,
       fillColor: primaerRgb,
       textColor: kopfTextRgb,
       lineColor: borderRgb,
     },
     bodyStyles: {
+      ...TABLE_BASE_STYLES.bodyStyles,
       textColor: koerperTextRgb,
       lineColor: borderRgb,
     },
@@ -472,7 +495,7 @@ function buildAngebotPdfV2(angebot, postenDetails, tpl, confirmationUrl = '') {
   renderPostenTable(doc, y + 8, buildPostenTableBody(postenDetails), 2, tpl);
   const totalsY = doc.lastAutoTable.finalY + 10;
   renderPdfTotalsBlock(doc, { netto, mwst, brutto }, totalsY, 2, primaerRgb);
-  renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY + 22);
+  renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY, tpl);
   renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
   return doc;
 }
@@ -542,7 +565,7 @@ function buildAngebotPdfV3(angebot, postenDetails, tpl, confirmationUrl = '') {
   renderPostenTable(doc, y + 16, buildPostenTableBody(postenDetails), 3, tpl);
   const totalsY = doc.lastAutoTable.finalY + 10;
   renderPdfTotalsBlock(doc, { netto, mwst, brutto }, totalsY, 3, primaerRgb);
-  renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY + 22);
+  renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY, tpl);
   renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
   return doc;
 }
@@ -715,7 +738,7 @@ function buildAngebotPdfV1(angebot, postenDetails, tpl, confirmationUrl = '') {
 
   const totalsY = doc.lastAutoTable.finalY + 10;
   renderPdfTotalsBlock(doc, { netto, mwst, brutto }, totalsY, 1, primaerRgb);
-  renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY + 22);
+  renderAngebotConfirmationBlock(doc, confirmationUrl, totalsY, tpl);
   renderPdfFooter(doc, tpl, { fuss1: tpl.texte.fuss1, fuss2: tpl.texte.fuss2 });
 
   return doc;

@@ -1,4 +1,5 @@
 import { getDb } from '../db/index.js';
+import { assertCanCreateRechnung } from '../services/planLimits.js';
 
 function rowToRechnung(row) {
   const doc = {
@@ -36,6 +37,8 @@ export function getRechnung(tenantId, id) {
 }
 
 export function saveRechnung(tenantId, rechnung) {
+  assertCanCreateRechnung(tenantId, rechnung.id);
+
   const db = getDb();
   const existing = db
     .prepare('SELECT id FROM rechnungen WHERE tenant_id = ? AND id = ?')

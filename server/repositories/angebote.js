@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { getDb } from '../db/index.js';
 import { extractPlzFromPlzOrt, normalizePlzInput } from '../services/authStore.js';
+import { assertCanCreateAngebot } from '../services/planLimits.js';
 
 const VALID_PROZESS_STATUS = new Set(['gespeichert', 'versendet', 'bestaetigt', 'abgelehnt']);
 
@@ -103,6 +104,8 @@ export function respondToAngebotConfirmation(token, plzInput, decision) {
 }
 
 export function saveAngebot(tenantId, angebot) {
+  assertCanCreateAngebot(tenantId, angebot.id);
+
   const db = getDb();
   const existing = db
     .prepare('SELECT id FROM angebote WHERE tenant_id = ? AND id = ?')

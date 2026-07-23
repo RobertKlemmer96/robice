@@ -5,6 +5,8 @@ import {
   getTenantById,
   getTenantOwnerEmail,
   listAllUsersWithStats,
+  tenantToJson,
+  updateTenantPlan,
 } from '../services/authStore.js';
 import { listAngebote } from '../repositories/angebote.js';
 import { listRechnungen } from '../repositories/rechnungen.js';
@@ -64,6 +66,41 @@ export function createAdminRouter() {
     } catch (err) {
       console.error('admin/users:', err);
       res.status(500).json({ error: 'Nutzerliste konnte nicht geladen werden.' });
+    }
+  });
+
+  router.patch('/tenants/:tenantId/plan', requireAdmin, (req, res) => {
+    try {
+      const tenantId = String(req.params.tenantId || '').trim();
+      const plan = req.body?.plan;
+      if (!tenantId) {
+        res.status(400).json({ error: 'Mandant ist erforderlich.' });
+        return;
+      }
+      if (!plan) {
+        res.status(400).json({ error: 'Tarif ist erforderlich.' });
+        return;
+      }
+
+      const tenant = getTenantById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: 'Mandant nicht gefunden.' });
+        return;
+      }
+      if (tenant.plan === 'admin') {
+        res.status(403).json({ error: 'Admin-Tarif kann nicht geändert werden.' });
+        return;
+      }
+
+      const updated = updateTenantPlan(tenantId, plan);
+      res.json({ ok: true, tenant: tenantToJson(updated) });
+    } catch (err) {
+      if (err.status === 403) {
+        res.status(403).json({ error: err.message });
+        return;
+      }
+      console.error('admin/tenants/plan:', err);
+      res.status(500).json({ error: 'Tarif konnte nicht geändert werden.' });
     }
   });
 

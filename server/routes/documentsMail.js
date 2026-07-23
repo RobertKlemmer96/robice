@@ -1,7 +1,8 @@
 import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import { findUserById } from '../services/authStore.js';
+import { findUserById, getTenantById } from '../services/authStore.js';
 import { sendDocumentEmail, getMailStatus } from '../services/mail.js';
+import { canSendMail } from '../services/planLimits.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -14,6 +15,16 @@ export function createDocumentsMailRouter() {
 
   router.post('/send', requireAuth, async (req, res) => {
     try {
+      const tenant = getTenantById(req.tenantId);
+      if (!canSendMail(tenant?.plan)) {
+        res.status(403).json({
+          error:
+            'E-Mail-Versand ist ab dem Plus-Tarif verfügbar. Im Free-Tarif können Sie PDFs erstellen und speichern.',
+          code: 'PLAN_MAIL_LOCKED',
+        });
+        return;
+      }
+
       const { to, subject, text, filename, pdfBase64, type } = req.body || {};
       const recipient = String(to || '').trim().toLowerCase();
 

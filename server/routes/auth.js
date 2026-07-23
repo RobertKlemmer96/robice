@@ -20,6 +20,10 @@ import { config } from '../config.js';
 import { savePdfTemplate } from '../repositories/pdfTemplate.js';
 import { PDF_TEMPLATE_DEFAULT } from '../defaults/pdfTemplate.js';
 import { buildSessionPayload, resolveSessionUser } from '../middleware/auth.js';
+import {
+  markTenantNotificationsSeen,
+  getTenantNotificationUnreadCount,
+} from '../services/notifications.js';
 
 export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
   const router = express.Router();
@@ -132,10 +136,41 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
     }
     try {
       const tenant = getTenantById(resolved.effectiveTenantId);
-      res.json(getTenantDashboard(resolved.effectiveTenantId, tenant?.name));
+      res.json(getTenantDashboard(resolved.effectiveTenantId, tenant?.name, tenant?.plan));
     } catch (err) {
       console.error('dashboard:', err);
       res.status(500).json({ error: 'Dashboard konnte nicht geladen werden.' });
+    }
+  });
+
+  router.get('/notifications/summary', (req, res) => {
+    const resolved = resolveSessionUser(req.session);
+    if (!resolved) {
+      res.status(401).json({ error: 'Nicht angemeldet.' });
+      return;
+    }
+    try {
+      res.json({
+        unreadCount: getTenantNotificationUnreadCount(resolved.effectiveTenantId),
+      });
+    } catch (err) {
+      console.error('notifications/summary:', err);
+      res.status(500).json({ error: 'Mitteilungen konnten nicht geladen werden.' });
+    }
+  });
+
+  router.post('/notifications/seen', (req, res) => {
+    const resolved = resolveSessionUser(req.session);
+    if (!resolved) {
+      res.status(401).json({ error: 'Nicht angemeldet.' });
+      return;
+    }
+    try {
+      const seenAt = markTenantNotificationsSeen(resolved.effectiveTenantId);
+      res.json({ ok: true, seenAt, unreadCount: 0 });
+    } catch (err) {
+      console.error('notifications/seen:', err);
+      res.status(500).json({ error: 'Mitteilungen konnten nicht aktualisiert werden.' });
     }
   });
 

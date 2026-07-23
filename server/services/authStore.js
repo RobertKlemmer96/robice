@@ -5,6 +5,8 @@ import { config } from '../config.js';
 import { getPdfTemplate } from '../repositories/pdfTemplate.js';
 import { PDF_TEMPLATE_DEFAULT } from '../defaults/pdfTemplate.js';
 import { removeTenantAssets } from './assets.js';
+import { getDocumentLimits } from './planLimits.js';
+import { getTenantNotifications } from './notifications.js';
 
 const SALT_ROUNDS = 12;
 
@@ -184,7 +186,7 @@ export function listAllUsersWithStats() {
     .all();
 }
 
-export function getTenantDashboard(tenantId, tenantName = '') {
+export function getTenantDashboard(tenantId, tenantName = '', tenantPlan = 'free') {
   const db = getDb();
   const stats = db
     .prepare(
@@ -295,6 +297,8 @@ export function getTenantDashboard(tenantId, tenantName = '') {
     lastActivityAt: stats?.last_activity_at ?? null,
     recentDocuments,
     setupMissing: getFirmaSetupMissing(tenantId, tenantName),
+    planLimits: getDocumentLimits(tenantId, tenantPlan),
+    notifications: getTenantNotifications(tenantId),
   };
 }
 
@@ -380,6 +384,20 @@ export function tenantToJson(tenant) {
 export function updateTenantName(tenantId, name) {
   const db = getDb();
   db.prepare('UPDATE tenants SET name = ? WHERE id = ?').run(name.trim(), tenantId);
+}
+
+export function updateTenantPlan(tenantId, plan) {
+  const tenant = getTenantById(tenantId);
+  if (!tenant) return null;
+  if (tenant.plan === 'admin') {
+    const err = new Error('Admin-Tarif kann nicht geändert werden.');
+    err.status = 403;
+    throw err;
+  }
+  const normalized = normalizeRegistrationPlan(plan);
+  const db = getDb();
+  db.prepare('UPDATE tenants SET plan = ? WHERE id = ?').run(normalized, tenantId);
+  return getTenantById(tenantId);
 }
 
 export function extractPlzFromPlzOrt(plzOrt) {

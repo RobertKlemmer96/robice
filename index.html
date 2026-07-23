@@ -666,6 +666,7 @@
                     </svg>
                   </span>
                   <span class="app-nav__trigger-label" data-i18n="nav.dashboard">Dashboard</span>
+                  <span id="dashboard-notifications-badge" class="app-nav__badge hidden" aria-hidden="true">0</span>
                 </button>
               </li>
               <li class="app-nav__group is-open" data-nav-group="angebote">
@@ -1429,60 +1430,120 @@
 
       <div id="view-profil" class="hidden">
         <main class="main main--profil">
-          <section class="card profil-card">
-            <div class="profil-card__head">
-              <h2>Mein Profil</h2>
-              <div class="profil-card__actions">
-                <button type="submit" form="profil-account-form" class="btn btn-primary btn-sm">
-                  Speichern
-                </button>
+          <div class="profil-layout">
+            <section class="card profil-card profil-card--profile">
+              <div class="profil-card__head">
+                <h2 data-i18n="profil.myProfile">Mein Profil</h2>
                 <div class="lang-switcher lang-switcher--profil" id="lang-switcher-wrap">
-                <button
-                  type="button"
-                  class="lang-switcher__trigger lang-switcher__trigger--profil"
-                  id="lang-switcher"
-                  aria-haspopup="menu"
-                  aria-expanded="false"
-                  aria-controls="lang-switcher-menu"
-                  data-i18n-aria-label="lang.choose"
-                  data-i18n-title="lang.choose"
-                >
-                  <span class="lang-switcher__flag" aria-hidden="true"></span>
-                </button>
-                <div
-                  class="lang-switcher__menu hidden"
-                  id="lang-switcher-menu"
-                  role="menu"
-                  data-i18n-aria-label="lang.menu"
-                >
                   <button
                     type="button"
-                    class="lang-switcher__option is-active"
-                    role="menuitemradio"
-                    data-locale="de"
-                    aria-checked="true"
+                    class="lang-switcher__trigger lang-switcher__trigger--profil"
+                    id="lang-switcher"
+                    aria-haspopup="menu"
+                    aria-expanded="false"
+                    aria-controls="lang-switcher-menu"
+                    data-i18n-aria-label="lang.choose"
+                    data-i18n-title="lang.choose"
                   >
-                    <span class="lang-switcher__option-flag" data-flag-locale="de" aria-hidden="true"></span>
-                    <span>Deutsch</span>
+                    <span class="lang-switcher__flag" aria-hidden="true"></span>
                   </button>
-                  <button
-                    type="button"
-                    class="lang-switcher__option"
-                    role="menuitemradio"
-                    data-locale="en"
-                    aria-checked="false"
+                  <div
+                    class="lang-switcher__menu hidden"
+                    id="lang-switcher-menu"
+                    role="menu"
+                    data-i18n-aria-label="lang.menu"
                   >
-                    <span class="lang-switcher__option-flag" data-flag-locale="en" aria-hidden="true"></span>
-                    <span>English</span>
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      class="lang-switcher__option is-active"
+                      role="menuitemradio"
+                      data-locale="de"
+                      aria-checked="true"
+                    >
+                      <span class="lang-switcher__option-flag" data-flag-locale="de" aria-hidden="true"></span>
+                      <span>Deutsch</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="lang-switcher__option"
+                      role="menuitemradio"
+                      data-locale="en"
+                      aria-checked="false"
+                    >
+                      <span class="lang-switcher__option-flag" data-flag-locale="en" aria-hidden="true"></span>
+                      <span>English</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+              <div class="profil-profile-fields">
+                <div class="profil-field profil-field--static">
+                  <span class="profil-field__label" data-i18n="profil.login">Login</span>
+                  <span id="profil-email" class="profil-field__value">—</span>
+                </div>
+                <div class="profil-field profil-field--static">
+                  <span class="profil-field__label" data-i18n="profil.plan">Tarif</span>
+                  <div class="profil-plan-row">
+                    <span id="profil-plan" class="profil-field__value">—</span>
+                    <button type="button" id="profil-plan-change-btn" class="btn btn-ghost btn-sm" data-i18n="profil.changePlan">
+                      Tarif wechseln
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-            <div class="profil-block">
-              <form id="profil-account-form" class="form-grid form-grid--profil form-grid--profil-firma">
-                <h3 class="profil-block__title full" data-i18n="profil.companyData">Firmendaten</h3>
+            <section class="card profil-card profil-card--password">
+              <div class="profil-card__head">
+                <h2 data-i18n="profil.changePassword">Passwort ändern</h2>
+              </div>
+              <form id="profil-password-form" class="profil-password-form">
+                <div class="profil-password-row">
+                  <label class="full">
+                    <span data-i18n="profil.currentPassword">Aktuelles Passwort</span>
+                    <input
+                      type="password"
+                      id="profil-current-password"
+                      autocomplete="current-password"
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span data-i18n="profil.newPassword">Neues Passwort</span>
+                    <input
+                      type="password"
+                      id="profil-new-password"
+                      autocomplete="new-password"
+                      required
+                      minlength="8"
+                    />
+                  </label>
+                  <label>
+                    <span data-i18n="profil.confirmPassword">Bestätigen</span>
+                    <input
+                      type="password"
+                      id="profil-confirm-password"
+                      autocomplete="new-password"
+                      required
+                      minlength="8"
+                    />
+                  </label>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary btn-sm" data-i18n="profil.savePassword">Passwort speichern</button>
+                </div>
+              </form>
+              <p id="profil-password-status" class="settings-status hidden" role="status"></p>
+            </section>
+
+            <section class="card profil-card profil-card--firma">
+              <div class="profil-card__head">
+                <h2 data-i18n="profil.companyData">Firmendaten</h2>
+                <button type="submit" form="profil-account-form" class="btn btn-primary btn-sm" data-i18n="common.save">
+                  Speichern
+                </button>
+              </div>
+              <form id="profil-account-form" class="form-grid form-grid--profil form-grid--profil-firma form-grid--profil-firma-compact">
                 <label class="full">
                   <span data-i18n="pdfTpl.companyName">Firmenname</span>
                   <input type="text" id="profil-tenant-name" name="firma-name" autocomplete="organization" required />
@@ -1503,11 +1564,11 @@
                   <span data-i18n="pdfTpl.email">E-Mail</span>
                   <input type="email" name="firma-email" autocomplete="email" />
                 </label>
-                <label>
+                <label class="span-2">
                   <span data-i18n="pdfTpl.website">Webseite</span>
                   <input type="text" name="firma-web" autocomplete="url" />
                 </label>
-                <label class="full">
+                <label>
                   <span data-i18n="pdfTpl.vatId">USt-IdNr.</span>
                   <input type="text" name="firma-ustId" />
                 </label>
@@ -1523,113 +1584,52 @@
                   <span data-i18n="pdfTpl.bank">Bank</span>
                   <input type="text" name="firma-bankName" autocomplete="organization" />
                 </label>
-                <div class="profil-field profil-field--static full">
-                  <span class="profil-field__label">Login</span>
-                  <span id="profil-email" class="profil-field__value">—</span>
-                </div>
-                <div class="profil-field profil-field--static full">
-                  <span class="profil-field__label">Tarif</span>
-                  <div class="profil-plan-row">
-                    <span id="profil-plan" class="profil-field__value">—</span>
-                    <button type="button" id="profil-plan-change-btn" class="btn btn-ghost btn-sm">
-                      Tarif wechseln
-                    </button>
-                  </div>
-                </div>
               </form>
               <p id="profil-account-status" class="settings-status hidden" role="status"></p>
+            </section>
 
-              <div class="profil-subsection">
-                <h3 class="profil-block__title">Passwort ändern</h3>
-                <form id="profil-password-form" class="profil-password-form">
-                  <div class="profil-password-row">
-                    <label>
-                      Aktuelles Passwort
-                      <input
-                        type="password"
-                        id="profil-current-password"
-                        autocomplete="current-password"
-                        required
-                      />
-                    </label>
-                    <label>
-                      Neues Passwort
-                      <input
-                        type="password"
-                        id="profil-new-password"
-                        autocomplete="new-password"
-                        required
-                        minlength="8"
-                      />
-                    </label>
-                    <label>
-                      Bestätigen
-                      <input
-                        type="password"
-                        id="profil-confirm-password"
-                        autocomplete="new-password"
-                        required
-                        minlength="8"
-                      />
-                    </label>
-                  </div>
-                  <div class="form-actions">
-                    <button type="submit" class="btn btn-primary btn-sm">Passwort speichern</button>
-                  </div>
-                </form>
-                <p id="profil-password-status" class="settings-status hidden" role="status"></p>
-              </div>
-
-              <div class="profil-subsection profil-subsection--danger">
-                <div class="profil-danger-row">
-                  <div>
-                    <h3 class="profil-block__title">Konto löschen</h3>
-                    <p class="profil-danger-note">Alle Daten werden unwiderruflich entfernt.</p>
-                  </div>
-                  <button type="button" id="profil-delete-account-btn" class="btn btn-ghost btn-sm profil-delete-btn">
-                    Konto löschen
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="profil-divider" aria-hidden="true"></div>
-
-            <div class="profil-block">
-              <div class="profil-section-head">
-                <h3 class="profil-block__title">Dokumentnummern</h3>
+            <section class="card profil-card profil-card--nummern">
+              <div class="profil-card__head">
+                <h2 data-i18n="profil.documentNumbers">Dokumentnummern</h2>
                 <span class="info-tip info-tip--desktop">
-                  <button
-                    type="button"
-                    class="info-tip__btn"
-                    aria-describedby="profil-schema-tip"
-                  >
-                    i
-                  </button>
-                  <span id="profil-schema-tip" class="info-tip__flyout" role="tooltip">
-                    Die Nummernschemas werden bei der Einrichtung festgelegt und können im Profil nicht
-                    geändert werden.
+                  <button type="button" class="info-tip__btn" aria-describedby="profil-schema-tip">i</button>
+                  <span id="profil-schema-tip" class="info-tip__flyout" role="tooltip" data-i18n="profil.schemaTip">
+                    Die Nummernschemas werden bei der Einrichtung festgelegt und können im Profil nicht geändert werden.
                   </span>
                 </span>
               </div>
               <div id="profil-nummern-form" class="profil-nummern-grid">
                 <div class="profil-field profil-field--static">
-                  <span class="profil-field__label">Angebotsnummer</span>
+                  <span class="profil-field__label" data-i18n="profil.offerNumber">Angebotsnummer</span>
                   <span id="profil-angebot-nummer-schema" class="profil-field__value profil-field__value--mono">—</span>
                   <span class="profil-schema-preview">
-                    Vorschau: <strong id="profil-angebot-schema-preview">—</strong>
+                    <span data-i18n="profil.preview">Vorschau</span>:
+                    <strong id="profil-angebot-schema-preview">—</strong>
                   </span>
                 </div>
                 <div class="profil-field profil-field--static">
-                  <span class="profil-field__label">Rechnungsnummer</span>
+                  <span class="profil-field__label" data-i18n="profil.invoiceNumber">Rechnungsnummer</span>
                   <span id="profil-rechnung-nummer-schema" class="profil-field__value profil-field__value--mono">—</span>
                   <span class="profil-schema-preview">
-                    Vorschau: <strong id="profil-rechnung-schema-preview">—</strong>
+                    <span data-i18n="profil.preview">Vorschau</span>:
+                    <strong id="profil-rechnung-schema-preview">—</strong>
                   </span>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+
+            <section class="card profil-card profil-card--danger">
+              <div class="profil-card__head">
+                <h2 data-i18n="profil.deleteAccount">Konto löschen</h2>
+              </div>
+              <div class="profil-danger-row">
+                <p class="profil-danger-note" data-i18n="profil.deleteNote">Alle Daten werden unwiderruflich entfernt.</p>
+                <button type="button" id="profil-delete-account-btn" class="btn btn-ghost btn-sm profil-delete-btn" data-i18n="profil.deleteAccountBtn">
+                  Konto löschen
+                </button>
+              </div>
+            </section>
+          </div>
         </main>
       </div>
 
@@ -2073,6 +2073,7 @@
           <div id="document-preview-content"></div>
         </div>
         <div class="document-preview-modal__actions">
+          <p id="document-preview-plan-hint" class="document-preview-modal__plan-hint hidden" aria-live="polite"></p>
           <button type="button" class="btn btn-ghost" data-close-document-preview data-i18n="pdf.back">Zurück</button>
           <button type="button" id="document-preview-send-btn" class="btn btn-primary" data-i18n="pdf.send">Senden</button>
         </div>

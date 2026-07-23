@@ -1,11 +1,19 @@
 import { apiFetch } from './apiClient.js';
 import { getSession } from './auth.js';
 import { t } from './i18n.js';
-import { formatPlanLabel } from './plans.js';
+import { formatPlanLabel, isFreePlan, FREE_DOCUMENT_LIMIT } from './plans.js';
 import { formatDatum } from './pdf.js';
 
 export async function loadDashboardData() {
   return apiFetch('/api/auth/dashboard');
+}
+
+export async function loadNotificationSummary() {
+  return apiFetch('/api/auth/notifications/summary');
+}
+
+export async function markNotificationsSeen() {
+  return apiFetch('/api/auth/notifications/seen', { method: 'POST' });
 }
 
 function escapeHtml(value) {
@@ -53,7 +61,13 @@ const SETUP_FIELD_KEYS = {
   iban: 'pdfTpl.iban',
 };
 
-export function renderDashboard(root, data, { onNavigate, mailStatus = null } = {}) {
+function notificationStatusLabel(status) {
+  if (status === 'bestaetigt') return t('dashboard.notificationConfirmed');
+  if (status === 'abgelehnt') return t('dashboard.notificationRejected');
+  return status || '—';
+}
+
+export function renderDashboard(root, data, { onNavigate, onNotificationsSeen } = {}) {
   if (!root) return;
 
   const session = getSession();
@@ -70,6 +84,19 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
   };
   const recentDocuments = data?.recentDocuments ?? [];
   const setupMissing = data?.setupMissing ?? [];
+  const planLimits = data?.planLimits ?? null;
+  const notifications = data?.notifications ?? { unreadCount: 0, items: [] };
+  const unreadCount = notifications.unreadCount ?? 0;
+  const notificationItems = notifications.items ?? [];
+  const showPlanLimits = isFreePlan(tenant?.plan) && planLimits?.angebote?.max != null;
+
+  const quotaHint = (key) => {
+    if (!showPlanLimits) return null;
+    const bucket = planLimits[key];
+    if (!bucket?.max) return null;
+    return t('planLimits.statQuota', { used: bucket.used, max: bucket.max });
+  };
+
   const statCards = [
     {
       key: 'angebote',
@@ -77,9 +104,10 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
       label: t('dashboard.statsOffers'),
       value: stats.angebote,
       hint:
-        stats.angeboteMonat > 0
+        quotaHint('angebote') ||
+        (stats.angeboteMonat > 0
           ? t('dashboard.monthCount', { count: stats.angeboteMonat, type: t('dashboard.statsOffers') })
-          : t('dashboard.noActivityMonth'),
+          : t('dashboard.noActivityMonth')),
       view: 'archiv',
     },
     {
@@ -88,9 +116,10 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
       label: t('dashboard.statsInvoices'),
       value: stats.rechnungen,
       hint:
-        stats.rechnungenMonat > 0
+        quotaHint('rechnungen') ||
+        (stats.rechnungenMonat > 0
           ? t('dashboard.monthCount', { count: stats.rechnungenMonat, type: t('dashboard.statsInvoices') })
-          : t('dashboard.noActivityMonth'),
+          : t('dashboard.noActivityMonth')),
       view: 'rechnung-archiv',
     },
     {
@@ -122,7 +151,7 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
       label: t('nav.invoicesNew'),
       desc: t('dashboard.actionInvoiceDesc'),
       view: 'rechnung-neu',
-      tone: 'primary',
+      tone: 'invoice',
     },
     {
       label: t('nav.customers'),
@@ -166,20 +195,37 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
         <p class="dashboard-panel__lead">${escapeHtml(t('dashboard.setupDoneLead'))}</p>
       </section>`;
 
-  const mailBlock = mailStatus
-    ? `
-      <section class="dashboard-panel dashboard-panel--mail">
-        <h3 class="dashboard-panel__title">${escapeHtml(t('dashboard.mailTitle'))}</h3>
-        <p class="dashboard-panel__lead">
-          ${
-            mailStatus.configured
-              ? escapeHtml(t('dashboard.mailActive'))
-              : mailStatus.devMode
-                ? escapeHtml(t('dashboard.mailDev'))
-                : escapeHtml(mailStatus.hint || t('dashboard.mailInactive'))
-          }
-        </p>
-      </section>`
+  const planLimitsBlock = showPlanLimits
+    ? (() => {
+        const angeboteRemaining = planLimits.angebote.remaining ?? 0;
+        const rechnungenRemaining = planLimits.rechnungen.remaining ?? 0;
+        const atLimit = angeboteRemaining <= 0 && rechnungenRemaining <= 0;
+        const lead = atLimit
+          ? t('planLimits.dashboardFull')
+          : t('planLimits.dashboardLead', {
+              angeboteRemaining,
+              rechnungenRemaining,
+              max: planLimits.angebote.max ?? FREE_DOCUMENT_LIMIT,
+            });
+        return `
+      <section class="dashboard-panel dashboard-panel--limits">
+        <h3 class="dashboard-panel__title">${escapeHtml(t('planLimits.dashboardTitle'))}</h3>
+        <p class="dashboard-panel__lead">${escapeHtml(lead)}</p>
+        <div class="dashboard-limits__rows">
+          <div class="dashboard-limits__row">
+            <span>${escapeHtml(t('dashboard.statsOffers'))}</span>
+            <strong>${escapeHtml(t('planLimits.statQuota', { used: planLimits.angebote.used, max: planLimits.angebote.max }))}</strong>
+          </div>
+          <div class="dashboard-limits__row">
+            <span>${escapeHtml(t('dashboard.statsInvoices'))}</span>
+            <strong>${escapeHtml(t('planLimits.statQuota', { used: planLimits.rechnungen.used, max: planLimits.rechnungen.max }))}</strong>
+          </div>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm dashboard-panel__cta" data-dashboard-nav="profil">
+          ${escapeHtml(t('planLimits.dashboardUpgrade'))}
+        </button>
+      </section>`;
+      })()
     : '';
 
   const dueBlock =
@@ -194,6 +240,47 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
         </button>
       </section>`
       : '';
+
+  const notificationsBadge =
+    unreadCount > 0
+      ? `<span class="dashboard-panel__badge" aria-label="${escapeHtml(t('dashboard.notificationsUnread', { count: unreadCount }))}">${escapeHtml(String(unreadCount))}</span>`
+      : '';
+
+  const notificationsBlock = `
+      <section class="card dashboard-panel dashboard-panel--notifications" aria-labelledby="dashboard-notifications-title">
+        <div class="dashboard-panel__head">
+          <h3 id="dashboard-notifications-title" class="dashboard-panel__title dashboard-panel__title--with-badge">
+            ${escapeHtml(t('dashboard.notificationsTitle'))}
+            ${notificationsBadge}
+          </h3>
+          ${
+            unreadCount > 0
+              ? `<button type="button" class="btn btn-ghost btn-sm" data-dashboard-mark-notifications-read>${escapeHtml(t('dashboard.notificationsMarkRead'))}</button>`
+              : ''
+          }
+        </div>
+        ${
+          notificationItems.length
+            ? `<ul class="dashboard-notifications__list">
+                ${notificationItems
+                  .map(
+                    (item) => `
+                  <li class="dashboard-notifications__item${item.unread ? ' dashboard-notifications__item--unread' : ''}">
+                    <button type="button" class="dashboard-notifications__link" data-dashboard-nav="prozesse">
+                      <span class="dashboard-notifications__status dashboard-notifications__status--${escapeHtml(item.status)}">${escapeHtml(notificationStatusLabel(item.status))}</span>
+                      <span class="dashboard-notifications__main">
+                        <strong>${escapeHtml(item.angebotNr || '—')}</strong>
+                        <span>${escapeHtml(item.customer || t('dashboard.noCustomer'))}</span>
+                      </span>
+                      <span class="dashboard-notifications__date">${escapeHtml(formatActivityDate(item.respondedAt))}</span>
+                    </button>
+                  </li>`
+                  )
+                  .join('')}
+              </ul>`
+            : `<p class="dashboard-panel__lead dashboard-notifications__empty">${escapeHtml(t('dashboard.notificationsEmpty'))}</p>`
+        }
+      </section>`;
 
   root.innerHTML = `
     <div class="dashboard-layout">
@@ -223,6 +310,8 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
 
       <div class="dashboard-main">
         <div class="dashboard-main__primary">
+          ${notificationsBlock}
+
           <section class="card dashboard-panel">
             <h3 class="dashboard-panel__title">${escapeHtml(t('dashboard.quickActions'))}</h3>
             <div class="dashboard-actions">
@@ -284,9 +373,9 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
         </div>
 
         <aside class="dashboard-main__aside">
+          ${planLimitsBlock}
           ${dueBlock}
           ${setupBlock}
-          ${mailBlock}
         </aside>
       </div>
     </div>
@@ -297,5 +386,9 @@ export function renderDashboard(root, data, { onNavigate, mailStatus = null } = 
       const view = button.dataset.dashboardNav;
       if (view && onNavigate) onNavigate(view);
     });
+  });
+
+  root.querySelector('[data-dashboard-mark-notifications-read]')?.addEventListener('click', () => {
+    if (onNotificationsSeen) onNotificationsSeen();
   });
 }

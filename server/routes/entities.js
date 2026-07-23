@@ -34,7 +34,12 @@ export function createEntityRouter({ label, list, get, save, remove, idField = '
         return;
       }
       res.json(save(req.tenantId, item));
-    } catch {
+    } catch (err) {
+      if (err.status === 403) {
+        res.status(403).json({ error: err.message, code: err.code || 'PLAN_LIMIT' });
+        return;
+      }
+      console.error(`${label} save:`, err);
       res.status(500).json({ error: `${singular} konnte nicht gespeichert werden.` });
     }
   });

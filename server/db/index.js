@@ -149,6 +149,21 @@ function runMigrations(database) {
       `ALTER TABLE tenants ADD COLUMN onboarding_completed INTEGER NOT NULL DEFAULT 1`
     );
   }
+  if (!tenantNames.has('notifications_seen_at')) {
+    database.exec(`ALTER TABLE tenants ADD COLUMN notifications_seen_at TEXT`);
+  }
+
+  const notificationsSeenMigration = database
+    .prepare('SELECT 1 FROM schema_migrations WHERE id = ?')
+    .get('tenant_notifications_seen_at_v1');
+  if (!notificationsSeenMigration) {
+    database
+      .prepare(`UPDATE tenants SET notifications_seen_at = datetime('now') WHERE notifications_seen_at IS NULL`)
+      .run();
+    database
+      .prepare('INSERT INTO schema_migrations (id, applied_at) VALUES (?, ?)')
+      .run('tenant_notifications_seen_at_v1', new Date().toISOString());
+  }
 
   database.exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (

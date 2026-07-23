@@ -7,14 +7,17 @@ export async function apiFetch(url, options = {}) {
 
   if (!res.ok) {
     let message = 'Serverfehler';
+    let code = null;
     try {
       const data = await res.json();
       message = data.error || message;
+      code = data.code || null;
     } catch {
       message = res.statusText || message;
     }
     const err = new Error(message);
     err.status = res.status;
+    err.code = code;
     throw err;
   }
 

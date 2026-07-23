@@ -20,3 +20,10 @@ export async function stopAdminImpersonation() {
     method: 'POST',
   });
 }
+
+export async function updateAdminTenantPlan(tenantId, plan) {
+  return apiFetch(`/api/admin/tenants/${encodeURIComponent(tenantId)}/plan`, {
+    method: 'PATCH',
+    body: JSON.stringify({ plan }),
+  });
+}
