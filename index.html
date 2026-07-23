@@ -271,135 +271,137 @@
 
         <section id="landing-pricing" class="landing-section landing-pricing" aria-labelledby="landing-pricing-title">
           <div class="landing-section__head landing-pricing__head">
-            <h2 id="landing-pricing-title">Preisstufen für jeden Bedarf</h2>
-            <p>Starten Sie kostenlos — upgraden Sie, wenn Ihr Geschäft wächst.</p>
+            <h2 id="landing-pricing-title" data-i18n="landing.pricingCompareTitle">Die 3 Pakete im Vergleich</h2>
+            <p data-i18n="landing.pricingCompareLead">
+              Finden Sie die passende Stufe für Ihr Büro — von kostenlos testen bis unbegrenzt nutzen.
+            </p>
           </div>
-          <div class="landing-pricing__carousel" data-landing-pricing-carousel>
-            <div class="landing-pricing__viewport">
-              <div class="landing-pricing__track" role="list">
-            <article class="landing-plan landing-plan--free" role="listitem">
-              <header class="landing-plan__header">
-                <span class="landing-plan__badge">Stufe 1</span>
-                <h3 class="landing-plan__name">Free</h3>
-                <p class="landing-plan__price">
-                  <span class="landing-plan__amount">0 €</span>
-                  <span class="landing-plan__period">/ Monat</span>
-                </p>
-                <p class="landing-plan__tagline">Zum Ausprobieren</p>
-              </header>
-              <ul class="landing-plan__features">
-                <li>10 Angebote &amp; 10 Rechnungen / Monat</li>
-                <li>Kunden, Katalog, Archiv &amp; Prozesse</li>
-                <li>PDF-Download &amp; ZUGFeRD-Rechnung</li>
-                <li>Online-Angebotsbestätigung per Link</li>
-              </ul>
-              <button type="button" class="btn btn-landing-register landing-plan__cta" data-landing-action="register" data-landing-plan="free">
-                Kostenlos registrieren
-              </button>
-            </article>
-
-            <article class="landing-plan landing-plan--plus landing-plan--unavailable" role="listitem" aria-disabled="true">
-              <span class="landing-plan__soon-badge">Demnächst verfügbar</span>
-              <header class="landing-plan__header">
-                <span class="landing-plan__badge">Stufe 2</span>
-                <h3 class="landing-plan__name">Plus</h3>
-                <p class="landing-plan__price">
-                  <span class="landing-plan__amount">3,99 €</span>
-                  <span class="landing-plan__period">/ Monat</span>
-                </p>
-                <p class="landing-plan__tagline">Für regelmäßigen Versand</p>
-              </header>
-              <ul class="landing-plan__features">
-                <li>30 Angebote &amp; 30 Rechnungen / Monat</li>
-                <li>PDF-Versand an Kunden</li>
-                <li>Eigene PDF-Vorlage</li>
-                <li>Monats-Export (CSV)</li>
-              </ul>
-              <button type="button" class="btn btn-ghost landing-plan__cta" disabled aria-disabled="true">
-                Demnächst verfügbar
-              </button>
-            </article>
-
-            <article class="landing-plan landing-plan--pro landing-plan--unavailable" role="listitem" aria-disabled="true">
-              <span class="landing-plan__soon-badge">Demnächst verfügbar</span>
-              <header class="landing-plan__header">
-                <span class="landing-plan__badge landing-plan__badge--popular">Stufe 3</span>
-                <h3 class="landing-plan__name">Pro</h3>
-                <p class="landing-plan__price">
-                  <span class="landing-plan__amount">7,99 €</span>
-                  <span class="landing-plan__period">/ Monat</span>
-                </p>
-                <p class="landing-plan__tagline">Unbegrenzt &amp; weniger Tipparbeit</p>
-              </header>
-              <ul class="landing-plan__features">
-                <li>Unbegrenzte Angebote &amp; Rechnungen</li>
-                <li>Versand &amp; Archivierung</li>
-                <li>KI-Import aus alten PDFs</li>
-                <li>Offene Posten, Jahres-Export &amp; CSV-Import</li>
-              </ul>
-              <button type="button" class="btn btn-ghost landing-plan__cta" disabled aria-disabled="true">
-                Demnächst verfügbar
-              </button>
-            </article>
-              </div>
-            </div>
-            <div class="landing-pricing__controls" aria-label="Preisstufen blättern">
-              <button
-                type="button"
-                class="landing-pricing__arrow landing-pricing__arrow--prev"
-                aria-label="Vorherige Preisstufe"
-                disabled
-              >
-                <svg viewBox="0 0 16 16" aria-hidden="true">
-                  <path
-                    d="M10 4l-4 4 4 4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </button>
-              <div class="landing-pricing__dots" role="tablist" aria-label="Preisstufen">
-                <button
-                  type="button"
-                  class="landing-pricing__dot is-active"
-                  role="tab"
-                  aria-label="Free"
-                  aria-selected="true"
-                  data-landing-pricing-dot="0"
-                ></button>
-                <button
-                  type="button"
-                  class="landing-pricing__dot"
-                  role="tab"
-                  aria-label="Plus"
-                  aria-selected="false"
-                  data-landing-pricing-dot="1"
-                ></button>
-                <button
-                  type="button"
-                  class="landing-pricing__dot"
-                  role="tab"
-                  aria-label="Pro"
-                  aria-selected="false"
-                  data-landing-pricing-dot="2"
-                ></button>
-              </div>
-              <button type="button" class="landing-pricing__arrow landing-pricing__arrow--next" aria-label="Nächste Preisstufe">
-                <svg viewBox="0 0 16 16" aria-hidden="true">
-                  <path
-                    d="M6 4l4 4-4 4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
+          <div class="pricing-compare-wrap">
+            <table class="pricing-compare">
+              <caption class="visually-hidden" data-i18n="landing.pricingCompareCaption">
+                Vergleich der Tarife Free, Plus und Pro
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col" class="pricing-compare__corner"></th>
+                  <th scope="col" class="pricing-compare__plan-head pricing-compare__plan-head--free">
+                    <span class="pricing-compare__plan-name">Free</span>
+                    <span class="pricing-compare__plan-price"><strong>0 €</strong> <span class="pricing-compare__plan-period" data-i18n="landing.pricingPerMonth">/ Monat</span></span>
+                  </th>
+                  <th scope="col" class="pricing-compare__plan-head pricing-compare__plan-head--plus pricing-compare__plan-head--featured">
+                    <span class="pricing-compare__plan-badge" data-i18n="landing.pricingPopular">Beliebt</span>
+                    <span class="pricing-compare__plan-name">Plus</span>
+                    <span class="pricing-compare__plan-price"><strong>3,99 €</strong> <span class="pricing-compare__plan-period" data-i18n="landing.pricingPerMonth">/ Monat</span></span>
+                    <span class="pricing-compare__plan-soon" data-i18n="landing.pricingSoon">Demnächst</span>
+                  </th>
+                  <th scope="col" class="pricing-compare__plan-head pricing-compare__plan-head--pro">
+                    <span class="pricing-compare__plan-name">Pro</span>
+                    <span class="pricing-compare__plan-price"><strong>7,99 €</strong> <span class="pricing-compare__plan-period" data-i18n="landing.pricingPerMonth">/ Monat</span></span>
+                    <span class="pricing-compare__plan-soon" data-i18n="landing.pricingSoon">Demnächst</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowQuotes">Angebote / Monat</th>
+                  <td>10</td>
+                  <td>30</td>
+                  <td data-i18n="landing.pricingUnlimited">Unbegrenzt</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowInvoices">Rechnungen / Monat</th>
+                  <td>10</td>
+                  <td>30</td>
+                  <td data-i18n="landing.pricingUnlimited">Unbegrenzt</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowCustomers">Kunden &amp; Katalog</th>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowPdf">PDF-Download</th>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowZugferd">ZUGFeRD E-Rechnung</th>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowConfirm">Angebotsbestätigung online</th>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowProcesses">Prozesse &amp; Status</th>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowMail">E-Mail-Versand</th>
+                  <td><span class="pricing-compare__dash" aria-hidden="true">—</span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowTemplate">PDF-Vorlage</th>
+                  <td data-i18n="landing.pricingTemplateBasic">Basis</td>
+                  <td data-i18n="landing.pricingTemplateCustom">Eigene</td>
+                  <td data-i18n="landing.pricingTemplateCustom">Eigene</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowDatev">DATEV-Export</th>
+                  <td><span class="pricing-compare__dash" aria-hidden="true">—</span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowCsv">CSV-Export</th>
+                  <td><span class="pricing-compare__dash" aria-hidden="true">—</span></td>
+                  <td data-i18n="landing.pricingCsvMonth">Monat</td>
+                  <td data-i18n="landing.pricingCsvYear">Jahr</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowAi">KI-Import aus PDFs</th>
+                  <td><span class="pricing-compare__dash" aria-hidden="true">—</span></td>
+                  <td><span class="pricing-compare__dash" aria-hidden="true">—</span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="landing.pricingRowOpenItems">Offene Posten</th>
+                  <td><span class="pricing-compare__dash" aria-hidden="true">—</span></td>
+                  <td><span class="pricing-compare__dash" aria-hidden="true">—</span></td>
+                  <td><span class="pricing-compare__check" aria-label="Enthalten"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10"/><path d="M6 10l2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></span></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td class="pricing-compare__corner"></td>
+                  <td>
+                    <button type="button" class="btn btn-landing-register pricing-compare__cta" data-landing-action="register" data-landing-plan="free" data-i18n="landing.registerFree">
+                      Kostenlos registrieren
+                    </button>
+                  </td>
+                  <td>
+                    <button type="button" class="btn pricing-compare__cta pricing-compare__cta--featured" disabled aria-disabled="true" data-i18n="landing.pricingSoonFull">
+                      Demnächst verfügbar
+                    </button>
+                  </td>
+                  <td>
+                    <button type="button" class="btn pricing-compare__cta" disabled aria-disabled="true" data-i18n="landing.pricingSoonFull">
+                      Demnächst verfügbar
+                    </button>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </section>
 
@@ -425,17 +427,6 @@
               <h3>Alle Ressourcen</h3>
               <p>FAQ, Handbuch, Roadmap und Link-Übersicht zum Teilen.</p>
             </a>
-          </div>
-        </section>
-
-        <section class="landing-cta">
-          <div class="landing-cta__card">
-            <h2 data-i18n="landing.ctaTitle">Bereit für das erste Angebot?</h2>
-            <p data-i18n="landing.ctaLead">Registrierung dauert unter einer Minute. Quotavo ist aktuell kostenlos nutzbar.</p>
-            <div class="landing-cta__actions">
-              <button type="button" class="btn btn-landing-register btn-landing-register--lg" data-landing-action="register" data-landing-plan="free" data-i18n="landing.registerFree">Kostenlos registrieren</button>
-              <button type="button" class="btn btn-ghost" data-landing-action="login" data-i18n="landing.login">Anmelden</button>
-            </div>
           </div>
         </section>
       </main>
