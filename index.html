@@ -606,66 +606,17 @@
       <div class="app-shell">
         <aside class="app-sidebar" id="app-sidebar">
           <div class="app-sidebar__head">
-            <div class="bereich-switcher" id="bereich-switcher-wrap">
-            <button
-              type="button"
-              class="app-brand"
-              id="bereich-switcher"
-              aria-haspopup="menu"
-              aria-expanded="false"
-              aria-controls="bereich-switcher-menu"
-              data-i18n-aria-label="header.switchArea"
-            >
-              <span class="app-brand__mark app-brand__mark--angebote" id="bereich-switcher-mark" aria-hidden="true"
-                >A</span
-              >
-              <span class="app-brand__title" id="bereich-switcher-label">Angebote</span>
-              <svg class="app-brand__chevron" viewBox="0 0 16 16" aria-hidden="true">
-                <path
-                  d="M4 6l4 4 4-4"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </button>
-            <div
-              class="bereich-switcher__menu hidden"
-              id="bereich-switcher-menu"
-              role="menu"
-              data-i18n-aria-label="header.switchArea"
-              aria-label="Bereich wechseln"
-            >
-              <button
-                type="button"
-                class="bereich-switcher__option"
-                role="menuitem"
-                data-bereich="angebote"
-                hidden
-              >
-                <span class="app-brand__mark app-brand__mark--angebote" data-bereich-mark="angebote" aria-hidden="true">A</span>
-                <span class="bereich-switcher__option-text">
-                  <span class="bereich-switcher__option-title" data-i18n="bereich.offers">Angebote</span>
-                  <span class="bereich-switcher__option-desc" data-i18n="bereich.offersManage">Angebote erstellen &amp; verwalten</span>
-                </span>
-              </button>
-              <button
-                type="button"
-                class="bereich-switcher__option"
-                role="menuitem"
-                data-bereich="rechnungen"
-                hidden
-              >
-                <span class="app-brand__mark app-brand__mark--rechnungen" data-bereich-mark="rechnungen" aria-hidden="true">R</span>
-                <span class="bereich-switcher__option-text">
-                  <span class="bereich-switcher__option-title" data-i18n="bereich.invoices">Rechnungen</span>
-                  <span class="bereich-switcher__option-desc" data-i18n="bereich.invoicesManage">Rechnungen erstellen &amp; verwalten</span>
-                </span>
-              </button>
-            </div>
-            </div>
+            <a href="#" class="app-brand app-brand--static" id="app-sidebar-brand" data-nav-view="dashboard">
+              <img
+                src="/quotavo-logo.svg"
+                alt=""
+                class="app-brand__logo"
+                width="32"
+                height="32"
+                decoding="async"
+              />
+              <span class="app-brand__title">Quotavo</span>
+            </a>
           </div>
 
           <nav class="app-nav app-sidebar__nav" id="main-nav" data-i18n-aria-label="nav.main" aria-label="Hauptnavigation">
@@ -689,13 +640,11 @@
                   <span id="dashboard-notifications-badge" class="app-nav__badge hidden" aria-hidden="true">0</span>
                 </button>
               </li>
-              <li class="app-nav__group is-open" data-nav-group="angebote">
+              <li class="app-nav__group app-nav__group--solo is-open" data-nav-group="angebote">
                 <button
                   type="button"
-                  class="app-nav__trigger"
-                  aria-expanded="true"
-                  aria-haspopup="true"
-                  data-nav-trigger
+                  class="app-nav__trigger app-nav__trigger--solo"
+                  data-nav-view="archiv"
                   data-i18n-title="nav.offers"
                 >
                   <span class="app-nav__trigger-icon" aria-hidden="true">
@@ -705,28 +654,13 @@
                     </svg>
                   </span>
                   <span class="app-nav__trigger-label" data-i18n="nav.offers">Angebote</span>
-                  <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
                 </button>
-                <div class="app-nav__menu" role="menu">
-                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="neu">
-                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.offersNew">Neues Angebot</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.offersNewShort">Neu</span>
-                  </button>
-                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="archiv">
-                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.offersArchive">Alle Angebote</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.offersArchiveShort">Archiv</span>
-                  </button>
-                </div>
               </li>
-              <li class="app-nav__group is-bereich-hidden is-open" data-nav-group="rechnungen">
+              <li class="app-nav__group app-nav__group--solo is-open" data-nav-group="rechnungen">
                 <button
                   type="button"
-                  class="app-nav__trigger"
-                  aria-expanded="true"
-                  aria-haspopup="true"
-                  data-nav-trigger
+                  class="app-nav__trigger app-nav__trigger--solo"
+                  data-nav-view="rechnung-archiv"
                   data-i18n-title="nav.invoices"
                 >
                   <span class="app-nav__trigger-icon" aria-hidden="true">
@@ -736,20 +670,7 @@
                     </svg>
                   </span>
                   <span class="app-nav__trigger-label" data-i18n="nav.invoices">Rechnungen</span>
-                  <svg class="app-nav__chevron" viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
                 </button>
-                <div class="app-nav__menu" role="menu">
-                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-neu">
-                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.invoicesNew">Neue Rechnung</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.invoicesNewShort">Neu</span>
-                  </button>
-                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="rechnung-archiv">
-                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.invoicesArchive">Alle Rechnungen</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.invoicesArchiveShort">Archiv</span>
-                  </button>
-                </div>
               </li>
               <li class="app-nav__group is-open" data-nav-group="prozesse">
                 <button
@@ -836,9 +757,13 @@
                     <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.template">PDF-Vorlagen</span>
                     <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.template">PDF-Vorlagen</span>
                   </button>
-                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="datev">
-                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.datev">DATEV</span>
-                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.datev">DATEV</span>
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="export">
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.export">Daten-Export</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.export">Daten-Export</span>
+                  </button>
+                  <button type="button" class="app-nav__link" role="menuitem" data-nav-view="import">
+                    <span class="app-nav__link-title app-nav__link-title--desktop" data-i18n="nav.import">Daten-Import</span>
+                    <span class="app-nav__link-title app-nav__link-title--mobile" data-i18n="nav.import">Daten-Import</span>
                   </button>
                 </div>
               </li>
@@ -1132,28 +1057,46 @@
         <main class="main">
           <section class="card">
             <div class="card-header card-header--rechnung-archiv">
-              <h2 data-i18n="form.archivInvoicesTitle">Gespeicherte Rechnungen</h2>
-              <div class="rechnung-archiv-toolbar">
-                <label class="rechnung-archiv-toolbar__item">
-                  <span data-i18n="datev.from">Von</span>
-                  <input type="date" id="datev-export-von" />
-                </label>
-                <label class="rechnung-archiv-toolbar__item">
-                  <span data-i18n="datev.to">Bis</span>
-                  <input type="date" id="datev-export-bis" />
-                </label>
-                <div class="rechnung-archiv-toolbar__item rechnung-archiv-toolbar__item--datev">
-                  <span data-i18n="datev.exportShortLabel">DATEV Export</span>
-                  <button type="button" id="datev-export-btn" class="btn btn-secondary rechnung-archiv-toolbar__btn" data-i18n="datev.exportBtn">
-                    DATEV exportieren
-                  </button>
-                </div>
-                <label class="rechnung-archiv-toolbar__item">
-                  <span data-i18n="form.searchInvoicesLabel">Rechnung suchen</span>
-                  <input type="search" id="rechnung-archiv-suche" class="search rechnung-archiv-toolbar__search" data-i18n-placeholder="form.searchInvoices" placeholder="Rechnungen suchen…" />
-                </label>
+              <div class="card-header__top">
+                <h2 data-i18n="nav.invoices">Rechnungen</h2>
+                <button type="button" id="rechnung-archiv-neu-btn" class="btn btn-primary btn-sm" data-i18n="nav.invoicesNew">
+                  Neue Rechnung
+                </button>
               </div>
-              <p id="datev-export-hint" class="datev-export-hint hidden" role="status"></p>
+              <div class="rechnung-archiv-toolbar">
+                <div class="search-expand" id="rechnung-archiv-search-wrap">
+                  <span class="search-expand__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="7"></circle>
+                      <path d="M20 20l-3-3"></path>
+                    </svg>
+                  </span>
+                  <input
+                    type="search"
+                    id="rechnung-archiv-suche"
+                    class="search search-expand__input"
+                    data-i18n-placeholder="form.searchInvoices"
+                    data-i18n-aria-label="form.searchInvoicesLabel"
+                    placeholder="Rechnungen suchen…"
+                    aria-label="Rechnung suchen"
+                  />
+                </div>
+                <div class="rechnung-archiv-toolbar__dates">
+                  <input
+                    type="date"
+                    id="rechnung-archiv-von"
+                    data-i18n-aria-label="datev.from"
+                    aria-label="Von"
+                  />
+                  <span class="rechnung-archiv-toolbar__date-sep" aria-hidden="true">–</span>
+                  <input
+                    type="date"
+                    id="rechnung-archiv-bis"
+                    data-i18n-aria-label="datev.to"
+                    aria-label="Bis"
+                  />
+                </div>
+              </div>
             </div>
             <div id="rechnung-archiv-liste" class="archiv-liste"></div>
           </section>
@@ -1325,8 +1268,13 @@
         <main class="main">
           <section class="card">
             <div class="card-header">
-              <h2 data-i18n="form.archivQuotesTitle">Gespeicherte Angebote</h2>
-              <input type="search" id="archiv-suche" class="search" data-i18n-placeholder="form.searchQuotes" placeholder="Angebote suchen (Nr., Kunde, Datum)…" />
+              <h2 data-i18n="nav.offers">Angebote</h2>
+              <div class="archiv-liste-toolbar">
+                <input type="search" id="archiv-suche" class="search" data-i18n-placeholder="form.searchQuotes" placeholder="Angebote suchen (Nr., Kunde, Datum)…" />
+                <button type="button" id="angebot-archiv-neu-btn" class="btn btn-primary btn-sm" data-i18n="nav.offersNew">
+                  Neues Angebot
+                </button>
+              </div>
             </div>
             <div id="archiv-liste" class="archiv-liste"></div>
           </section>
@@ -1472,8 +1420,83 @@
         </main>
       </div>
 
+      <div id="view-export" class="hidden">
+        <main class="main main--settings">
+          <section class="card">
+            <h2 data-i18n="export.title">Daten-Export</h2>
+            <p class="settings-lead" data-i18n="export.lead">
+              Daten aus Quotavo in externe Formate und Buchhaltungssysteme übertragen.
+            </p>
+            <div class="settings-hub">
+              <article class="settings-hub__tile settings-hub__tile--split">
+                <button type="button" class="settings-hub__tile-main" data-export-target="datev">
+                  <span class="settings-hub__icon" aria-hidden="true">DV</span>
+                  <span class="settings-hub__text">
+                    <strong data-i18n="export.datevTitle">DATEV</strong>
+                    <span data-i18n="export.datevDesc">Buchungsstapel für Ihren Steuerberater konfigurieren und exportieren.</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm settings-hub__tile-action"
+                  data-export-target="datev-export"
+                  data-i18n="datev.exportShortLabel"
+                >
+                  Export
+                </button>
+              </article>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <div id="view-import" class="hidden">
+        <main class="main main--settings">
+          <section class="card import-card">
+            <h2 data-i18n="import.title">Daten-Import</h2>
+            <p class="settings-lead" data-i18n="import.lead">
+              Daten aus externen Tools per CSV in Quotavo übernehmen.
+            </p>
+            <form id="import-form" class="form-grid form-grid--import">
+              <label class="full">
+                <span data-i18n="import.toolLabel">Quell-Tool</span>
+                <select id="import-tool" name="import-tool">
+                  <option value="time" data-i18n="import.toolTime">Tool Time</option>
+                </select>
+              </label>
+              <div class="full">
+                <span class="import-file-label" data-i18n="import.csvLabel">CSV-Datei</span>
+                <label class="import-file-drop" for="import-csv-file">
+                  <input
+                    type="file"
+                    id="import-csv-file"
+                    name="import-csv-file"
+                    accept=".csv,text/csv"
+                    class="import-file-drop__input"
+                  />
+                  <span class="import-file-drop__title" data-i18n="import.csvDropTitle">CSV hier ablegen oder auswählen</span>
+                  <span class="import-file-drop__hint" data-i18n="import.csvDropHint">Nur .csv-Dateien</span>
+                  <span id="import-csv-name" class="import-file-drop__name hidden" aria-live="polite"></span>
+                </label>
+              </div>
+              <div class="form-actions full">
+                <button type="submit" id="import-submit-btn" class="btn btn-primary" disabled data-i18n="import.submit">
+                  Importieren
+                </button>
+              </div>
+            </form>
+            <p id="import-status" class="settings-status hidden" role="status"></p>
+          </section>
+        </main>
+      </div>
+
       <div id="view-datev" class="hidden">
         <main class="main main--settings">
+          <div class="settings-subnav">
+            <button type="button" id="datev-back-btn" class="btn btn-ghost btn-sm" data-i18n="export.backToExport">
+              ← Zurück zu Daten-Export
+            </button>
+          </div>
           <section class="card datev-settings-card">
             <div class="datev-settings-card__head">
               <h2 data-i18n="datev.settingsTitle">DATEV-Export</h2>
@@ -1527,6 +1550,33 @@
               </label>
             </form>
             <p id="datev-settings-status" class="settings-status hidden" role="status"></p>
+          </section>
+        </main>
+      </div>
+
+      <div id="view-datev-export" class="hidden">
+        <main class="main main--settings">
+          <div class="settings-subnav">
+            <button type="button" id="datev-export-back-btn" class="btn btn-ghost btn-sm" data-i18n="export.backToExport">
+              ← Zurück zu Daten-Export
+            </button>
+          </div>
+          <section class="card datev-export-card">
+            <h2 data-i18n="datev.exportTitle">DATEV exportieren</h2>
+            <p class="settings-lead" data-i18n="datev.exportLead">
+              Rechnungen für einen Zeitraum als DATEV-Buchungsstapel herunterladen.
+            </p>
+            <div class="datev-export-panel">
+              <div class="datev-export-panel__period">
+                <input type="date" id="datev-export-von" data-i18n-aria-label="datev.from" aria-label="Von" />
+                <span class="datev-export-panel__sep" aria-hidden="true">–</span>
+                <input type="date" id="datev-export-bis" data-i18n-aria-label="datev.to" aria-label="Bis" />
+              </div>
+              <button type="button" id="datev-export-btn" class="btn btn-primary" data-i18n="datev.exportBtn">
+                DATEV exportieren
+              </button>
+            </div>
+            <p id="datev-export-hint" class="settings-status datev-export-hint hidden" role="status"></p>
           </section>
         </main>
       </div>
@@ -1842,7 +1892,7 @@
                   <dd id="kunden-detail-kunden-nr"></dd>
                 </div>
                 <div class="kunden-detail__row">
-                  <dt data-i18n="form.salutation">Anrede</dt>
+                  <dt data-i18n="form.customerType">Kundentyp</dt>
                   <dd id="kunden-detail-anrede"></dd>
                 </div>
                 <div class="kunden-detail__row">
@@ -1871,12 +1921,10 @@
             <form id="kunden-form" class="form-grid form-grid--kunden">
               <div class="kunden-form-meta full">
                 <label>
-                  <span data-i18n="form.salutation">Anrede</span>
+                  <span data-i18n="form.customerType">Kundentyp</span>
                   <select id="kunden-form-anrede">
-                    <option value="">—</option>
-                    <option value="Herr" data-i18n="form.salutationMr">Herr</option>
-                    <option value="Frau" data-i18n="form.salutationMs">Frau</option>
-                    <option value="Firma" data-i18n="form.salutationCompany">Firma</option>
+                    <option value="Privatperson" data-i18n="form.customerTypePrivate">Privatperson</option>
+                    <option value="Firma" data-i18n="form.customerTypeCompany">Firma</option>
                   </select>
                 </label>
                 <label>

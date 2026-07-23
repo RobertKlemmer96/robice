@@ -37,7 +37,7 @@ import { initKatalogModal } from './katalogModal.js';
 import { initDatePickers, refreshDatePickers } from './datePicker.js';
 import { deleteIconButton, editIconButton, iconMoreVerticalSvg, mountIconButton } from './icons.js';
 import { initTheme } from './theme.js';
-import { applyI18n, getBereichMark, initI18n, onLocaleChange, syncBereichMarks, t } from './i18n.js';
+import { applyI18n, initI18n, onLocaleChange, t } from './i18n.js';
 import { initLangSwitcher } from './langSwitcher.js';
 import {
   getAllAngebote,
@@ -128,6 +128,7 @@ import {
   addDaysIso,
 } from './dokumentnummer.js';
 import { generiereKundennummer, previewKundennummer } from './kundennummer.js';
+import { importToolTimeCustomers, parseToolTimeCustomers } from './toolTimeImport.js';
 import {
   normalizeKundeAnrede,
   formatKundeAnredeLabel,
@@ -148,12 +149,6 @@ function isPdfVorlageView(view) {
 }
 
 function pdfVorlageViewForBereich(view) {
-  if (state.bereich === 'rechnungen' && view === 'pdf-vorlage-angebot') {
-    return 'pdf-vorlage-rechnung';
-  }
-  if (state.bereich === 'angebote' && view === 'pdf-vorlage-rechnung') {
-    return 'pdf-vorlage-angebot';
-  }
   return view;
 }
 
@@ -259,11 +254,7 @@ const els = {
   appSidebarBackdrop: document.getElementById('app-sidebar-backdrop'),
   navMobileToggle: document.getElementById('nav-mobile-toggle'),
   sidebarCollapseBtn: document.getElementById('sidebar-collapse-btn'),
-  bereichSwitcher: document.getElementById('bereich-switcher'),
-  bereichSwitcherWrap: document.getElementById('bereich-switcher-wrap'),
-  bereichSwitcherMenu: document.getElementById('bereich-switcher-menu'),
-  bereichSwitcherMark: document.getElementById('bereich-switcher-mark'),
-  bereichSwitcherLabel: document.getElementById('bereich-switcher-label'),
+  appSidebarBrand: document.getElementById('app-sidebar-brand'),
   viewRechnungNeu: document.getElementById('view-rechnung-neu'),
   viewRechnungArchiv: document.getElementById('view-rechnung-archiv'),
   viewDashboard: document.getElementById('view-dashboard'),
@@ -282,6 +273,9 @@ const els = {
   pdfPreviewRechnung: document.getElementById('pdf-preview-rechnung'),
   viewProfil: document.getElementById('view-profil'),
   viewDatev: document.getElementById('view-datev'),
+  viewDatevExport: document.getElementById('view-datev-export'),
+  viewExport: document.getElementById('view-export'),
+  viewImport: document.getElementById('view-import'),
   viewAdmin: document.getElementById('view-admin'),
   adminOverview: document.getElementById('admin-overview'),
   adminUserList: document.getElementById('admin-user-list'),
@@ -320,6 +314,8 @@ const els = {
   profilDeleteConfirmBtn: document.getElementById('profil-delete-confirm'),
   archivSuche: document.getElementById('archiv-suche'),
   archivListe: document.getElementById('archiv-liste'),
+  angebotArchivNeuBtn: document.getElementById('angebot-archiv-neu-btn'),
+  rechnungArchivNeuBtn: document.getElementById('rechnung-archiv-neu-btn'),
   resetBtn: document.getElementById('reset-btn'),
   saveBtn: document.getElementById('save-btn'),
   pdfFooter: document.getElementById('pdf-footer'),
@@ -433,14 +429,25 @@ const els = {
   rechnungFaellig: document.getElementById('rechnung-faellig'),
   rechnungAngebotRef: document.getElementById('rechnung-angebot-ref'),
   rechnungArchivSuche: document.getElementById('rechnung-archiv-suche'),
+  rechnungArchivSearchWrap: document.getElementById('rechnung-archiv-search-wrap'),
+  rechnungArchivVon: document.getElementById('rechnung-archiv-von'),
+  rechnungArchivBis: document.getElementById('rechnung-archiv-bis'),
   rechnungArchivListe: document.getElementById('rechnung-archiv-liste'),
+  datevSettingsForm: document.getElementById('datev-settings-form'),
+  datevSettingsStatus: document.getElementById('datev-settings-status'),
+  datevSkrSelect: document.getElementById('datev-skr'),
+  datevBackBtn: document.getElementById('datev-back-btn'),
+  datevExportBackBtn: document.getElementById('datev-export-back-btn'),
   datevExportVon: document.getElementById('datev-export-von'),
   datevExportBis: document.getElementById('datev-export-bis'),
   datevExportBtn: document.getElementById('datev-export-btn'),
   datevExportHint: document.getElementById('datev-export-hint'),
-  datevSettingsForm: document.getElementById('datev-settings-form'),
-  datevSettingsStatus: document.getElementById('datev-settings-status'),
-  datevSkrSelect: document.getElementById('datev-skr'),
+  importForm: document.getElementById('import-form'),
+  importTool: document.getElementById('import-tool'),
+  importCsvFile: document.getElementById('import-csv-file'),
+  importCsvName: document.getElementById('import-csv-name'),
+  importSubmitBtn: document.getElementById('import-submit-btn'),
+  importStatus: document.getElementById('import-status'),
   katalogOeffnenBtn: document.getElementById('katalog-oeffnen-btn'),
   rechnungKatalogOeffnenBtn: document.getElementById('rechnung-katalog-oeffnen-btn'),
   katalogModal: document.getElementById('katalog-modal'),
@@ -487,13 +494,6 @@ function canCurrentTenantSendMail() {
     return cachedPlanLimits.canSendMail;
   }
   return canSendMail(getSession()?.tenant?.plan);
-}
-
-function canCurrentTenantExportDatev() {
-  if (cachedPlanLimits && typeof cachedPlanLimits.canExportDatev === 'boolean') {
-    return cachedPlanLimits.canExportDatev;
-  }
-  return canExportDatev(getSession()?.tenant?.plan);
 }
 
 function updatePreviewButtonLabels() {
@@ -562,6 +562,13 @@ const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
   },
 });
 
+function canCurrentTenantExportDatev() {
+  if (cachedPlanLimits && typeof cachedPlanLimits.canExportDatev === 'boolean') {
+    return cachedPlanLimits.canExportDatev;
+  }
+  return canExportDatev(getSession()?.tenant?.plan);
+}
+
 function updateDocumentPlanUi() {
   updatePreviewButtonLabels();
   updateDocumentPreviewModalPlanState();
@@ -609,9 +616,34 @@ function updateDatevExportUi() {
   }
   if (!canExport) {
     setDatevExportHint(t('datev.exportLockedHint'));
-  } else {
+  } else if (state.view === 'datev-export') {
     setDatevExportHint('');
   }
+}
+
+function renderDatevExportView() {
+  ensureDatevExportDefaults();
+  updateDatevExportUi();
+}
+
+function getRechnungListDateIso(rechnung) {
+  return rechnung.rechnungsdatum || rechnung.erstelltAm?.split('T')[0] || '';
+}
+
+function matchesRechnungDateFilter(rechnung, von, bis) {
+  if (!von && !bis) return true;
+  const datum = getRechnungListDateIso(rechnung);
+  if (!datum) return false;
+  if (von && datum < von) return false;
+  if (bis && datum > bis) return false;
+  return true;
+}
+
+function syncRechnungArchivSearchExpand() {
+  const wrap = els.rechnungArchivSearchWrap;
+  const input = els.rechnungArchivSuche;
+  if (!wrap || !input) return;
+  wrap.classList.toggle('is-open', Boolean(input.value.trim()));
 }
 
 function applyDatevSkrPreset(form, skr) {
@@ -2151,6 +2183,139 @@ async function renderDatevView() {
   setDatevSettingsStatus('');
 }
 
+function setImportStatus(message, isError = false) {
+  if (!els.importStatus) return;
+  if (!message) {
+    els.importStatus.textContent = '';
+    els.importStatus.classList.add('hidden');
+    els.importStatus.classList.remove('settings-status--error');
+    return;
+  }
+  els.importStatus.textContent = message;
+  els.importStatus.classList.toggle('settings-status--error', isError);
+  els.importStatus.classList.remove('hidden');
+}
+
+function isCsvFile(file) {
+  if (!file) return false;
+  const name = String(file.name || '').toLowerCase();
+  return name.endsWith('.csv') || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel';
+}
+
+function syncImportFileUi(file = null) {
+  const selectedFile = file ?? els.importCsvFile?.files?.[0] ?? null;
+  const hasFile = Boolean(selectedFile && isCsvFile(selectedFile));
+
+  if (els.importCsvName) {
+    if (hasFile) {
+      els.importCsvName.textContent = t('import.fileSelected', { name: selectedFile.name });
+      els.importCsvName.classList.remove('hidden');
+    } else {
+      els.importCsvName.textContent = '';
+      els.importCsvName.classList.add('hidden');
+    }
+  }
+
+  if (els.importSubmitBtn) {
+    els.importSubmitBtn.disabled = !hasFile;
+  }
+
+  if (!hasFile) {
+    setImportStatus('');
+    return;
+  }
+
+  if (els.importTool?.value === 'time') {
+    selectedFile
+      .text()
+      .then((text) => {
+        const count = parseToolTimeCustomers(text).length;
+        if (count > 0) {
+          setImportStatus(t('import.previewCount', { count }));
+        }
+      })
+      .catch(() => {});
+  }
+}
+
+async function runImportSubmit() {
+  const file = els.importCsvFile?.files?.[0] ?? null;
+  if (!file || !isCsvFile(file)) {
+    setImportStatus(t('import.invalidFile'), true);
+    return;
+  }
+
+  if (els.importTool?.value !== 'time') {
+    setImportStatus(t('import.unsupportedTool'), true);
+    return;
+  }
+
+  els.importSubmitBtn.disabled = true;
+  setImportStatus(t('import.importing'));
+
+  try {
+    const csvText = await file.text();
+    const result = await importToolTimeCustomers(csvText, {
+      saveKunde,
+      getAllKunden,
+      generiereKundennummer,
+      createKundeId,
+    });
+
+    if (result.imported === 0 && result.total === 0) {
+      setImportStatus(t('import.noRows'), true);
+      return;
+    }
+
+    if (result.imported === 0 && result.duplicates > 0 && result.errors.length === 0) {
+      setImportStatus(t('import.allDuplicates', { count: result.duplicates }), true);
+      return;
+    }
+
+    if (result.errors.length > 0) {
+      const firstError = result.errors[0];
+      setImportStatus(
+        t('import.partialFailed', {
+          imported: result.imported,
+          failed: result.errors.length,
+          message: firstError.message,
+        }),
+        true
+      );
+    } else if (result.duplicates > 0) {
+      setImportStatus(
+        t('import.successWithDuplicates', {
+          imported: result.imported,
+          duplicates: result.duplicates,
+          skipped: result.skipped,
+        })
+      );
+    } else if (result.skipped > 0) {
+      setImportStatus(
+        t('import.successWithSkipped', { imported: result.imported, skipped: result.skipped })
+      );
+    } else {
+      setImportStatus(t('import.success', { count: result.imported }));
+    }
+
+    if (result.imported > 0) {
+      els.importCsvFile.value = '';
+      syncImportFileUi();
+      if (state.view === 'kunden') {
+        await renderKundenView();
+      }
+    }
+  } catch (err) {
+    setImportStatus(err.message || t('import.failed'), true);
+  } finally {
+    syncImportFileUi(els.importCsvFile?.files?.[0] ?? null);
+  }
+}
+
+function renderImportView() {
+  syncImportFileUi();
+}
+
 function refreshPdfTemplatePreviewsFromProfile() {
   const angebotVariant = getPdfLayoutVariant('angebot');
   const rechnungVariant = getPdfLayoutVariant('rechnung');
@@ -2454,14 +2619,8 @@ async function openAdminTenant(tenantId, targetView = 'archiv') {
     await refreshSession();
     await reloadAfterTenantSwitch();
     if (targetView === 'rechnung-archiv') {
-      state.bereich = 'rechnungen';
-      syncBereichSwitcher();
-      syncBereichNav();
       showView('rechnung-archiv');
     } else {
-      state.bereich = 'angebote';
-      syncBereichSwitcher();
-      syncBereichNav();
       showView('archiv');
     }
   } catch (err) {
@@ -2634,7 +2793,10 @@ const NAV_VIEW_GROUPS = {
   'pdf-vorlage': 'einstellungen',
   'pdf-vorlage-angebot': 'einstellungen',
   'pdf-vorlage-rechnung': 'einstellungen',
+  export: 'einstellungen',
+  import: 'einstellungen',
   datev: 'einstellungen',
+  'datev-export': 'einstellungen',
 };
 
 const SIDEBAR_COLLAPSED_KEY = 'quotavo.sidebarCollapsed';
@@ -2667,32 +2829,6 @@ function positionNavFlyout(group) {
   menu.style.left = `${rect.right + 8}px`;
 }
 
-function resetBereichDropdownPosition() {
-  const menu = els.bereichSwitcherMenu;
-  if (!menu) return;
-  menu.style.position = '';
-  menu.style.top = '';
-  menu.style.left = '';
-  menu.style.right = '';
-  menu.style.width = '';
-}
-
-function positionBereichDropdown() {
-  if (!isSidebarCollapsed() || !isDesktopSidebarLayout()) {
-    resetBereichDropdownPosition();
-    return;
-  }
-  const trigger = els.bereichSwitcher;
-  const menu = els.bereichSwitcherMenu;
-  if (!trigger || !menu) return;
-  const rect = trigger.getBoundingClientRect();
-  menu.style.position = 'fixed';
-  menu.style.top = `${Math.max(8, rect.top)}px`;
-  menu.style.left = `${rect.right + 8}px`;
-  menu.style.right = 'auto';
-  menu.style.width = '240px';
-}
-
 function syncSidebarCollapseUi() {
   if (!els.sidebarCollapseBtn) return;
   const collapsed = isSidebarCollapsed();
@@ -2714,7 +2850,6 @@ function setSidebarCollapsed(collapsed, { persist = true } = {}) {
     els.appSidebar.classList.remove('is-collapsed');
     els.app?.classList.remove('app--sidebar-collapsed');
     closeNavFlyouts();
-    resetBereichDropdownPosition();
     syncSidebarCollapseUi();
     return;
   }
@@ -2723,10 +2858,8 @@ function setSidebarCollapsed(collapsed, { persist = true } = {}) {
   els.app?.classList.toggle('app--sidebar-collapsed', collapsed);
   if (collapsed) {
     closeNavFlyouts();
-    closeBereichDropdown();
   } else {
     closeNavFlyouts();
-    resetBereichDropdownPosition();
     expandVisibleNavGroups();
   }
   syncSidebarCollapseUi();
@@ -2752,6 +2885,9 @@ function closeMobileNav() {
 
 function resolveNavBarView(view) {
   const resolved = resolvePdfVorlageView(view);
+  if (resolved === 'neu') return 'archiv';
+  if (resolved === 'rechnung-neu') return 'rechnung-archiv';
+  if (resolved === 'datev' || resolved === 'datev-export') return 'export';
   if (resolved === 'profil' || resolved === 'admin') {
     return state.lastNavBarView ?? 'dashboard';
   }
@@ -2766,6 +2902,8 @@ function resolveNavBarView(view) {
     resolved === 'kunden' ||
     resolved === 'rechnung-neu' ||
     resolved === 'rechnung-archiv' ||
+    resolved === 'export' ||
+    resolved === 'import' ||
     isPdfVorlageView(resolved)
   ) {
     return resolved;
@@ -2791,7 +2929,9 @@ function syncNavState(view) {
   document.querySelectorAll('[data-nav-view]').forEach((el) => {
     const navItemView = el.dataset.navView;
     const isCurrent =
-      navItemView === navView || (navItemView === 'pdf-vorlage' && isPdfVorlageView(navView));
+      navItemView === navView ||
+      (navItemView === 'pdf-vorlage' && isPdfVorlageView(navView)) ||
+      (navItemView === 'export' && (resolved === 'datev' || resolved === 'datev-export'));
     el.classList.toggle('is-current', isCurrent);
   });
 
@@ -2808,7 +2948,7 @@ function syncNavState(view) {
 }
 
 function expandVisibleNavGroups() {
-  document.querySelectorAll('.app-nav__group:not(.is-bereich-hidden)').forEach((group) => {
+  document.querySelectorAll('.app-nav__group').forEach((group) => {
     group.classList.add('is-open');
     const trigger = group.querySelector('[data-nav-trigger]');
     if (trigger) trigger.setAttribute('aria-expanded', 'true');
@@ -2841,113 +2981,32 @@ function toggleNavGroup(group, forceOpen) {
   if (trigger) trigger.setAttribute('aria-expanded', String(shouldOpen));
 }
 
-function syncBereichNav() {
-  const isRechnungen = state.bereich === 'rechnungen';
-  document.querySelectorAll('[data-nav-group="angebote"]').forEach((group) => {
-    group.classList.toggle('is-bereich-hidden', isRechnungen);
-  });
-  document.querySelectorAll('[data-nav-group="rechnungen"]').forEach((group) => {
-    group.classList.toggle('is-bereich-hidden', !isRechnungen);
-  });
-  els.mainNav?.classList.remove('hidden');
-}
-
-function syncBereichSwitcher() {
-  const { bereichSwitcherMark, bereichSwitcherLabel } = els;
-  if (!bereichSwitcherMark || !bereichSwitcherLabel) return;
-
-  if (state.bereich === 'rechnungen') {
-    bereichSwitcherMark.textContent = getBereichMark('rechnungen');
-    bereichSwitcherMark.className = 'app-brand__mark app-brand__mark--rechnungen';
-    bereichSwitcherLabel.textContent = t('bereich.invoices');
-  } else {
-    bereichSwitcherMark.textContent = getBereichMark('angebote');
-    bereichSwitcherMark.className = 'app-brand__mark app-brand__mark--angebote';
-    bereichSwitcherLabel.textContent = t('bereich.offers');
+function syncBereichFromView(view) {
+  if (view === 'rechnung-neu' || view === 'rechnung-archiv' || view === 'pdf-vorlage-rechnung') {
+    state.bereich = 'rechnungen';
+  } else if (view === 'neu' || view === 'archiv' || view === 'pdf-vorlage-angebot') {
+    state.bereich = 'angebote';
   }
-
-  syncBereichMarks();
-
-  els.bereichSwitcherMenu?.querySelectorAll('[data-bereich]').forEach((btn) => {
-    const alternate = state.bereich === 'rechnungen' ? 'angebote' : 'rechnungen';
-    btn.hidden = btn.dataset.bereich !== alternate;
-  });
-
-  els.app?.classList.toggle('app--rechnungen', state.bereich === 'rechnungen');
-}
-
-function openBereichDropdown() {
-  if (!els.bereichSwitcherMenu || !els.bereichSwitcherWrap) return;
-  syncBereichSwitcher();
-  els.bereichSwitcherMenu.classList.remove('hidden');
-  els.bereichSwitcherWrap.classList.add('is-open');
-  els.bereichSwitcher?.setAttribute('aria-expanded', 'true');
-  positionBereichDropdown();
-}
-
-function closeBereichDropdown() {
-  if (!els.bereichSwitcherMenu || !els.bereichSwitcherWrap) return;
-  els.bereichSwitcherMenu.classList.add('hidden');
-  els.bereichSwitcherWrap.classList.remove('is-open');
-  els.bereichSwitcher?.setAttribute('aria-expanded', 'false');
-  resetBereichDropdownPosition();
-}
-
-function toggleBereichDropdown() {
-  if (els.bereichSwitcherWrap?.classList.contains('is-open')) {
-    closeBereichDropdown();
-    return;
-  }
-  openBereichDropdown();
+  saveBereich(state.bereich);
 }
 
 function setBereich(bereich, viewAfter) {
-  closeBereichDropdown();
   state.bereich = bereich;
   saveBereich(bereich);
-  syncBereichSwitcher();
-  syncBereichNav();
-
-  if (bereich === 'rechnungen') {
-    closeMobileNav();
-    const nextView = viewAfter ?? getDefaultViewForBereich(bereich);
-    showView(nextView);
-    return;
-  }
-
-  els.viewRechnungNeu?.classList.add('hidden');
-  els.viewRechnungArchiv?.classList.add('hidden');
-  const nextView = viewAfter ?? getDefaultViewForBereich(bereich);
-  showView(nextView);
-}
-
-function bindBereichSwitch() {
-  els.bereichSwitcher?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleBereichDropdown();
-  });
-
-  const activateBereich = (next) => {
-    if (!next || next === state.bereich) return;
-    closeBereichDropdown();
-    closeMobileNav();
-    setBereich(next, 'dashboard');
-  };
-
-  els.bereichSwitcherMenu?.querySelectorAll('[data-bereich]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      activateBereich(btn.dataset.bereich);
-    });
-  });
+  showView(viewAfter ?? getDefaultViewForBereich(bereich));
 }
 
 function bindMainNav() {
   if (!els.mainNav) return;
 
   expandVisibleNavGroups();
-  bindBereichSwitch();
   initSidebarCollapsed();
+
+  els.appSidebarBrand?.addEventListener('click', (e) => {
+    e.preventDefault();
+    showView('dashboard');
+    closeMobileNav();
+  });
 
   els.sidebarCollapseBtn?.addEventListener('click', () => {
     toggleSidebarCollapsed();
@@ -2992,7 +3051,6 @@ function bindMainNav() {
       els.appSidebar?.classList.remove('is-collapsed');
       els.app?.classList.remove('app--sidebar-collapsed');
       closeNavFlyouts();
-      resetBereichDropdownPosition();
       syncSidebarCollapseUi();
       return;
     }
@@ -3000,15 +3058,9 @@ function bindMainNav() {
     els.app?.classList.toggle('app--sidebar-collapsed', saved);
     syncSidebarCollapseUi();
     document.querySelectorAll('.app-nav__group.is-flyout-open').forEach(positionNavFlyout);
-    if (els.bereichSwitcherWrap?.classList.contains('is-open')) {
-      positionBereichDropdown();
-    }
   });
 
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.bereich-switcher')) {
-      closeBereichDropdown();
-    }
     if (
       !e.target.closest('.app-nav__group.is-flyout-open') &&
       !e.target.closest('[data-nav-trigger]')
@@ -3026,7 +3078,6 @@ function bindMainNav() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      closeBereichDropdown();
       closeNavFlyouts();
       closeMobileNav();
     }
@@ -3088,113 +3139,76 @@ async function renderDashboardView() {
 }
 
 function navigateFromDashboard(view) {
-  if ((view === 'rechnung-neu' || view === 'rechnung-archiv') && state.bereich !== 'rechnungen') {
-    setBereich('rechnungen', view);
-    return;
-  }
-  if ((view === 'neu' || view === 'archiv') && state.bereich !== 'angebote') {
-    setBereich('angebote', view);
-    return;
-  }
   showView(view);
+}
+
+function toggleSettingsViews(view) {
+  els.viewExport?.classList.toggle('hidden', view !== 'export');
+  els.viewImport?.classList.toggle('hidden', view !== 'import');
+  els.viewDatev?.classList.toggle('hidden', view !== 'datev');
+  els.viewDatevExport?.classList.toggle('hidden', view !== 'datev-export');
 }
 
 function showView(view) {
   view = resolvePdfVorlageView(view);
   if (view === 'admin' && !isAdmin()) return;
-  if (state.bereich === 'rechnungen') {
-    state.view = view;
-    els.viewNeu.classList.add('hidden');
-    els.viewArchiv.classList.add('hidden');
-    els.viewProzesse?.classList.toggle('hidden', view !== 'prozesse');
-    els.viewRechnungNeu.classList.toggle('hidden', view !== 'rechnung-neu');
-    els.viewRechnungArchiv.classList.toggle('hidden', view !== 'rechnung-archiv');
-    els.viewDashboard?.classList.toggle('hidden', view !== 'dashboard');
-    els.viewKunden.classList.toggle('hidden', view !== 'kunden');
-    els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
-    syncPdfVorlageViews(view);
-    els.viewProfil?.classList.toggle('hidden', view !== 'profil');
-    els.viewDatev?.classList.toggle('hidden', view !== 'datev');
-    els.viewAdmin?.classList.toggle('hidden', view !== 'admin');
-    els.angebotStickyFooter?.classList.add('hidden');
-    els.rechnungStickyFooter?.classList.toggle('hidden', view !== 'rechnung-neu');
-    syncNavState(view);
-    syncProfileButton(view);
 
-    if (view === 'rechnung-archiv') {
-      renderRechnungArchiv();
-    } else if (view === 'kunden') {
-      renderKundenView();
-    } else if (view === 'katalog') {
-      renderKatalogView();
-    } else if (view === 'admin') {
-      renderAdminView();
-    } else if (isPdfVorlageView(view)) {
-      renderPdfTemplateView(view, { syncLayoutFromTemplate: true });
-    } else if (view === 'profil') {
-      renderProfilView();
-    } else if (view === 'datev') {
-      void renderDatevView();
-    } else if (view === 'dashboard') {
-      void renderDashboardView();
-    } else if (view === 'prozesse') {
-      void renderProzesse();
-    } else if (view === 'rechnung-neu') {
-      void refreshPlanLimitsCache();
-      updateRechnungPageHeader();
-    }
-    return;
-  }
-
+  syncBereichFromView(view);
   state.view = view;
-  els.viewRechnungNeu?.classList.add('hidden');
-  els.viewRechnungArchiv?.classList.add('hidden');
-  els.rechnungStickyFooter?.classList.add('hidden');
+
+  const isAngebotEditor = view === 'neu';
+  const isRechnungEditor = view === 'rechnung-neu';
+
   els.viewNeu.classList.toggle('hidden', view !== 'neu');
   els.viewArchiv.classList.toggle('hidden', view !== 'archiv');
+  els.viewRechnungNeu?.classList.toggle('hidden', view !== 'rechnung-neu');
+  els.viewRechnungArchiv?.classList.toggle('hidden', view !== 'rechnung-archiv');
   els.viewProzesse?.classList.toggle('hidden', view !== 'prozesse');
   els.viewDashboard?.classList.toggle('hidden', view !== 'dashboard');
   els.viewKunden.classList.toggle('hidden', view !== 'kunden');
   els.viewKatalog?.classList.toggle('hidden', view !== 'katalog');
   syncPdfVorlageViews(view);
   els.viewProfil?.classList.toggle('hidden', view !== 'profil');
-  els.viewDatev?.classList.toggle('hidden', view !== 'datev');
+  toggleSettingsViews(view);
   els.viewAdmin?.classList.toggle('hidden', view !== 'admin');
+
+  els.angebotStickyFooter?.classList.toggle('hidden', !isAngebotEditor);
+  els.rechnungStickyFooter?.classList.toggle('hidden', !isRechnungEditor);
+
   syncNavState(view);
   syncProfileButton(view);
 
   if (view === 'archiv') {
-    els.angebotStickyFooter.classList.add('hidden');
     renderArchiv();
+  } else if (view === 'rechnung-archiv') {
+    renderRechnungArchiv();
   } else if (view === 'prozesse') {
-    els.angebotStickyFooter.classList.add('hidden');
     void renderProzesse();
   } else if (view === 'kunden') {
-    els.angebotStickyFooter.classList.add('hidden');
     renderKundenView();
   } else if (view === 'katalog') {
-    els.angebotStickyFooter.classList.add('hidden');
     renderKatalogView();
   } else if (view === 'admin') {
-    els.angebotStickyFooter.classList.add('hidden');
     renderAdminView();
   } else if (isPdfVorlageView(view)) {
-    els.angebotStickyFooter.classList.add('hidden');
     renderPdfTemplateView(view, { syncLayoutFromTemplate: true });
   } else if (view === 'profil') {
-    els.angebotStickyFooter.classList.add('hidden');
     renderProfilView();
+  } else if (view === 'export') {
+    /* statische Kachel-Übersicht */
+  } else if (view === 'import') {
+    renderImportView();
   } else if (view === 'datev') {
-    els.angebotStickyFooter.classList.add('hidden');
     void renderDatevView();
+  } else if (view === 'datev-export') {
+    renderDatevExportView();
   } else if (view === 'dashboard') {
-    els.angebotStickyFooter.classList.add('hidden');
     void renderDashboardView();
-  } else {
-    els.angebotStickyFooter.classList.remove('hidden');
-    if (view === 'neu') {
-      void refreshPlanLimitsCache();
-    }
+  } else if (view === 'rechnung-neu') {
+    void refreshPlanLimitsCache();
+    updateRechnungPageHeader();
+  } else if (view === 'neu') {
+    void refreshPlanLimitsCache();
     updatePageHeader();
   }
 }
@@ -3723,8 +3737,8 @@ async function renderArchiv() {
         const datum = formatDatum(new Date(a.aktualisiertAm || a.erstelltAm));
 
         return `
-        <article class="archiv-item" data-id="${a.id}">
-          <div class="archiv-info" role="button" tabindex="0" aria-label="Angebot ${escapeHtml(a.angebotNr)} bearbeiten">
+        <article class="archiv-item${state.angebot.editingId === a.id ? ' is-selected' : ''}" data-id="${a.id}" tabindex="0" role="button" aria-label="Angebot ${escapeHtml(a.angebotNr)} öffnen">
+          <div class="archiv-info">
             <div class="archiv-top">
               <strong>${a.angebotNr}</strong>
             </div>
@@ -3764,9 +3778,10 @@ async function renderProzesse() {
 }
 
 async function renderRechnungArchiv() {
-  ensureDatevExportDefaults();
-  updateDatevExportUi();
+  syncRechnungArchivSearchExpand();
   const q = (els.rechnungArchivSuche?.value || '').trim().toLowerCase();
+  const von = els.rechnungArchivVon?.value || '';
+  const bis = els.rechnungArchivBis?.value || '';
   els.rechnungArchivListe.innerHTML = `<p class="empty">${t('archiv.loadingInvoices')}</p>`;
 
   try {
@@ -3781,9 +3796,13 @@ async function renderRechnungArchiv() {
       );
     }
 
+    if (von || bis) {
+      rechnungen = rechnungen.filter((r) => matchesRechnungDateFilter(r, von, bis));
+    }
+
     if (rechnungen.length === 0) {
       els.rechnungArchivListe.innerHTML = `<p class="empty">${
-        q ? t('archiv.notFoundInvoices') : t('archiv.noInvoices')
+        q || von || bis ? t('archiv.notFoundInvoices') : t('archiv.noInvoices')
       }</p>`;
       return;
     }
@@ -3799,8 +3818,8 @@ async function renderRechnungArchiv() {
           : '';
 
         return `
-        <article class="archiv-item" data-id="${r.id}">
-          <div class="archiv-info" role="button" tabindex="0" aria-label="Rechnung ${escapeHtml(r.rechnungNr)} bearbeiten">
+        <article class="archiv-item${state.rechnung.editingId === r.id ? ' is-selected' : ''}" data-id="${r.id}" tabindex="0" role="button" aria-label="Rechnung ${escapeHtml(r.rechnungNr)} öffnen">
+          <div class="archiv-info">
             <div class="archiv-top">
               <strong>${r.rechnungNr}</strong>
             </div>
@@ -3827,7 +3846,7 @@ async function renderRechnungArchiv() {
 function resetKundenForm() {
   state.editingKundeId = null;
   els.kundenForm.reset();
-  if (els.kundenFormAnrede) els.kundenFormAnrede.value = '';
+  if (els.kundenFormAnrede) els.kundenFormAnrede.value = 'Privatperson';
   if (els.kundenFormKundenNr) {
     els.kundenFormKundenNr.value = '';
     els.kundenFormKundenNr.placeholder = t('form.customerNumberPlaceholder');
@@ -3845,11 +3864,18 @@ function closeKundenForm() {
   els.kundenFormSection?.classList.add('hidden');
 }
 
+function syncKundenListSelection() {
+  els.kundenListe?.querySelectorAll('.kunden-item').forEach((item) => {
+    item.classList.toggle('is-selected', item.dataset.id === state.detailKundeId);
+  });
+}
+
 function closeKundenDetail() {
   state.detailKundeId = null;
   state.kundeDetailDocs = { angebote: [], rechnungen: [] };
   state.kundeDetailDocsPage = { angebote: 0, rechnungen: 0 };
   els.kundenDetail?.classList.add('hidden');
+  syncKundenListSelection();
 }
 
 async function openKundenDetail(kundeId) {
@@ -3857,6 +3883,7 @@ async function openKundenDetail(kundeId) {
   state.detailKundeId = kundeId;
   state.kundeDetailDocsPage = { angebote: 0, rechnungen: 0 };
   els.kundenDetail?.classList.remove('hidden');
+  syncKundenListSelection();
   await refreshKundenDetail();
 }
 
@@ -4112,10 +4139,10 @@ async function renderKundenView() {
         const nrPrefix = k.kundenNr ? `<span class="kunden-info__nr">${escapeHtml(k.kundenNr)}</span> · ` : '';
 
         return `
-        <article class="kunden-item" data-id="${k.id}">
+        <article class="kunden-item${state.detailKundeId === k.id ? ' is-selected' : ''}" data-id="${k.id}" tabindex="0" role="button" aria-label="${escapeHtml(k.name)}">
           <div class="kunden-info">
             <h3>${nrPrefix}${escapeHtml(k.name)}</h3>
-            ${formatKundeAnredeLabel(k.anrede) !== '—' ? `<p class="kunden-info__anrede">${escapeHtml(formatKundeAnredeLabel(k.anrede))}</p>` : ''}
+            <p class="kunden-info__anrede">${escapeHtml(formatKundeAnredeLabel(k.anrede))}</p>
             ${formatAdresseHtml(k) ? `<p>${formatAdresseHtml(k)}</p>` : ''}
             ${kontakt ? `<p class="kunden-info__kontakt">${escapeHtml(kontakt)}</p>` : ''}
           </div>
@@ -4159,7 +4186,7 @@ async function renderKundenPicker() {
         <article class="kunden-picker-item" data-id="${k.id}" tabindex="0">
           <div class="kunden-info">
             <h3>${k.kundenNr ? `<span class="kunden-info__nr">${escapeHtml(k.kundenNr)}</span> · ` : ''}${escapeHtml(k.name)}</h3>
-            ${formatKundeAnredeLabel(k.anrede) !== '—' ? `<p class="kunden-info__anrede">${escapeHtml(formatKundeAnredeLabel(k.anrede))}</p>` : ''}
+            <p class="kunden-info__anrede">${escapeHtml(formatKundeAnredeLabel(k.anrede))}</p>
             ${formatAdresseInline(k) ? `<p>${escapeHtml(formatAdresseInline(k))}</p>` : ''}
           </div>
         </article>
@@ -4790,8 +4817,6 @@ async function restoreLoginView() {
   await resetForm();
   await resetRechnungForm();
 
-  syncBereichSwitcher();
-  syncBereichNav();
   showView(startView);
 }
 
@@ -4864,15 +4889,9 @@ function bindAppEvents() {
     void stopAdminImpersonationFlow();
   });
   els.adminImpersonationArchivBtn?.addEventListener('click', () => {
-    state.bereich = 'angebote';
-    syncBereichSwitcher();
-    syncBereichNav();
     showView('archiv');
   });
   els.adminImpersonationRechnungenBtn?.addEventListener('click', () => {
-    state.bereich = 'rechnungen';
-    syncBereichSwitcher();
-    syncBereichNav();
     showView('rechnung-archiv');
   });
   els.adminUserList?.addEventListener('change', async (e) => {
@@ -4995,6 +5014,12 @@ function bindAppEvents() {
   els.datevSkrSelect?.addEventListener('change', () => {
     applyDatevSkrPreset(els.datevSettingsForm, els.datevSkrSelect.value);
   });
+  els.datevBackBtn?.addEventListener('click', () => {
+    showView('export');
+  });
+  els.datevExportBackBtn?.addEventListener('click', () => {
+    showView('export');
+  });
   els.datevExportBtn?.addEventListener('click', async () => {
     setDatevExportHint('');
     if (!canCurrentTenantExportDatev()) {
@@ -5020,6 +5045,47 @@ function bindAppEvents() {
       const message = err.message || t('datev.exportFailed');
       setDatevExportHint(message, true);
     }
+  });
+  document.querySelectorAll('[data-export-target]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.exportTarget;
+      if (target) showView(target);
+    });
+  });
+  els.importCsvFile?.addEventListener('change', () => {
+    const file = els.importCsvFile.files?.[0] ?? null;
+    if (file && !isCsvFile(file)) {
+      els.importCsvFile.value = '';
+      syncImportFileUi();
+      setImportStatus(t('import.invalidFile'), true);
+      return;
+    }
+    syncImportFileUi(file);
+  });
+  const importDrop = els.importCsvFile?.closest('.import-file-drop');
+  importDrop?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    importDrop.classList.add('is-dragover');
+  });
+  importDrop?.addEventListener('dragleave', () => {
+    importDrop.classList.remove('is-dragover');
+  });
+  importDrop?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    importDrop.classList.remove('is-dragover');
+    const file = e.dataTransfer?.files?.[0] ?? null;
+    if (!file || !isCsvFile(file)) {
+      setImportStatus(t('import.invalidFile'), true);
+      return;
+    }
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    if (els.importCsvFile) els.importCsvFile.files = dt.files;
+    syncImportFileUi(file);
+  });
+  els.importForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    void runImportSubmit();
   });
   els.profilPasswordForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -5280,37 +5346,63 @@ function bindAppEvents() {
 
   els.kundenListe.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action]');
-    if (!btn) return;
+    if (btn) {
+      const { action, id } = btn.dataset;
 
-    const { action, id } = btn.dataset;
+      try {
+        if (action === 'toggle-kunde-actions-menu') {
+          e.stopPropagation();
+          toggleKundenActionsMenu(btn);
+          return;
+        }
+
+        closeAllKundenActionsMenus();
+
+        if (action === 'show-kunde-detail') {
+          await openKundenDetail(id);
+          return;
+        }
+
+        const kunde = await getKunde(id);
+        if (!kunde) return;
+
+        if (action === 'edit-kunde') {
+          loadKundeIntoForm(kunde);
+        } else if (action === 'delete-kunde') {
+          if (confirm(`Kunde „${kunde.name}" wirklich löschen?`)) {
+            await deleteKunde(id);
+            if (state.editingKundeId === id) closeKundenForm();
+            if (state.detailKundeId === id) closeKundenDetail();
+            renderKundenView();
+          }
+        }
+      } catch (err) {
+        alert(`Fehler: ${err.message}`);
+      }
+      return;
+    }
+
+    if (e.target.closest('.kunden-actions-menu')) return;
+
+    const item = e.target.closest('.kunden-item');
+    if (!item?.dataset.id) return;
 
     try {
-      if (action === 'toggle-kunde-actions-menu') {
-        e.stopPropagation();
-        toggleKundenActionsMenu(btn);
-        return;
-      }
-
       closeAllKundenActionsMenus();
+      await openKundenDetail(item.dataset.id);
+    } catch (err) {
+      alert(`Fehler: ${err.message}`);
+    }
+  });
 
-      if (action === 'show-kunde-detail') {
-        await openKundenDetail(id);
-        return;
-      }
-
-      const kunde = await getKunde(id);
-      if (!kunde) return;
-
-      if (action === 'edit-kunde') {
-        loadKundeIntoForm(kunde);
-      } else if (action === 'delete-kunde') {
-        if (confirm(`Kunde „${kunde.name}" wirklich löschen?`)) {
-          await deleteKunde(id);
-          if (state.editingKundeId === id) closeKundenForm();
-          if (state.detailKundeId === id) closeKundenDetail();
-          renderKundenView();
-        }
-      }
+  els.kundenListe.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const item = e.target.closest('.kunden-item');
+    if (!item?.dataset.id) return;
+    e.preventDefault();
+    try {
+      closeAllKundenActionsMenus();
+      await openKundenDetail(item.dataset.id);
     } catch (err) {
       alert(`Fehler: ${err.message}`);
     }
@@ -5325,18 +5417,32 @@ function bindAppEvents() {
     if (e.key === 'Escape') {
       closeAllKundenActionsMenus();
     }
-    if (e.key === 'Escape' && els.bereichSwitcherWrap?.classList.contains('is-open')) {
-      closeBereichDropdown();
-      return;
-    }
     if (e.key === 'Escape' && !els.kundenModal.classList.contains('hidden')) {
       closeKundenModal();
     }
   });
 
   els.archivSuche?.addEventListener('input', renderArchiv);
+  els.angebotArchivNeuBtn?.addEventListener('click', async () => {
+    await resetForm();
+    showView('neu');
+  });
   els.prozesseSuche?.addEventListener('input', renderProzesse);
-  els.rechnungArchivSuche?.addEventListener('input', renderRechnungArchiv);
+  els.rechnungArchivSuche?.addEventListener('input', () => {
+    syncRechnungArchivSearchExpand();
+    renderRechnungArchiv();
+  });
+  els.rechnungArchivSearchWrap?.addEventListener('focusout', (e) => {
+    if (!els.rechnungArchivSearchWrap.contains(e.relatedTarget)) {
+      syncRechnungArchivSearchExpand();
+    }
+  });
+  els.rechnungArchivVon?.addEventListener('change', renderRechnungArchiv);
+  els.rechnungArchivBis?.addEventListener('change', renderRechnungArchiv);
+  els.rechnungArchivNeuBtn?.addEventListener('click', async () => {
+    await resetRechnungForm();
+    showView('rechnung-neu');
+  });
 
   els.archivListe.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action]');
@@ -5365,9 +5471,7 @@ function bindAppEvents() {
       return;
     }
 
-    const info = e.target.closest('.archiv-info');
-    if (!info) return;
-    const item = info.closest('.archiv-item');
+    const item = e.target.closest('.archiv-item');
     if (!item?.dataset.id) return;
 
     try {
@@ -5380,10 +5484,17 @@ function bindAppEvents() {
 
   els.archivListe.addEventListener('keydown', async (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const info = e.target.closest('.archiv-info');
-    if (!info) return;
+    const item = e.target.closest('.archiv-item');
+    if (!item?.dataset.id) return;
+    if (e.target.closest('[data-action]')) return;
     e.preventDefault();
-    info.click();
+
+    try {
+      const angebot = await getAngebot(item.dataset.id);
+      if (angebot) await loadAngebotIntoForm(angebot);
+    } catch (err) {
+      alert(`Fehler: ${err.message}`);
+    }
   });
 
   els.rechnungArchivListe?.addEventListener('click', async (e) => {
@@ -5411,9 +5522,7 @@ function bindAppEvents() {
       return;
     }
 
-    const info = e.target.closest('.archiv-info');
-    if (!info) return;
-    const item = info.closest('.archiv-item');
+    const item = e.target.closest('.archiv-item');
     if (!item?.dataset.id) return;
 
     try {
@@ -5426,10 +5535,17 @@ function bindAppEvents() {
 
   els.rechnungArchivListe?.addEventListener('keydown', async (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const info = e.target.closest('.archiv-info');
-    if (!info) return;
+    const item = e.target.closest('.archiv-item');
+    if (!item?.dataset.id) return;
+    if (e.target.closest('[data-action]')) return;
     e.preventDefault();
-    info.click();
+
+    try {
+      const rechnung = await getRechnung(item.dataset.id);
+      if (rechnung) await loadRechnungIntoForm(rechnung);
+    } catch (err) {
+      alert(`Fehler: ${err.message}`);
+    }
   });
 
   if (!document.documentElement.dataset.prozesseRefreshBound) {
@@ -5501,7 +5617,6 @@ function bindAuthEvents() {
 async function refreshLocaleUi() {
   applyI18n();
   syncSidebarCollapseUi();
-  syncBereichSwitcher();
   updatePageHeader();
   updateRechnungPageHeader();
   updateAngebotKopfSummary();
@@ -5562,6 +5677,7 @@ async function refreshLocaleUi() {
   else if (state.view === 'katalog') await renderKatalogView();
   else if (state.view === 'dashboard') await renderDashboardView();
   else if (state.view === 'admin') renderAdminSiteSettingsControls();
+  else if (state.view === 'import') renderImportView();
   else if (state.detailKundeId) await refreshKundenDetail();
 }
 
@@ -5574,7 +5690,6 @@ async function bootstrap() {
   onLocaleChange(() => {
     void refreshLocaleUi();
   });
-  syncBereichMarks();
   initLegal({ onClose: handlePublicPageClose });
   initLanding();
   initDatePickers();

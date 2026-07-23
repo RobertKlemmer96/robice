@@ -36,8 +36,8 @@
   --border-hover: #cbd5e1;
   --text: #1e293b;
   --text-muted: #64748b;
-  --primary: #1e3a5f;
-  --primary-hover: #152a45;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
   --primary-text: #ffffff;
   --accent: #3b82f6;
   --accent-soft: #eff6ff;
@@ -298,14 +298,6 @@ body:has(#app:not(.hidden)) {
   max-width: none;
 }
 
-#app.app--rechnungen {
-  --accent: var(--rechnungen);
-  --accent-soft: color-mix(in srgb, var(--rechnungen) 14%, transparent);
-  --primary: var(--rechnungen);
-  --primary-hover: var(--rechnungen-dark);
-  --focus-ring: color-mix(in srgb, var(--rechnungen) 25%, transparent);
-}
-
 .app-shell {
   display: flex;
   flex: 1 1 auto;
@@ -399,7 +391,6 @@ body:has(#app:not(.hidden)) {
   }
 
   .app-sidebar.is-collapsed .app-brand__title,
-  .app-sidebar.is-collapsed .app-brand__chevron,
   .app-sidebar.is-collapsed .app-nav__trigger-label,
   .app-sidebar.is-collapsed .app-nav__chevron,
   .app-sidebar.is-collapsed .app-nav__link-desc,
@@ -2747,13 +2738,13 @@ body:has(#app:not(.hidden)) {
 }
 
 .dashboard-action--primary {
-  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
-  background: color-mix(in srgb, var(--accent-soft) 50%, var(--surface));
+  border-color: color-mix(in srgb, var(--angebote-accent) 30%, var(--border));
+  background: color-mix(in srgb, var(--angebote-accent-soft) 50%, var(--surface));
 }
 
 .dashboard-action--primary:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--angebote-accent) 45%, var(--border));
+  background: var(--angebote-accent-soft);
 }
 
 .dashboard-action--invoice {
@@ -2786,9 +2777,9 @@ body:has(#app:not(.hidden)) {
 }
 
 .dashboard-action--primary .dashboard-action__icon {
-  background: var(--accent);
+  background: var(--angebote-accent);
   border-color: transparent;
-  color: var(--primary-text);
+  color: #fff;
 }
 
 [data-theme='dark'] .dashboard-action--primary .dashboard-action__icon {
@@ -3698,6 +3689,33 @@ body:has(#app:not(.hidden)) {
   text-align: left;
   border-radius: 12px;
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  text-decoration: none;
+}
+
+.app-brand--static {
+  border-color: transparent;
+  background: transparent;
+  padding: 6px 4px;
+  justify-content: center;
+  text-align: center;
+}
+
+.app-brand--static:hover {
+  background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.app-brand__logo {
+  display: block;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 3px 8px color-mix(in srgb, var(--accent) 35%, transparent));
+}
+
+.app-brand--static:hover .app-brand__logo {
+  filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--accent) 48%, transparent));
 }
 
 .app-brand:hover {
@@ -4048,10 +4066,6 @@ body:has(#app:not(.hidden)) {
   filter: brightness(1.06);
 }
 
-#app.app--rechnungen #katalog-neu-btn.btn-primary {
-  background: linear-gradient(135deg, var(--rechnungen), var(--rechnungen-dark));
-}
-
 .app-nav__group {
   position: relative;
   border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
@@ -4330,6 +4344,7 @@ body:has(#app:not(.hidden)) {
   border-radius: 10px;
   background: var(--input-bg);
   transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
 }
 
 .archiv-item:hover {
@@ -4337,16 +4352,29 @@ body:has(#app:not(.hidden)) {
   background: var(--surface-hover);
 }
 
+.archiv-item.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-soft);
+}
+
+.archiv-item.is-selected:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+}
+
+.archiv-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .archiv-info {
   flex: 1;
   min-width: 0;
-  cursor: pointer;
   border-radius: 6px;
 }
 
 .archiv-info:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .archiv-top {
@@ -4785,6 +4813,25 @@ body:has(#app:not(.hidden)) {
   transition: border-color 0.15s, background 0.15s;
 }
 
+.kunden-item {
+  cursor: pointer;
+}
+
+.kunden-item:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--accent));
+  outline-offset: 2px;
+}
+
+.kunden-item.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-soft);
+}
+
+.kunden-item.is-selected:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+}
+
 .kunden-actions {
   display: flex;
   gap: 8px;
@@ -4994,8 +5041,8 @@ body:has(#app:not(.hidden)) {
 }
 
 .kunden-item:hover {
-  border-color: var(--border-hover);
-  background: var(--surface-hover);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface-hover));
 }
 
 .kunden-info h3 {
@@ -5452,6 +5499,166 @@ body:has(#app:not(.hidden)) {
   max-width: 720px;
 }
 
+.settings-subnav {
+  margin-bottom: 12px;
+}
+
+.settings-hub {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.settings-hub__tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 2%, var(--surface));
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, transform 0.15s;
+}
+
+.settings-hub__tile--split {
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+  cursor: default;
+}
+
+.settings-hub__tile-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-hub__tile-action {
+  flex-shrink: 0;
+}
+
+.settings-hub__tile:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+}
+
+.settings-hub__tile--split:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+}
+
+.settings-hub__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.settings-hub__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.settings-hub__text strong {
+  font-size: 0.95rem;
+}
+
+.settings-hub__text span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.import-file-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.import-file-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 148px;
+  padding: 18px;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface));
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.import-file-drop:hover,
+.import-file-drop.is-dragover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+}
+
+.import-file-drop__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.import-file-drop__title {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.import-file-drop__hint,
+.import-file-drop__name {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.import-file-drop__name {
+  margin-top: 4px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.form-grid--import {
+  margin-top: 8px;
+}
+
 .datev-settings-card {
   padding: 12px 14px;
   display: grid;
@@ -5472,6 +5679,44 @@ body:has(#app:not(.hidden)) {
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.3;
+}
+
+.datev-export-card {
+  display: grid;
+  gap: 14px;
+}
+
+.datev-export-card h2 {
+  margin: 0;
+}
+
+.datev-export-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.datev-export-panel__period {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.datev-export-panel__period input[type='date'] {
+  min-height: 42px;
+  min-width: 0;
+}
+
+.datev-export-panel__sep {
+  color: var(--text-muted);
+  line-height: 1;
+  user-select: none;
+}
+
+.datev-export-hint {
+  margin: 0;
 }
 
 #view-datev .form-grid--profil label {
@@ -5715,77 +5960,123 @@ h1 {
   gap: 12px;
 }
 
-.card-header--rechnung-archiv h2 {
+.card-header__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   width: 100%;
+}
+
+.card-header__top h2 {
+  margin: 0;
+}
+
+.archiv-liste-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.archiv-liste-toolbar .search {
+  flex: 1;
+  min-width: 160px;
 }
 
 .rechnung-archiv-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.62fr) minmax(0, 1.38fr);
-  gap: 10px;
-  align-items: end;
-  width: 100%;
-}
-
-.rechnung-archiv-toolbar__item {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  font-size: 0.82rem;
-}
-
-.rechnung-archiv-toolbar__item > span {
-  font-weight: 500;
-  color: var(--text-muted);
-  line-height: 1.2;
-}
-
-.rechnung-archiv-toolbar__item input[type='date'],
-.rechnung-archiv-toolbar__search,
-.rechnung-archiv-toolbar__btn {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   width: 100%;
-  min-height: 42px;
-  box-sizing: border-box;
 }
 
-.rechnung-archiv-toolbar__item--datev {
-  font-size: 0.74rem;
-}
-
-.rechnung-archiv-toolbar__item--datev > span {
-  font-size: 0.74rem;
-}
-
-.rechnung-archiv-toolbar__btn {
-  margin: 0;
-  padding: 10px 12px;
-  white-space: nowrap;
+.search-expand {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--input-bg);
   overflow: hidden;
-  text-overflow: ellipsis;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
-.rechnung-archiv-toolbar__item--datev .rechnung-archiv-toolbar__btn {
-  min-height: 34px;
-  padding: 6px 8px;
-  font-size: 0.78rem;
-  line-height: 1.2;
+.search-expand:hover,
+.search-expand:focus-within,
+.search-expand.is-open {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
-.datev-export-hint {
-  width: 100%;
+.search-expand__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  color: var(--text-muted);
+}
+
+.search-expand__input {
+  width: 0;
+  min-width: 0;
+  padding: 0;
   margin: 0;
-  font-size: 0.85rem;
-  color: var(--text-muted, #64748b);
+  border: none;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 0.28s ease, opacity 0.2s ease, padding 0.28s ease;
 }
 
-.datev-export-hint.settings-status--error {
-  color: var(--danger, #b91c1c);
+.search-expand:hover .search-expand__input,
+.search-expand:focus-within .search-expand__input,
+.search-expand.is-open .search-expand__input {
+  width: min(260px, 52vw);
+  padding: 0 12px 0 0;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.rechnung-archiv-toolbar__dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.rechnung-archiv-toolbar__dates input[type='date'] {
+  min-height: 42px;
+  min-width: 0;
+}
+
+.rechnung-archiv-toolbar__date-sep {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  user-select: none;
 }
 
 @media (max-width: 900px) {
   .rechnung-archiv-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rechnung-archiv-toolbar__dates {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .search-expand:hover .search-expand__input,
+  .search-expand:focus-within .search-expand__input,
+  .search-expand.is-open .search-expand__input {
+    width: min(260px, calc(100vw - 96px));
   }
 }
 
@@ -9234,7 +9525,8 @@ textarea:focus,
   }
 
   .katalog-liste-toolbar,
-  .kunden-liste-toolbar {
+  .kunden-liste-toolbar,
+  .archiv-liste-toolbar {
     gap: 6px;
   }
 

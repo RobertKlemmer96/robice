@@ -1,26 +1,22 @@
 import { t } from './i18n.js';
 
-export const KUNDE_ANREDE_VALUES = ['', 'Herr', 'Frau', 'Firma'];
+export const KUNDE_ANREDE_VALUES = ['Privatperson', 'Firma'];
+export const KUNDE_ANREDE_DEFAULT = 'Privatperson';
 
 export function normalizeKundeAnrede(value) {
   const trimmed = String(value || '').trim();
-  return KUNDE_ANREDE_VALUES.includes(trimmed) ? trimmed : '';
+  if (!trimmed || trimmed === 'Herr' || trimmed === 'Frau') return KUNDE_ANREDE_DEFAULT;
+  if (trimmed === 'Firma') return 'Firma';
+  if (trimmed === 'Privatperson') return 'Privatperson';
+  return KUNDE_ANREDE_DEFAULT;
 }
 
 export function formatKundeAnredeLabel(anrede) {
   const normalized = normalizeKundeAnrede(anrede);
-  if (!normalized) return '—';
-  if (normalized === 'Herr') return t('form.salutationMr');
-  if (normalized === 'Frau') return t('form.salutationMs');
-  if (normalized === 'Firma') return t('form.salutationCompany');
-  return normalized;
+  if (normalized === 'Firma') return t('form.customerTypeCompany');
+  return t('form.customerTypePrivate');
 }
 
 export function formatKundeDisplayName(kunde) {
-  const name = String(kunde?.name || '').trim();
-  const anrede = normalizeKundeAnrede(kunde?.anrede);
-  if (!anrede || anrede === 'Firma') return name;
-  const label = formatKundeAnredeLabel(anrede);
-  if (label === '—') return name;
-  return name ? `${label} ${name}` : label;
+  return String(kunde?.name || '').trim();
 }
