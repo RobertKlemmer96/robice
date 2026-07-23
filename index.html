@@ -81,6 +81,11 @@
             <img src="/quotavo-logo.svg" alt="" class="brand-logo" width="40" height="40" decoding="async" />
             <strong class="landing-brand__name">Quotavo</strong>
           </div>
+          <nav class="landing-header__nav" data-i18n-aria-label="landing.navAria" aria-label="Seitenbereiche">
+            <a href="#landing-features" class="landing-header__nav-link" data-i18n="landing.navFeatures">Funktionen</a>
+            <a href="#landing-pricing" class="landing-header__nav-link" data-i18n="landing.navPricing">Preise</a>
+            <a href="/faq" class="landing-header__nav-link" data-i18n="landing.navFaq">FAQ</a>
+          </nav>
           <div class="landing-header__actions">
             <div class="lang-switcher" id="landing-lang-switcher-wrap">
               <button
@@ -107,13 +112,164 @@
               </div>
             </div>
             <button type="button" class="btn btn-ghost btn-sm" data-landing-action="login" data-i18n="landing.login">Anmelden</button>
-            <button type="button" class="btn btn-primary btn-sm" data-landing-action="register" data-landing-plan="free" data-i18n="landing.startFree">Kostenlos starten</button>
+            <button type="button" class="btn btn-landing-register btn-sm" data-landing-action="register" data-landing-plan="free" data-i18n="landing.startFree">Kostenlos starten</button>
           </div>
         </div>
       </header>
 
       <main class="landing-main">
-        <section class="landing-section landing-pricing" aria-labelledby="landing-pricing-title">
+        <section class="landing-hero">
+          <div class="landing-hero__content">
+            <p class="landing-eyebrow" data-i18n="landing.heroEyebrow">Kostenlos · Sofort startklar · Für Dienstleistung</p>
+            <h1 class="landing-hero__title">
+              <span data-i18n="landing.heroTitle">Angebote und Rechnungen erstellen —</span><br />
+              <span class="landing-hero__accent" data-i18n="landing.heroAccent">professionell als PDF</span>
+            </h1>
+            <p class="landing-hero__lead" data-i18n="landing.heroLead">
+              Kunden, Katalog, Angebotsbestätigung per Link, ZUGFeRD-Rechnungen und Prozess-Übersicht —
+              alles in einer Oberfläche. In Minuten startklar, ohne Installation.
+            </p>
+            <div class="landing-hero__actions">
+              <button type="button" class="btn btn-landing-register btn-landing-register--lg" data-landing-action="register" data-landing-plan="free" data-i18n="landing.registerFree">
+                Jetzt kostenlos registrieren
+              </button>
+              <button type="button" class="btn btn-ghost" data-landing-action="login" data-i18n="landing.hasAccount">Bereits Konto? Anmelden</button>
+            </div>
+            <ul class="landing-badges" aria-label="Vorteile">
+              <li class="landing-badge" data-i18n="landing.badgeFree">100&nbsp;% kostenlos nutzbar</li>
+              <li class="landing-badge" data-i18n="landing.badgeTenant">Eigener Mandant &amp; getrennte Daten</li>
+              <li class="landing-badge" data-i18n="landing.badgeNoInstall">Keine Installation nötig</li>
+            </ul>
+          </div>
+          <div class="landing-hero__visual" aria-hidden="true">
+            <div class="landing-preview">
+              <div class="landing-preview__bar">
+                <span class="landing-preview__dot"></span>
+                <span class="landing-preview__dot"></span>
+                <span class="landing-preview__dot"></span>
+              </div>
+              <div class="landing-preview__body">
+                <div class="landing-preview__doc landing-preview__doc--angebot">
+                  <span class="landing-preview__label">Angebot</span>
+                  <span class="landing-preview__line landing-preview__line--wide"></span>
+                  <span class="landing-preview__line"></span>
+                  <span class="landing-preview__line"></span>
+                </div>
+                <div class="landing-preview__doc landing-preview__doc--rechnung">
+                  <span class="landing-preview__label landing-preview__label--rechnung">Rechnung</span>
+                  <span class="landing-preview__line landing-preview__line--wide"></span>
+                  <span class="landing-preview__line"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="landing-features" class="landing-section landing-section--features" aria-labelledby="landing-features-title">
+          <div class="landing-section__head">
+            <h2 id="landing-features-title" data-i18n="landing.featuresTitle">Was Quotavo kann</h2>
+            <p data-i18n="landing.featuresLead">
+              Von der ersten Kundenanfrage bis zur E-Rechnung — konkrete Funktionen für Ihren Büroalltag.
+            </p>
+          </div>
+          <div class="landing-features">
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M14 3v5h5M9 13h6M9 17h4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Angebote &amp; Rechnungen</h3>
+              <p>Posten aus dem Katalog oder manuell, MwSt. und Summen automatisch — mit eigenen Nummernkreisen für Angebote und Rechnungen.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M9 8h6M9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>PDF-Vorlagen &amp; Briefkopf</h3>
+              <p>Logo, Farben, Layout-Varianten und Fußtexte — Ihre Firmendaten erscheinen automatisch auf jedem Angebot und jeder Rechnung.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Kunden &amp; Einsatzorte</h3>
+              <p>Stammdaten, Adressen und Einsatzorte zentral pflegen — bei neuen Dokumenten per Autocomplete übernehmen.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Leistungskatalog</h3>
+              <p>Lohn- und Materialposten mit Stück- und Stundensätzen — einmal anlegen, in jedem Angebot wieder verwenden.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon landing-feature__icon--success" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 11l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.75"/></svg>
+              </div>
+              <h3>Online-Angebotsbestätigung</h3>
+              <p>Kunden bestätigen oder lehnen per Link ab — mit PLZ-Abgleich. Sie sehen den Status sofort unter Prozesse.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon landing-feature__icon--info" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M8 10h8M8 14h5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Prozesse &amp; Status</h3>
+              <p>Alle Angebote im Überblick: Gespeichert, Versendet, Bestätigt, Abgelehnt — filterbar und manuell anpassbar.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon landing-feature__icon--rechnung" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 4h10v16H7z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M9 8h6M9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>ZUGFeRD E-Rechnung</h3>
+              <p>Rechnungs-PDFs mit eingebetteter EN16931-XML — bereit für digitale Weiterverarbeitung und Buchhaltung.</p>
+            </article>
+            <article class="landing-feature">
+              <div class="landing-feature__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 6l8 5 8-5v12H4z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/><path d="M4 6h16" fill="none" stroke="currentColor" stroke-width="1.75"/></svg>
+              </div>
+              <h3>E-Mail-Versand &amp; Archiv</h3>
+              <p>PDFs direkt an Kunden senden, Angebote und Rechnungen durchsuchbar archivieren und jederzeit erneut bearbeiten.</p>
+            </article>
+            <article class="landing-feature">
+              <span class="landing-feature__tag">Plus</span>
+              <div class="landing-feature__icon landing-feature__icon--accent" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 16h10" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+              </div>
+              <h3>DATEV-Export</h3>
+              <p>Rechnungen als Buchungsstapel (EXTF) exportieren — mit SKR03/SKR04, Berater- und Mandantennummer aus dem Profil.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="landing-section landing-section--steps" aria-labelledby="landing-steps-title">
+          <div class="landing-section__head">
+            <h2 id="landing-steps-title" data-i18n="landing.stepsTitle">In drei Schritten loslegen</h2>
+          </div>
+          <ol class="landing-steps">
+            <li class="landing-step">
+              <span class="landing-step__num">1</span>
+              <div>
+                <h3 data-i18n="landing.step1Title">Kostenlos registrieren</h3>
+                <p data-i18n="landing.step1Text">E-Mail und Passwort — der Einrichtungs-Assistent führt Sie durch Firmendaten und PDF-Vorlage.</p>
+              </div>
+            </li>
+            <li class="landing-step">
+              <span class="landing-step__num">2</span>
+              <div>
+                <h3 data-i18n="landing.step2Title">Kunden &amp; Katalog anlegen</h3>
+                <p data-i18n="landing.step2Text">Stammdaten und Leistungen einmal pflegen, danach in Sekunden neue Dokumente erstellen.</p>
+              </div>
+            </li>
+            <li class="landing-step">
+              <span class="landing-step__num">3</span>
+              <div>
+                <h3 data-i18n="landing.step3Title">Angebot oder Rechnung als PDF</h3>
+                <p data-i18n="landing.step3Text">Posten wählen, PDF erzeugen, optional per E-Mail versenden — mit Bestätigungslink für den Kunden.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section id="landing-pricing" class="landing-section landing-pricing" aria-labelledby="landing-pricing-title">
           <div class="landing-section__head landing-pricing__head">
             <h2 id="landing-pricing-title">Preisstufen für jeden Bedarf</h2>
             <p>Starten Sie kostenlos — upgraden Sie, wenn Ihr Geschäft wächst.</p>
@@ -133,11 +289,11 @@
               </header>
               <ul class="landing-plan__features">
                 <li>10 Angebote &amp; 10 Rechnungen / Monat</li>
-                <li>Kunden, Katalog &amp; Archiv</li>
-                <li>PDF nur Download</li>
-                <li>Basis-PDF-Vorlage</li>
+                <li>Kunden, Katalog, Archiv &amp; Prozesse</li>
+                <li>PDF-Download &amp; ZUGFeRD-Rechnung</li>
+                <li>Online-Angebotsbestätigung per Link</li>
               </ul>
-              <button type="button" class="btn btn-ghost landing-plan__cta" data-landing-action="register" data-landing-plan="free">
+              <button type="button" class="btn btn-landing-register landing-plan__cta" data-landing-action="register" data-landing-plan="free">
                 Kostenlos registrieren
               </button>
             </article>
@@ -247,133 +403,6 @@
           </div>
         </section>
 
-        <section class="landing-hero">
-          <div class="landing-hero__content">
-            <p class="landing-eyebrow" data-i18n="landing.heroEyebrow">Kostenlos · Sofort startklar · Für Dienstleistung</p>
-            <h1 class="landing-hero__title">
-              <span data-i18n="landing.heroTitle">Angebote und Rechnungen erstellen —</span><br />
-              <span class="landing-hero__accent" data-i18n="landing.heroAccent">professionell als PDF</span>
-            </h1>
-            <p class="landing-hero__lead" data-i18n="landing.heroLead">
-              Quotavo bündelt Kunden, Katalog und Dokumente in einer Oberfläche.
-              Registrieren, einloggen und in wenigen Minuten das erste Angebot versenden.
-            </p>
-            <div class="landing-hero__actions">
-              <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free" data-i18n="landing.registerFree">
-                Jetzt kostenlos registrieren
-              </button>
-              <button type="button" class="btn btn-ghost" data-landing-action="login" data-i18n="landing.hasAccount">Bereits Konto? Anmelden</button>
-            </div>
-            <ul class="landing-badges" aria-label="Vorteile">
-              <li class="landing-badge" data-i18n="landing.badgeFree">100&nbsp;% kostenlos nutzbar</li>
-              <li class="landing-badge" data-i18n="landing.badgeTenant">Eigener Mandant &amp; getrennte Daten</li>
-              <li class="landing-badge" data-i18n="landing.badgeNoInstall">Keine Installation nötig</li>
-            </ul>
-          </div>
-          <div class="landing-hero__visual" aria-hidden="true">
-            <div class="landing-preview">
-              <div class="landing-preview__bar">
-                <span class="landing-preview__dot"></span>
-                <span class="landing-preview__dot"></span>
-                <span class="landing-preview__dot"></span>
-              </div>
-              <div class="landing-preview__body">
-                <div class="landing-preview__doc landing-preview__doc--angebot">
-                  <span class="landing-preview__label">Angebot</span>
-                  <span class="landing-preview__line landing-preview__line--wide"></span>
-                  <span class="landing-preview__line"></span>
-                  <span class="landing-preview__line"></span>
-                </div>
-                <div class="landing-preview__doc landing-preview__doc--rechnung">
-                  <span class="landing-preview__label landing-preview__label--rechnung">Rechnung</span>
-                  <span class="landing-preview__line landing-preview__line--wide"></span>
-                  <span class="landing-preview__line"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="landing-section" aria-labelledby="landing-features-title">
-          <div class="landing-section__head">
-            <h2 id="landing-features-title" data-i18n="landing.featuresTitle">Alles für den Büroalltag</h2>
-            <p data-i18n="landing.featuresLead">Von der Kundenanfrage bis zum PDF — ohne Medienbruch.</p>
-          </div>
-          <div class="landing-features">
-            <article class="landing-feature">
-              <div class="landing-feature__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M14 3v5h5M9 13h6M9 17h4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
-              </div>
-              <h3>Angebote &amp; Rechnungen</h3>
-              <p>Dokumente anlegen, Posten aus dem Katalog wählen und Summen automatisch berechnen lassen.</p>
-            </article>
-            <article class="landing-feature">
-              <div class="landing-feature__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M9 8h6M9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
-              </div>
-              <h3>PDF-Export</h3>
-              <p>Professionelle PDFs mit Logo, Firmendaten, Farben und eigenen Textbausteinen — direkt aus der App.</p>
-            </article>
-            <article class="landing-feature">
-              <div class="landing-feature__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
-              </div>
-              <h3>Kundenverwaltung</h3>
-              <p>Stammdaten, Adressen und Einsatzorte zentral pflegen und bei neuen Dokumenten wiederverwenden.</p>
-            </article>
-            <article class="landing-feature">
-              <div class="landing-feature__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
-              </div>
-              <h3>Eigener Katalog</h3>
-              <p>Jeder Mandant pflegt seine Leistungen und Preise — Stück- und Stundensätze inklusive.</p>
-            </article>
-            <article class="landing-feature">
-              <div class="landing-feature__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M8 10h8M8 14h5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
-              </div>
-              <h3>Archiv &amp; Suche</h3>
-              <p>Alle Angebote und Rechnungen durchsuchbar ablegen, bearbeiten und erneut als PDF exportieren.</p>
-            </article>
-            <article class="landing-feature">
-              <div class="landing-feature__icon landing-feature__icon--success" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M12 3l2.4 4.9 5.4.8-3.9 3.8.9 5.3L12 15.8 7.2 17.8l.9-5.3L4.2 8.7l5.4-.8L12 3z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>
-              </div>
-              <h3>Kostenlos nutzen</h3>
-              <p>Account in Sekunden anlegen — mit eigenem Firmenbereich und getrennten Daten pro Mandant.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="landing-section landing-section--steps" aria-labelledby="landing-steps-title">
-          <div class="landing-section__head">
-            <h2 id="landing-steps-title">In drei Schritten loslegen</h2>
-          </div>
-          <ol class="landing-steps">
-            <li class="landing-step">
-              <span class="landing-step__num">1</span>
-              <div>
-                <h3>Kostenlos registrieren</h3>
-                <p>Firmenname, E-Mail und Passwort — fertig ist Ihr eigener Mandant.</p>
-              </div>
-            </li>
-            <li class="landing-step">
-              <span class="landing-step__num">2</span>
-              <div>
-                <h3>Kunden &amp; Katalog anlegen</h3>
-                <p>Stammdaten und Leistungen einmal pflegen, danach immer wieder verwenden.</p>
-              </div>
-            </li>
-            <li class="landing-step">
-              <span class="landing-step__num">3</span>
-              <div>
-                <h3>Angebot oder Rechnung als PDF</h3>
-                <p>Posten wählen, PDF erstellen — inklusive MwSt. und Ihrer Vorlage.</p>
-              </div>
-            </li>
-          </ol>
-        </section>
-
         <section class="landing-section landing-section--guides" aria-labelledby="landing-guides-title">
           <div class="landing-section__head">
             <h2 id="landing-guides-title">Ratgeber &amp; Hilfe</h2>
@@ -404,7 +433,7 @@
             <h2 data-i18n="landing.ctaTitle">Bereit für das erste Angebot?</h2>
             <p data-i18n="landing.ctaLead">Registrierung dauert unter einer Minute. Quotavo ist aktuell kostenlos nutzbar.</p>
             <div class="landing-cta__actions">
-              <button type="button" class="btn btn-primary" data-landing-action="register" data-landing-plan="free" data-i18n="landing.registerFree">Kostenlos registrieren</button>
+              <button type="button" class="btn btn-landing-register btn-landing-register--lg" data-landing-action="register" data-landing-plan="free" data-i18n="landing.registerFree">Kostenlos registrieren</button>
               <button type="button" class="btn btn-ghost" data-landing-action="login" data-i18n="landing.login">Anmelden</button>
             </div>
           </div>
