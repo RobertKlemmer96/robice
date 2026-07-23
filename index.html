@@ -1454,13 +1454,21 @@
           <section class="card import-card">
             <h2 data-i18n="import.title">Daten-Import</h2>
             <p class="settings-lead" data-i18n="import.lead">
-              Daten aus externen Tools per CSV in Quotavo übernehmen.
+              Daten aus Tool Time per CSV importieren. Kundennummern und Angebotsnummern werden nach Ihrem Quotavo-Schema neu vergeben.
             </p>
             <form id="import-form" class="form-grid form-grid--import">
               <label class="full">
                 <span data-i18n="import.toolLabel">Quell-Tool</span>
                 <select id="import-tool" name="import-tool">
                   <option value="time" data-i18n="import.toolTime">Tool Time</option>
+                </select>
+              </label>
+              <label class="full">
+                <span data-i18n="import.dataTypeLabel">Datentyp</span>
+                <select id="import-data-type" name="import-data-type">
+                  <option value="customers" data-i18n="import.dataTypeCustomers">Kunden</option>
+                  <option value="angebote" data-i18n="import.dataTypeAngebote">Angebote</option>
+                  <option value="rechnungen" data-i18n="import.dataTypeRechnungen">Rechnungen</option>
                 </select>
               </label>
               <div class="full">

@@ -128,7 +128,15 @@ import {
   addDaysIso,
 } from './dokumentnummer.js';
 import { generiereKundennummer, previewKundennummer } from './kundennummer.js';
-import { importToolTimeCustomers, parseToolTimeCustomers } from './toolTimeImport.js';
+import {
+  detectToolTimeCsvType,
+  importToolTimeCustomers,
+  importToolTimeOffers,
+  importToolTimeRechnungen,
+  parseToolTimeCustomers,
+  parseToolTimeOffers,
+  parseToolTimeRechnungen,
+} from './toolTimeImport.js';
 import {
   normalizeKundeAnrede,
   formatKundeAnredeLabel,
@@ -444,6 +452,7 @@ const els = {
   datevExportHint: document.getElementById('datev-export-hint'),
   importForm: document.getElementById('import-form'),
   importTool: document.getElementById('import-tool'),
+  importDataType: document.getElementById('import-data-type'),
   importCsvFile: document.getElementById('import-csv-file'),
   importCsvName: document.getElementById('import-csv-name'),
   importSubmitBtn: document.getElementById('import-submit-btn'),
@@ -2202,6 +2211,56 @@ function isCsvFile(file) {
   return name.endsWith('.csv') || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel';
 }
 
+function getImportDataType() {
+  const value = els.importDataType?.value;
+  if (value === 'angebote') return 'angebote';
+  if (value === 'rechnungen') return 'rechnungen';
+  return 'customers';
+}
+
+function getImportMessageKeys(dataType) {
+  switch (dataType) {
+    case 'angebote':
+      return {
+        noRows: 'import.noRowsAngebote',
+        allDuplicates: 'import.allDuplicatesAngebote',
+        success: 'import.successAngebote',
+        successWithDuplicates: 'import.successWithDuplicatesAngebote',
+        successWithCustomers: 'import.successAngeboteWithCustomers',
+        previewCount: 'import.previewCountAngebote',
+      };
+    case 'rechnungen':
+      return {
+        noRows: 'import.noRowsRechnungen',
+        allDuplicates: 'import.allDuplicatesRechnungen',
+        success: 'import.successRechnungen',
+        successWithDuplicates: 'import.successWithDuplicatesRechnungen',
+        successWithCustomers: 'import.successRechnungenWithCustomers',
+        previewCount: 'import.previewCountRechnungen',
+      };
+    default:
+      return {
+        noRows: 'import.noRows',
+        allDuplicates: 'import.allDuplicates',
+        success: 'import.success',
+        successWithDuplicates: 'import.successWithDuplicates',
+        successWithCustomers: null,
+        previewCount: 'import.previewCount',
+      };
+  }
+}
+
+function countImportPreviewRows(csvText, dataType) {
+  switch (dataType) {
+    case 'angebote':
+      return parseToolTimeOffers(csvText).length;
+    case 'rechnungen':
+      return parseToolTimeRechnungen(csvText).length;
+    default:
+      return parseToolTimeCustomers(csvText).length;
+  }
+}
+
 function syncImportFileUi(file = null) {
   const selectedFile = file ?? els.importCsvFile?.files?.[0] ?? null;
   const hasFile = Boolean(selectedFile && isCsvFile(selectedFile));
@@ -2226,16 +2285,86 @@ function syncImportFileUi(file = null) {
   }
 
   if (els.importTool?.value === 'time') {
+    const dataType = getImportDataType();
     selectedFile
       .text()
       .then((text) => {
-        const count = parseToolTimeCustomers(text).length;
+        const detectedType = detectToolTimeCsvType(text);
+        if (detectedType && detectedType !== dataType) {
+          setImportStatus(t('import.csvTypeMismatch'), true);
+          return;
+        }
+
+        const count = countImportPreviewRows(text, dataType);
         if (count > 0) {
-          setImportStatus(t('import.previewCount', { count }));
+          setImportStatus(t(getImportMessageKeys(dataType).previewCount, { count }));
+        } else {
+          setImportStatus('');
         }
       })
       .catch(() => {});
   }
+}
+
+function formatImportResultStatus(result, dataType) {
+  const messages = getImportMessageKeys(dataType);
+  const hasCustomerCreates = dataType === 'angebote' || dataType === 'rechnungen';
+
+  if (result.imported === 0 && result.total === 0) {
+    return { message: t(messages.noRows), isError: true };
+  }
+
+  if (result.imported === 0 && result.duplicates > 0 && result.errors.length === 0) {
+    return {
+      message: t(messages.allDuplicates, { count: result.duplicates }),
+      isError: true,
+    };
+  }
+
+  if (result.errors.length > 0) {
+    const firstError = result.errors[0];
+    return {
+      message: t('import.partialFailed', {
+        imported: result.imported,
+        failed: result.errors.length,
+        message: firstError.message,
+      }),
+      isError: true,
+    };
+  }
+
+  if (hasCustomerCreates && result.customersCreated > 0 && messages.successWithCustomers) {
+    return {
+      message: t(messages.successWithCustomers, {
+        imported: result.imported,
+        customers: result.customersCreated,
+      }),
+      isError: false,
+    };
+  }
+
+  if (result.duplicates > 0) {
+    return {
+      message: t(messages.successWithDuplicates, {
+        imported: result.imported,
+        duplicates: result.duplicates,
+        skipped: result.skipped,
+      }),
+      isError: false,
+    };
+  }
+
+  if (result.skipped > 0) {
+    return {
+      message: t('import.successWithSkipped', { imported: result.imported, skipped: result.skipped }),
+      isError: false,
+    };
+  }
+
+  return {
+    message: t(messages.success, { count: result.imported }),
+    isError: false,
+  };
 }
 
 async function runImportSubmit() {
@@ -2250,59 +2379,65 @@ async function runImportSubmit() {
     return;
   }
 
+  const dataType = getImportDataType();
   els.importSubmitBtn.disabled = true;
   setImportStatus(t('import.importing'));
 
   try {
     const csvText = await file.text();
-    const result = await importToolTimeCustomers(csvText, {
-      saveKunde,
-      getAllKunden,
-      generiereKundennummer,
-      createKundeId,
-    });
-
-    if (result.imported === 0 && result.total === 0) {
-      setImportStatus(t('import.noRows'), true);
+    const detectedType = detectToolTimeCsvType(csvText);
+    if (detectedType && detectedType !== dataType) {
+      setImportStatus(t('import.csvTypeMismatch'), true);
       return;
     }
 
-    if (result.imported === 0 && result.duplicates > 0 && result.errors.length === 0) {
-      setImportStatus(t('import.allDuplicates', { count: result.duplicates }), true);
-      return;
-    }
+    const result =
+      dataType === 'angebote'
+        ? await importToolTimeOffers(csvText, {
+            saveAngebot,
+            saveKunde,
+            getAllAngebote,
+            getAllKunden,
+            generiereAngebotsnummer,
+            generiereKundennummer,
+            createAngebotId,
+            createKundeId,
+          })
+        : dataType === 'rechnungen'
+          ? await importToolTimeRechnungen(csvText, {
+              saveRechnung,
+              saveKunde,
+              getAllRechnungen,
+              getAllKunden,
+              generiereRechnungsnummer,
+              generiereKundennummer,
+              createRechnungId,
+              createKundeId,
+            })
+          : await importToolTimeCustomers(csvText, {
+              saveKunde,
+              getAllKunden,
+              generiereKundennummer,
+              createKundeId,
+            });
 
-    if (result.errors.length > 0) {
-      const firstError = result.errors[0];
-      setImportStatus(
-        t('import.partialFailed', {
-          imported: result.imported,
-          failed: result.errors.length,
-          message: firstError.message,
-        }),
-        true
-      );
-    } else if (result.duplicates > 0) {
-      setImportStatus(
-        t('import.successWithDuplicates', {
-          imported: result.imported,
-          duplicates: result.duplicates,
-          skipped: result.skipped,
-        })
-      );
-    } else if (result.skipped > 0) {
-      setImportStatus(
-        t('import.successWithSkipped', { imported: result.imported, skipped: result.skipped })
-      );
-    } else {
-      setImportStatus(t('import.success', { count: result.imported }));
+    const { message, isError } = formatImportResultStatus(result, dataType);
+    setImportStatus(message, isError);
+    if (isError && result.imported === 0) {
+      return;
     }
 
     if (result.imported > 0) {
       els.importCsvFile.value = '';
       syncImportFileUi();
-      if (state.view === 'kunden') {
+      if (dataType === 'customers' && state.view === 'kunden') {
         await renderKundenView();
+      }
+      if (dataType === 'angebote' && state.view === 'archiv') {
+        await renderArchiv();
+      }
+      if (dataType === 'rechnungen' && state.view === 'rechnung-archiv') {
+        await renderRechnungArchiv();
       }
     }
   } catch (err) {
@@ -5051,6 +5186,9 @@ function bindAppEvents() {
       const target = btn.dataset.exportTarget;
       if (target) showView(target);
     });
+  });
+  els.importDataType?.addEventListener('change', () => {
+    syncImportFileUi();
   });
   els.importCsvFile?.addEventListener('change', () => {
     const file = els.importCsvFile.files?.[0] ?? null;
