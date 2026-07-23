@@ -51,6 +51,16 @@ export const PDF_TEMPLATE_DEFAULT = {
     profile: 'EN16931',
     enabled: true,
   },
+  datev: {
+    beraterNr: '',
+    mandantenNr: '',
+    skr: 'SKR04',
+    kontenlaenge: 4,
+    wjBeginn: '20260101',
+    kontoForderungen: '1200',
+    kontoErloese19: '4400',
+    buSchluessel19: '3',
+  },
   texteRechnung: {
     titel: 'RECHNUNG',
     einleitung: 'Wir stellen Ihnen folgende Leistungen in Rechnung:',

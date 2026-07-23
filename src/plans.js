@@ -41,3 +41,8 @@ export function canSendMail(plan) {
   const value = String(plan || 'free').trim().toLowerCase();
   return value === 'plus' || value === 'pro' || value === 'admin';
 }
+
+export function canExportDatev(plan) {
+  const value = String(plan || 'free').trim().toLowerCase();
+  return value === 'plus' || value === 'pro' || value === 'admin';
+}

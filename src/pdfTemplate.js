@@ -74,6 +74,16 @@ export function getDefaultPdfTemplate() {
         text: 'Amtsgericht Musterstadt\nHRB 12345',
       },
     ],
+    datev: {
+      beraterNr: '',
+      mandantenNr: '',
+      skr: 'SKR04',
+      kontenlaenge: 4,
+      wjBeginn: `${new Date().getFullYear()}0101`,
+      kontoForderungen: '1200',
+      kontoErloese19: '4400',
+      buSchluessel19: '3',
+    },
   };
 }
 
@@ -101,8 +111,29 @@ function deepMerge(base, patch) {
   return out;
 }
 
+function mergeFirmaFields(storedFirma = {}, defaultFirma = {}) {
+  const merged = { ...defaultFirma };
+  for (const key of Object.keys(defaultFirma)) {
+    if (!Object.prototype.hasOwnProperty.call(storedFirma, key)) continue;
+    const storedVal = storedFirma[key];
+    if (storedVal === undefined || storedVal === null) continue;
+    merged[key] = storedVal;
+  }
+  for (const [key, storedVal] of Object.entries(storedFirma)) {
+    if (key in defaultFirma) continue;
+    if (storedVal !== undefined && storedVal !== null) {
+      merged[key] = storedVal;
+    }
+  }
+  return merged;
+}
+
 export function mergePdfTemplate(stored) {
-  return deepMerge(getDefaultPdfTemplate(), stored || {});
+  const merged = deepMerge(getDefaultPdfTemplate(), stored || {});
+  if (stored?.firma && typeof stored.firma === 'object') {
+    merged.firma = mergeFirmaFields(stored.firma, getDefaultPdfTemplate().firma);
+  }
+  return merged;
 }
 
 /** Briefkopf-Firmendaten mit Profil (Mandantenname, Login-E-Mail) zusammenführen. */
@@ -140,6 +171,40 @@ export function fillProfileFirmaForm(form, template, session = null) {
   set('firma-iban', firma.iban || '');
   set('firma-bic', firma.bic || '');
   set('firma-bankName', firma.bankName || '');
+}
+
+export const DATEV_SKR_PRESETS = {
+  SKR04: { kontoForderungen: '1200', kontoErloese19: '4400' },
+  SKR03: { kontoForderungen: '1400', kontoErloese19: '8400' },
+};
+
+function ymdToDateInput(ymd) {
+  const raw = String(ymd || '').replace(/\D/g, '');
+  if (raw.length !== 8) return '';
+  return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
+}
+
+function dateInputToYmd(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  return raw.replace(/-/g, '');
+}
+
+export function fillProfileDatevForm(form, template) {
+  if (!form) return;
+  const tpl = mergePdfTemplate(template);
+  const datev = tpl.datev || {};
+  const set = (name, value) => {
+    if (form.elements[name]) form.elements[name].value = value ?? '';
+  };
+  set('datev-berater-nr', datev.beraterNr || '');
+  set('datev-mandanten-nr', datev.mandantenNr || '');
+  set('datev-skr', datev.skr === 'SKR03' ? 'SKR03' : 'SKR04');
+  set('datev-kontenlaenge', String(datev.kontenlaenge || 4));
+  set('datev-wj-beginn', ymdToDateInput(datev.wjBeginn));
+  set('datev-konto-forderungen', datev.kontoForderungen || '');
+  set('datev-konto-erloese19', datev.kontoErloese19 || '');
+  set('datev-bu-schluessel19', datev.buSchluessel19 || '3');
 }
 
 export function hexToRgb(hex) {
@@ -255,6 +320,19 @@ export function templatePatchFromForm(form, section) {
           iban: String(fd.get('firma-iban') || '').trim(),
           bic: String(fd.get('firma-bic') || '').trim(),
           bankName: String(fd.get('firma-bankName') || '').trim(),
+        },
+      };
+    case 'datev':
+      return {
+        datev: {
+          beraterNr: String(fd.get('datev-berater-nr') || '').trim(),
+          mandantenNr: String(fd.get('datev-mandanten-nr') || '').trim(),
+          skr: String(fd.get('datev-skr') || 'SKR04').trim() === 'SKR03' ? 'SKR03' : 'SKR04',
+          kontenlaenge: Number.parseInt(fd.get('datev-kontenlaenge'), 10) || 4,
+          wjBeginn: dateInputToYmd(fd.get('datev-wj-beginn')) || `${new Date().getFullYear()}0101`,
+          kontoForderungen: String(fd.get('datev-konto-forderungen') || '').trim(),
+          kontoErloese19: String(fd.get('datev-konto-erloese19') || '').trim(),
+          buSchluessel19: String(fd.get('datev-bu-schluessel19') || '3').trim() || '3',
         },
       };
     case 'farben':

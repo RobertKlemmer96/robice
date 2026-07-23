@@ -1107,9 +1107,29 @@
       <div id="view-rechnung-archiv" class="hidden">
         <main class="main">
           <section class="card">
-            <div class="card-header">
+            <div class="card-header card-header--rechnung-archiv">
               <h2 data-i18n="form.archivInvoicesTitle">Gespeicherte Rechnungen</h2>
-              <input type="search" id="rechnung-archiv-suche" class="search" data-i18n-placeholder="form.searchInvoices" placeholder="Rechnungen suchen…" />
+              <div class="rechnung-archiv-toolbar">
+                <label class="rechnung-archiv-toolbar__item">
+                  <span data-i18n="datev.from">Von</span>
+                  <input type="date" id="datev-export-von" />
+                </label>
+                <label class="rechnung-archiv-toolbar__item">
+                  <span data-i18n="datev.to">Bis</span>
+                  <input type="date" id="datev-export-bis" />
+                </label>
+                <div class="rechnung-archiv-toolbar__item rechnung-archiv-toolbar__item--datev">
+                  <span data-i18n="datev.exportShortLabel">DATEV Export</span>
+                  <button type="button" id="datev-export-btn" class="btn btn-secondary rechnung-archiv-toolbar__btn" data-i18n="datev.exportBtn">
+                    DATEV exportieren
+                  </button>
+                </div>
+                <label class="rechnung-archiv-toolbar__item">
+                  <span data-i18n="form.searchInvoicesLabel">Rechnung suchen</span>
+                  <input type="search" id="rechnung-archiv-suche" class="search rechnung-archiv-toolbar__search" data-i18n-placeholder="form.searchInvoices" placeholder="Rechnungen suchen…" />
+                </label>
+              </div>
+              <p id="datev-export-hint" class="datev-export-hint hidden" role="status"></p>
             </div>
             <div id="rechnung-archiv-liste" class="archiv-liste"></div>
           </section>
@@ -1588,6 +1608,61 @@
               <p id="profil-account-status" class="settings-status hidden" role="status"></p>
             </section>
 
+            <section class="card profil-card profil-card--datev">
+              <div class="profil-card__head">
+                <h2 data-i18n="datev.settingsTitle">DATEV-Export</h2>
+                <button type="submit" form="profil-datev-form" class="btn btn-primary btn-sm" data-i18n="common.save">
+                  Speichern
+                </button>
+              </div>
+              <p class="settings-lead" data-i18n="datev.settingsHint">
+                Werte für den Buchungsstapel-Export — Berater- und Mandantennummer erhalten Sie von Ihrem Steuerberater.
+              </p>
+              <form id="profil-datev-form" class="form-grid form-grid--profil form-grid--profil-firma form-grid--profil-firma-compact">
+                <label>
+                  <span data-i18n="datev.advisorNumber">Beraternummer</span>
+                  <input type="text" name="datev-berater-nr" inputmode="numeric" autocomplete="off" />
+                </label>
+                <label>
+                  <span data-i18n="datev.clientNumber">Mandantennummer</span>
+                  <input type="text" name="datev-mandanten-nr" inputmode="numeric" autocomplete="off" />
+                </label>
+                <label>
+                  <span data-i18n="datev.chartOfAccounts">Kontenrahmen</span>
+                  <select name="datev-skr" id="datev-skr">
+                    <option value="SKR04">SKR04</option>
+                    <option value="SKR03">SKR03</option>
+                  </select>
+                </label>
+                <label>
+                  <span data-i18n="datev.accountLength">Kontenlänge</span>
+                  <select name="datev-kontenlaenge">
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="8">8</option>
+                  </select>
+                </label>
+                <label>
+                  <span data-i18n="datev.fiscalYearStart">Wirtschaftsjahresbeginn</span>
+                  <input type="date" name="datev-wj-beginn" />
+                </label>
+                <label>
+                  <span data-i18n="datev.receivablesAccount">Forderungskonto</span>
+                  <input type="text" name="datev-konto-forderungen" inputmode="numeric" autocomplete="off" />
+                </label>
+                <label>
+                  <span data-i18n="datev.revenueAccount19">Erlöskonto 19&nbsp;%</span>
+                  <input type="text" name="datev-konto-erloese19" inputmode="numeric" autocomplete="off" />
+                </label>
+                <label>
+                  <span data-i18n="datev.taxKey19">BU-Schlüssel 19&nbsp;%</span>
+                  <input type="text" name="datev-bu-schluessel19" inputmode="numeric" autocomplete="off" />
+                </label>
+              </form>
+              <p id="profil-datev-status" class="settings-status hidden" role="status"></p>
+            </section>
+
             <section class="card profil-card profil-card--nummern">
               <div class="profil-card__head">
                 <h2 data-i18n="profil.documentNumbers">Dokumentnummern</h2>
@@ -1963,22 +2038,45 @@
             <section class="onboarding-step" data-onboarding-step="firma">
               <h2>Firmendaten</h2>
               <p class="settings-lead">Diese Angaben erscheinen im Briefkopf Ihrer PDFs.</p>
-              <form id="onboarding-firma-form" class="form-grid">
+              <form id="onboarding-firma-form" class="form-grid onboarding-firma-form">
                 <label class="full">
                   Firmenname
-                  <input type="text" name="firma-name" autocomplete="organization" required />
+                  <input
+                    type="text"
+                    name="firma-name"
+                    autocomplete="organization"
+                    required
+                    placeholder="Ihr Unternehmen GmbH"
+                  />
                 </label>
                 <label class="full">
                   Straße und Hausnummer
-                  <input type="text" name="firma-strasse" autocomplete="street-address" required />
+                  <input
+                    type="text"
+                    name="firma-strasse"
+                    autocomplete="street-address"
+                    required
+                    placeholder="Musterstraße 1"
+                  />
                 </label>
                 <label class="full">
                   PLZ, Ort
-                  <input type="text" name="firma-plzOrt" autocomplete="postal-code" required />
+                  <input
+                    type="text"
+                    name="firma-plzOrt"
+                    autocomplete="postal-code"
+                    required
+                    placeholder="12345 Musterstadt"
+                  />
                 </label>
                 <label>
                   Telefon
-                  <input type="tel" name="firma-telefon" autocomplete="tel" />
+                  <input
+                    type="tel"
+                    name="firma-telefon"
+                    autocomplete="tel"
+                    placeholder="+49 123 456789"
+                  />
                 </label>
                 <label>
                   Webseite
@@ -1990,7 +2088,12 @@
                 </label>
                 <label class="full">
                   IBAN (ZUGFeRD)
-                  <input type="text" name="firma-iban" autocomplete="off" placeholder="DE89 3704 0044 0532 0130 00" />
+                  <input
+                    type="text"
+                    name="firma-iban"
+                    autocomplete="off"
+                    placeholder="DE89 3704 0044 0532 0130 00"
+                  />
                 </label>
               </form>
             </section>

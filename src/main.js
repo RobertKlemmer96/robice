@@ -15,7 +15,7 @@ import {
   angebotProzessStatusLabelKey,
   normalizeAngebotProzessStatus,
 } from './angebotProzessStatus.js';
-import { formatPlanLabel, normalizeRegistrationPlan, PLAN_LABELS, PLAN_PRICES, PLAN_TAGLINES, REGISTRATION_PLANS, canSendMail, isFreePlan, FREE_DOCUMENT_LIMIT } from './plans.js';
+import { formatPlanLabel, normalizeRegistrationPlan, PLAN_LABELS, PLAN_PRICES, PLAN_TAGLINES, REGISTRATION_PLANS, canSendMail, canExportDatev, isFreePlan, FREE_DOCUMENT_LIMIT } from './plans.js';
 import { formatPostenArt, normalizePostenArt } from './data.js';
 import { login, logout, register, refreshSession, getCurrentUser, getCurrentTenant, getSession, changePassword, updateTenantName, isAdmin, isImpersonating, getImpersonation, isLoggedIn, needsOnboarding, deleteAccount } from './auth.js';
 import {
@@ -79,6 +79,7 @@ import {
   getRechnungPdfAttachment,
 } from './pdf.js';
 import { fetchMailStatus, sendDocumentPdf } from './documentMail.js';
+import { downloadDatevExport } from './datevExport.js';
 import {
   loadPdfTemplate,
   savePdfTemplate,
@@ -90,6 +91,8 @@ import {
   fillPdfTemplateAngebotForm,
   fillPdfTemplateRechnungForm,
   fillProfileFirmaForm,
+  fillProfileDatevForm,
+  DATEV_SKR_PRESETS,
   withProfileFirma,
   readImageFileAsDataUrl,
   updateImagePreview,
@@ -417,6 +420,13 @@ const els = {
   rechnungAngebotRef: document.getElementById('rechnung-angebot-ref'),
   rechnungArchivSuche: document.getElementById('rechnung-archiv-suche'),
   rechnungArchivListe: document.getElementById('rechnung-archiv-liste'),
+  datevExportVon: document.getElementById('datev-export-von'),
+  datevExportBis: document.getElementById('datev-export-bis'),
+  datevExportBtn: document.getElementById('datev-export-btn'),
+  datevExportHint: document.getElementById('datev-export-hint'),
+  profilDatevForm: document.getElementById('profil-datev-form'),
+  profilDatevStatus: document.getElementById('profil-datev-status'),
+  datevSkrSelect: document.getElementById('datev-skr'),
   katalogOeffnenBtn: document.getElementById('katalog-oeffnen-btn'),
   rechnungKatalogOeffnenBtn: document.getElementById('rechnung-katalog-oeffnen-btn'),
   katalogModal: document.getElementById('katalog-modal'),
@@ -463,6 +473,13 @@ function canCurrentTenantSendMail() {
     return cachedPlanLimits.canSendMail;
   }
   return canSendMail(getSession()?.tenant?.plan);
+}
+
+function canCurrentTenantExportDatev() {
+  if (cachedPlanLimits && typeof cachedPlanLimits.canExportDatev === 'boolean') {
+    return cachedPlanLimits.canExportDatev;
+  }
+  return canExportDatev(getSession()?.tenant?.plan);
 }
 
 function updatePreviewButtonLabels() {
@@ -534,8 +551,78 @@ const rechnungPostenEditor = createPostenEditor(rechnungPostenState, {
 function updateDocumentPlanUi() {
   updatePreviewButtonLabels();
   updateDocumentPreviewModalPlanState();
+  updateDatevExportUi();
   angebotPostenEditor.refreshSummary();
   rechnungPostenEditor.refreshSummary();
+}
+
+function getCurrentMonthRangeIso() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+  return {
+    von: `${y}-${m}-01`,
+    bis: `${y}-${m}-${String(lastDay).padStart(2, '0')}`,
+  };
+}
+
+function ensureDatevExportDefaults() {
+  const range = getCurrentMonthRangeIso();
+  if (els.datevExportVon && !els.datevExportVon.value) els.datevExportVon.value = range.von;
+  if (els.datevExportBis && !els.datevExportBis.value) els.datevExportBis.value = range.bis;
+}
+
+function setDatevExportHint(message, isError = false) {
+  if (!els.datevExportHint) return;
+  if (!message) {
+    els.datevExportHint.textContent = '';
+    els.datevExportHint.classList.add('hidden');
+    els.datevExportHint.classList.remove('settings-status--error');
+    return;
+  }
+  els.datevExportHint.textContent = message;
+  els.datevExportHint.classList.toggle('settings-status--error', isError);
+  els.datevExportHint.classList.remove('hidden');
+}
+
+function updateDatevExportUi() {
+  const canExport = canCurrentTenantExportDatev();
+  if (els.datevExportBtn) {
+    els.datevExportBtn.disabled = !canExport;
+    els.datevExportBtn.setAttribute('aria-disabled', String(!canExport));
+    els.datevExportBtn.classList.toggle('is-disabled', !canExport);
+  }
+  if (!canExport) {
+    setDatevExportHint(t('datev.exportLockedHint'));
+  } else {
+    setDatevExportHint('');
+  }
+}
+
+function applyDatevSkrPreset(form, skr) {
+  if (!form) return;
+  const preset = DATEV_SKR_PRESETS[skr === 'SKR03' ? 'SKR03' : 'SKR04'];
+  if (!preset) return;
+  if (form.elements['datev-konto-forderungen']) {
+    form.elements['datev-konto-forderungen'].value = preset.kontoForderungen;
+  }
+  if (form.elements['datev-konto-erloese19']) {
+    form.elements['datev-konto-erloese19'].value = preset.kontoErloese19;
+  }
+}
+
+function setProfilDatevStatus(message, isError = false) {
+  if (!els.profilDatevStatus) return;
+  if (!message) {
+    els.profilDatevStatus.classList.add('hidden');
+    els.profilDatevStatus.textContent = '';
+    els.profilDatevStatus.classList.remove('settings-status--error');
+    return;
+  }
+  els.profilDatevStatus.textContent = message;
+  els.profilDatevStatus.classList.toggle('settings-status--error', isError);
+  els.profilDatevStatus.classList.remove('hidden');
 }
 
 async function generiereAngebotsnummer() {
@@ -1933,6 +2020,7 @@ async function renderProfilView() {
 
   await loadPdfTemplate();
   fillProfileFirmaForm(els.profilAccountForm, getPdfTemplate(), session);
+  fillProfileDatevForm(els.profilDatevForm, getPdfTemplate());
   updateProfilSchemaPreviews(getPdfTemplate());
   syncProfilNummernAccess();
   syncProfilPlanAccess();
@@ -3499,6 +3587,8 @@ async function renderProzesse() {
 }
 
 async function renderRechnungArchiv() {
+  ensureDatevExportDefaults();
+  updateDatevExportUi();
   const q = (els.rechnungArchivSuche?.value || '').trim().toLowerCase();
   els.rechnungArchivListe.innerHTML = `<p class="empty">${t('archiv.loadingInvoices')}</p>`;
 
@@ -4721,6 +4811,55 @@ function bindAppEvents() {
       setProfilAccountStatus(err.message || 'Profil konnte nicht gespeichert werden.', true);
     }
   });
+  els.profilDatevForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setProfilDatevStatus('');
+
+    try {
+      const patch = templatePatchFromForm(els.profilDatevForm, 'datev');
+      const current = getPdfTemplate();
+      await savePdfTemplate({
+        ...current,
+        datev: {
+          ...current.datev,
+          ...patch.datev,
+        },
+      });
+      fillProfileDatevForm(els.profilDatevForm, getPdfTemplate());
+      setProfilDatevStatus(t('datev.settingsSaved'));
+    } catch (err) {
+      setProfilDatevStatus(err.message || t('datev.settingsSaveFailed'), true);
+    }
+  });
+  els.datevSkrSelect?.addEventListener('change', () => {
+    applyDatevSkrPreset(els.profilDatevForm, els.datevSkrSelect.value);
+  });
+  els.datevExportBtn?.addEventListener('click', async () => {
+    setDatevExportHint('');
+    if (!canCurrentTenantExportDatev()) {
+      setDatevExportHint(t('datev.exportLockedHint'), true);
+      return;
+    }
+
+    const von = els.datevExportVon?.value || '';
+    const bis = els.datevExportBis?.value || '';
+    if (!von || !bis) {
+      setDatevExportHint(t('datev.periodRequired'), true);
+      return;
+    }
+
+    try {
+      const result = await downloadDatevExport(von, bis);
+      setDatevExportHint(
+        result.count != null
+          ? t('datev.exportSuccess', { count: result.count })
+          : t('datev.exportSuccessGeneric')
+      );
+    } catch (err) {
+      const message = err.message || t('datev.exportFailed');
+      setDatevExportHint(message, true);
+    }
+  });
   els.profilPasswordForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     setProfilPasswordStatus('');
@@ -5290,6 +5429,8 @@ async function bootstrap() {
   initDatePickers();
   initOnboarding({
     onComplete: async () => {
+      await refreshSession();
+      syncProfileButton();
       await resetForm();
       await resetRechnungForm();
     },

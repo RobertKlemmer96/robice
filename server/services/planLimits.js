@@ -12,6 +12,11 @@ export function canSendMail(plan) {
   return value === 'plus' || value === 'pro' || value === 'admin';
 }
 
+export function canExportDatev(plan) {
+  const value = String(plan || 'free').trim().toLowerCase();
+  return value === 'plus' || value === 'pro' || value === 'admin';
+}
+
 function countDocuments(table, tenantId) {
   const db = getDb();
   const row = db
@@ -29,6 +34,7 @@ export function getDocumentLimits(tenantId, plan) {
   return {
     plan: String(plan || 'free').trim().toLowerCase(),
     canSendMail: canSendMail(plan),
+    canExportDatev: canExportDatev(plan),
     angebote: {
       used: angeboteUsed,
       max,
@@ -93,5 +99,14 @@ export function assertCanSendMail(tenantId) {
   throw createPlanLimitError(
     'E-Mail-Versand ist ab dem Plus-Tarif verfügbar. Im Free-Tarif können Sie PDFs erstellen und speichern.',
     'PLAN_MAIL_LOCKED'
+  );
+}
+
+export function assertCanExportDatev(tenantId) {
+  const tenant = getTenantById(tenantId);
+  if (canExportDatev(tenant?.plan)) return;
+  throw createPlanLimitError(
+    'DATEV-Export ist ab dem Plus-Tarif verfügbar.',
+    'PLAN_DATEV_LOCKED'
   );
 }

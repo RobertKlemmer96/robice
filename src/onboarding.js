@@ -5,7 +5,10 @@ import {
   savePdfTemplate,
   templatePatchFromForm,
 } from './pdfTemplate.js';
-import { getSession, isLoggedIn, markOnboardingComplete, needsOnboarding, updateTenantName } from './auth.js';
+import { getSession, isLoggedIn, markOnboardingComplete, needsOnboarding, refreshSession, updateTenantName } from './auth.js';
+import {
+  onboardingFirmaFieldValue,
+} from './onboardingExamples.js';
 import {
   previewAngebotsnummer,
   previewRechnungsnummer,
@@ -161,18 +164,28 @@ function showStep(index) {
   setStatus('');
 }
 
+function setFirmaField(form, name, value) {
+  const el = form?.elements?.[name];
+  if (el) el.value = value ?? '';
+}
+
 function fillFirmaStep() {
   if (!firmaFormEl) return;
   const session = getSession();
   const tpl = mergePdfTemplate(getPdfTemplate());
+  const tenantName = String(session?.tenant?.name || '').trim();
 
-  firmaFormEl.elements['firma-name'].value = tpl.firma.name || session?.tenant?.name || '';
-  firmaFormEl.elements['firma-strasse'].value = tpl.firma.strasse || '';
-  firmaFormEl.elements['firma-plzOrt'].value = tpl.firma.plzOrt || '';
-  firmaFormEl.elements['firma-telefon'].value = tpl.firma.telefon || '';
-  firmaFormEl.elements['firma-web'].value = tpl.firma.web || '';
-  firmaFormEl.elements['firma-ustId'].value = tpl.firma.ustId || '';
-  firmaFormEl.elements['firma-iban'].value = tpl.firma.iban || '';
+  setFirmaField(
+    firmaFormEl,
+    'firma-name',
+    tenantName || onboardingFirmaFieldValue('name', tpl.firma.name)
+  );
+  setFirmaField(firmaFormEl, 'firma-strasse', onboardingFirmaFieldValue('strasse', tpl.firma.strasse));
+  setFirmaField(firmaFormEl, 'firma-plzOrt', onboardingFirmaFieldValue('plzOrt', tpl.firma.plzOrt));
+  setFirmaField(firmaFormEl, 'firma-telefon', onboardingFirmaFieldValue('telefon', tpl.firma.telefon));
+  setFirmaField(firmaFormEl, 'firma-web', onboardingFirmaFieldValue('web', tpl.firma.web));
+  setFirmaField(firmaFormEl, 'firma-ustId', onboardingFirmaFieldValue('ustId', tpl.firma.ustId));
+  setFirmaField(firmaFormEl, 'firma-iban', onboardingFirmaFieldValue('iban', tpl.firma.iban));
 }
 
 function fillNummernStep() {
@@ -215,10 +228,12 @@ async function saveFirmaStep() {
     firma: {
       ...current.firma,
       ...patch.firma,
+      name,
       email: current.firma?.email || getSession()?.user?.email || '',
     },
   });
   await updateTenantName(name);
+  await refreshSession();
   return true;
 }
 

@@ -3138,6 +3138,15 @@ body:has(#app:not(.hidden)) {
   line-height: 1.4;
 }
 
+.onboarding-firma-form input::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 78%, transparent);
+  opacity: 1;
+}
+
+.onboarding-firma-form input:focus::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 55%, transparent);
+}
+
 .pdf-schema-note {
   display: flex;
   align-items: center;
@@ -4005,6 +4014,17 @@ body:has(#app:not(.hidden)) {
 }
 
 .prozess-legend {
+  display: grid;
+  gap: 8px;
+}
+
+.prozess-legend__hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.prozess-legend__items {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -4017,8 +4037,39 @@ body:has(#app:not(.hidden)) {
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid transparent;
+  font: inherit;
   font-size: 0.76rem;
   font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease,
+    border-style 0.15s ease;
+}
+
+.prozess-legend__item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.prozess-legend__item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.prozess-legend__item.is-filter-off {
+  opacity: 0.42;
+  border-style: dashed;
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  transform: none;
+  box-shadow: none;
+}
+
+.prozess-legend__item.is-filter-off:hover {
+  opacity: 0.62;
+  transform: translateY(-1px);
 }
 
 .prozess-status-badge {
@@ -4642,6 +4693,7 @@ body:has(#app:not(.hidden)) {
   }
 
   .profil-card--firma,
+  .profil-card--datev,
   .profil-card--nummern,
   .profil-card--danger {
     grid-column: 1 / -1;
@@ -5129,6 +5181,86 @@ h1 {
 
 .card-header h2 {
   margin: 0;
+}
+
+.card-header--rechnung-archiv {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.card-header--rechnung-archiv h2 {
+  width: 100%;
+}
+
+.rechnung-archiv-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.62fr) minmax(0, 1.38fr);
+  gap: 10px;
+  align-items: end;
+  width: 100%;
+}
+
+.rechnung-archiv-toolbar__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.rechnung-archiv-toolbar__item > span {
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.rechnung-archiv-toolbar__item input[type='date'],
+.rechnung-archiv-toolbar__search,
+.rechnung-archiv-toolbar__btn {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.rechnung-archiv-toolbar__item--datev {
+  font-size: 0.74rem;
+}
+
+.rechnung-archiv-toolbar__item--datev > span {
+  font-size: 0.74rem;
+}
+
+.rechnung-archiv-toolbar__btn {
+  margin: 0;
+  padding: 10px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rechnung-archiv-toolbar__item--datev .rechnung-archiv-toolbar__btn {
+  min-height: 34px;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.datev-export-hint {
+  width: 100%;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+}
+
+.datev-export-hint.settings-status--error {
+  color: var(--danger, #b91c1c);
+}
+
+@media (max-width: 900px) {
+  .rechnung-archiv-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .angebot-kopf,

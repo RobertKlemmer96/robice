@@ -10,6 +10,28 @@ import { t } from './i18n.js';
 import { formatEuro, formatDatum, berechneSummenAusPosten } from './pdf.js';
 import { resolvePostenDetails } from './postenEditor.js';
 
+/** Aktive Status-Filter (Standard: alle an). */
+const activeStatusFilters = new Set(ANGEBOT_PROZESS_STATUS_ORDER);
+
+function isStatusFilterActive(status) {
+  return activeStatusFilters.has(status);
+}
+
+function toggleStatusFilter(status) {
+  if (activeStatusFilters.has(status)) {
+    activeStatusFilters.delete(status);
+  } else {
+    activeStatusFilters.add(status);
+  }
+}
+
+function filterAngeboteByStatus(angebote) {
+  if (activeStatusFilters.size === 0) return [];
+  return angebote.filter((a) =>
+    activeStatusFilters.has(normalizeAngebotProzessStatus(a.prozessStatus))
+  );
+}
+
 export async function updateAngebotProzessStatus(id, prozessStatus) {
   return apiFetch(`/api/angebote/${encodeURIComponent(id)}/prozess-status`, {
     method: 'PATCH',
@@ -27,14 +49,70 @@ function escapeHtml(value) {
 
 function renderStatusLegend() {
   return `
-    <div class="prozess-legend" aria-label="${escapeHtml(t('prozesse.legendAria'))}">
-      ${ANGEBOT_PROZESS_STATUS_ORDER.map(
-        (status) => `
-        <span class="prozess-legend__item ${angebotProzessStatusCssClass(status)}">
-          ${escapeHtml(t(angebotProzessStatusLabelKey(status)))}
-        </span>`
-      ).join('')}
+    <div class="prozess-legend">
+      <p class="prozess-legend__hint">${escapeHtml(t('prozesse.legendHint'))}</p>
+      <div class="prozess-legend__items" role="group" aria-label="${escapeHtml(t('prozesse.legendAria'))}">
+        ${ANGEBOT_PROZESS_STATUS_ORDER.map((status) => {
+          const active = isStatusFilterActive(status);
+          const label = t(angebotProzessStatusLabelKey(status));
+          return `
+          <button
+            type="button"
+            class="prozess-legend__item ${angebotProzessStatusCssClass(status)}${active ? ' is-filter-on' : ' is-filter-off'}"
+            data-prozess-filter="${escapeHtml(status)}"
+            aria-pressed="${active ? 'true' : 'false'}"
+            aria-label="${escapeHtml(
+              t(active ? 'prozesse.filterHide' : 'prozesse.filterShow', { status: label })
+            )}"
+          >
+            ${escapeHtml(label)}
+          </button>`;
+        }).join('')}
+      </div>
     </div>`;
+}
+
+function bindProzesseInteractions(root, { sucheInput, onOpenAngebot } = {}) {
+  root.querySelectorAll('[data-prozess-filter]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const status = button.dataset.prozessFilter;
+      if (!status) return;
+      toggleStatusFilter(status);
+      void renderProzesseView(root, { sucheInput, onOpenAngebot });
+    });
+  });
+
+  root.querySelectorAll('[data-prozess-open]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const id = button.dataset.prozessOpen;
+      if (id && onOpenAngebot) onOpenAngebot(id);
+    });
+  });
+
+  root.querySelectorAll('[data-prozess-status-id]').forEach((select) => {
+    select.addEventListener('change', async () => {
+      const id = select.dataset.prozessStatusId;
+      const nextStatus = select.value;
+      select.disabled = true;
+      try {
+        await updateAngebotProzessStatus(id, nextStatus);
+        await renderProzesseView(root, { sucheInput, onOpenAngebot });
+      } catch (err) {
+        alert(err.message || t('prozesse.saveError'));
+        void renderProzesseView(root, { sucheInput, onOpenAngebot });
+      } finally {
+        select.disabled = false;
+      }
+    });
+  });
+}
+
+function emptyMessage({ q, hadAngeboteBeforeFilter }) {
+  if (q && !hadAngeboteBeforeFilter) return t('prozesse.notFound');
+  if (hadAngeboteBeforeFilter || activeStatusFilters.size === 0) {
+    return t('prozesse.filteredEmpty');
+  }
+  return t('prozesse.empty');
 }
 
 function renderStatusSelect(angebotId, status) {
@@ -71,10 +149,14 @@ export async function renderProzesseView(root, { sucheInput, onOpenAngebot } = {
       );
     }
 
+    const hadAngeboteBeforeFilter = angebote.length > 0;
+    angebote = filterAngeboteByStatus(angebote);
+
     if (angebote.length === 0) {
       root.innerHTML = `
         ${renderStatusLegend()}
-        <p class="empty">${escapeHtml(q ? t('prozesse.notFound') : t('prozesse.empty'))}</p>`;
+        <p class="empty">${escapeHtml(emptyMessage({ q, hadAngeboteBeforeFilter }))}</p>`;
+      bindProzesseInteractions(root, { sucheInput, onOpenAngebot });
       return;
     }
 
@@ -106,29 +188,7 @@ export async function renderProzesseView(root, { sucheInput, onOpenAngebot } = {
           .join('')}
       </ul>`;
 
-    root.querySelectorAll('[data-prozess-open]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const id = button.dataset.prozessOpen;
-        if (id && onOpenAngebot) onOpenAngebot(id);
-      });
-    });
-
-    root.querySelectorAll('[data-prozess-status-id]').forEach((select) => {
-      select.addEventListener('change', async () => {
-        const id = select.dataset.prozessStatusId;
-        const nextStatus = select.value;
-        select.disabled = true;
-        try {
-          await updateAngebotProzessStatus(id, nextStatus);
-          select.className = `prozess-status-select ${angebotProzessStatusCssClass(nextStatus)}`;
-        } catch (err) {
-          alert(err.message || t('prozesse.saveError'));
-          void renderProzesseView(root, { sucheInput, onOpenAngebot });
-        } finally {
-          select.disabled = false;
-        }
-      });
-    });
+    bindProzesseInteractions(root, { sucheInput, onOpenAngebot });
   } catch (err) {
     root.innerHTML = `<p class="empty">${escapeHtml(t('prozesse.loadError', { message: err.message }))}</p>`;
   }

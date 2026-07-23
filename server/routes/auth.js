@@ -18,7 +18,6 @@ import {
 } from '../services/authStore.js';
 import { config } from '../config.js';
 import { savePdfTemplate } from '../repositories/pdfTemplate.js';
-import { PDF_TEMPLATE_DEFAULT } from '../defaults/pdfTemplate.js';
 import { buildSessionPayload, resolveSessionUser } from '../middleware/auth.js';
 import {
   markTenantNotificationsSeen,
@@ -58,11 +57,17 @@ export function createAuthRouter({ sessionCookieName = 'angebot.sid' } = {}) {
       });
 
       await savePdfTemplate(tenantId, {
-        ...PDF_TEMPLATE_DEFAULT,
         firma: {
-          ...PDF_TEMPLATE_DEFAULT.firma,
           name: '',
+          strasse: '',
+          plzOrt: '',
+          telefon: '',
           email: registeredEmail,
+          web: '',
+          ustId: '',
+          iban: '',
+          bic: '',
+          bankName: '',
         },
       });
 
