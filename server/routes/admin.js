@@ -10,6 +10,10 @@ import {
 } from '../services/authStore.js';
 import { listAngebote } from '../repositories/angebote.js';
 import { listRechnungen } from '../repositories/rechnungen.js';
+import {
+  getPublicSiteSettings,
+  setAlphaBannerVisible,
+} from '../repositories/siteSettings.js';
 
 function mapUserRow(row) {
   return {
@@ -46,6 +50,30 @@ function summarizeDocuments(documents, { numberField, dateField }) {
 
 export function createAdminRouter() {
   const router = express.Router();
+
+  router.get('/site-settings', requireAdmin, (_req, res) => {
+    try {
+      res.json(getPublicSiteSettings());
+    } catch (err) {
+      console.error('admin/site-settings get:', err);
+      res.status(500).json({ error: 'Einstellungen konnten nicht geladen werden.' });
+    }
+  });
+
+  router.patch('/site-settings', requireAdmin, (req, res) => {
+    try {
+      const { alphaBannerVisible } = req.body || {};
+      if (typeof alphaBannerVisible !== 'boolean') {
+        res.status(400).json({ error: 'alphaBannerVisible muss ein Boolean sein.' });
+        return;
+      }
+      setAlphaBannerVisible(alphaBannerVisible);
+      res.json(getPublicSiteSettings());
+    } catch (err) {
+      console.error('admin/site-settings patch:', err);
+      res.status(500).json({ error: 'Einstellungen konnten nicht gespeichert werden.' });
+    }
+  });
 
   router.get('/users', requireAdmin, (_req, res) => {
     try {

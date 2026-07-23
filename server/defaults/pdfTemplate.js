@@ -47,6 +47,9 @@ export const PDF_TEMPLATE_DEFAULT = {
     nummerSchema: 'RE-{YYYY}{MM}{DD}-{NR:3}',
     zahlungszielTage: 14,
   },
+  kunde: {
+    nummerSchema: 'K-{NR:5}',
+  },
   zugferd: {
     profile: 'EN16931',
     enabled: true,

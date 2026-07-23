@@ -18,6 +18,7 @@ import { createRechnungenExportRouter } from './server/routes/rechnungenExport.j
 import { createDocumentsMailRouter } from './server/routes/documentsMail.js';
 import { createAngeboteProzessRouter } from './server/routes/angeboteProzess.js';
 import { createPublicAngeboteRouter } from './server/routes/publicAngebote.js';
+import { createPublicSiteRouter } from './server/routes/publicSite.js';
 import {
   getPdfTemplate,
   savePdfTemplate,
@@ -51,6 +52,7 @@ app.use(attachSessionUser);
 
 app.use('/api/auth', createAuthRouter({ sessionCookieName: SESSION_COOKIE }));
 app.use('/api/public/angebote', createPublicAngeboteRouter());
+app.use('/api/public', createPublicSiteRouter());
 app.use('/api/admin', createAdminRouter());
 app.use('/api/documents', createDocumentsMailRouter());
 
@@ -141,6 +143,10 @@ app.put('/api/pdf-template', requireAuth, async (req, res) => {
         rechnung: {
           ...(body.rechnung || {}),
           nummerSchema: existing.rechnung?.nummerSchema,
+        },
+        kunde: {
+          ...(body.kunde || {}),
+          nummerSchema: existing.kunde?.nummerSchema,
         },
       };
     }

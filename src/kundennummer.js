@@ -1,3 +1,4 @@
+import { getPdfTemplate } from './pdfTemplate.js';
 import {
   getSchemaCountPrefix,
   getNextSequenceForPrefix,
@@ -7,7 +8,14 @@ import {
 export const DEFAULT_KUNDE_SCHEMA = 'K-{NR:5}';
 
 export function getKundennummerSchema() {
-  return DEFAULT_KUNDE_SCHEMA;
+  const tpl = getPdfTemplate();
+  const raw = tpl.kunde?.nummerSchema;
+  const schema = String(raw ?? '').trim();
+  return schema || DEFAULT_KUNDE_SCHEMA;
+}
+
+export function previewKundennummer(schema, date = new Date(), sequence = 1) {
+  return formatDokumentnummer(schema, sequence, date);
 }
 
 export async function generiereKundennummer(getAllKunden) {

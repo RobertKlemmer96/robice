@@ -172,6 +172,14 @@ function runMigrations(database) {
       .run('tenant_notifications_seen_at_v1', new Date().toISOString());
   }
 
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+
   const adminOnboardingMigration = database
     .prepare('SELECT 1 FROM schema_migrations WHERE id = ?')
     .get('admin_tenant_onboarding_pending_v1');

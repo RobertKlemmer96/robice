@@ -14,6 +14,7 @@ import {
   previewRechnungsnummer,
   schemaHasSequenceToken,
 } from './dokumentnummer.js';
+import { previewKundennummer } from './kundennummer.js';
 import { ENABLED_ONBOARDING_STEPS, ONBOARDING_STEPS } from './onboardingConfig.js';
 import { PDF_LAYOUT_VARIANTS, normalizePdfLayoutVariant } from './pdfLayoutVariants.js';
 
@@ -47,8 +48,10 @@ function updateSchemaPreviews() {
   if (!nummernFormEl) return;
   const angebotInput = nummernFormEl.elements['angebot-nummer-schema'];
   const rechnungInput = nummernFormEl.elements['rechnung-nummer-schema'];
+  const kundeInput = nummernFormEl.elements['kunde-nummer-schema'];
   const angebotPreview = nummernFormEl.querySelector('.onboarding-angebot-preview');
   const rechnungPreview = nummernFormEl.querySelector('.onboarding-rechnung-preview');
+  const kundePreview = nummernFormEl.querySelector('.onboarding-kunde-preview');
 
   const updateOne = (input, preview, previewFn) => {
     if (!input || !preview) return;
@@ -66,6 +69,7 @@ function updateSchemaPreviews() {
 
   updateOne(angebotInput, angebotPreview, previewAngebotsnummer);
   updateOne(rechnungInput, rechnungPreview, previewRechnungsnummer);
+  updateOne(kundeInput, kundePreview, previewKundennummer);
 }
 
 function renderLayoutOptions() {
@@ -195,6 +199,8 @@ function fillNummernStep() {
     tpl.angebot?.nummerSchema || 'ANG-{YYYY}{MM}{DD}-{NR:3}';
   nummernFormEl.elements['rechnung-nummer-schema'].value =
     tpl.rechnung?.nummerSchema || 'RE-{YYYY}{MM}{DD}-{NR:3}';
+  nummernFormEl.elements['kunde-nummer-schema'].value =
+    tpl.kunde?.nummerSchema || 'K-{NR:5}';
   updateSchemaPreviews();
 }
 
@@ -246,6 +252,7 @@ async function saveNummernStep() {
   const rechnungSchema = String(
     nummernFormEl.elements['rechnung-nummer-schema']?.value || ''
   ).trim();
+  const kundeSchema = String(nummernFormEl.elements['kunde-nummer-schema']?.value || '').trim();
 
   if (!angebotSchema || !schemaHasSequenceToken(angebotSchema)) {
     setStatus('Angebots-Schema braucht eine Laufnummer, z. B. {NR:3}.', true);
@@ -257,14 +264,21 @@ async function saveNummernStep() {
     nummernFormEl.elements['rechnung-nummer-schema']?.focus();
     return false;
   }
+  if (!kundeSchema || !schemaHasSequenceToken(kundeSchema)) {
+    setStatus('Kunden-Schema braucht eine Laufnummer, z. B. {NR:5}.', true);
+    nummernFormEl.elements['kunde-nummer-schema']?.focus();
+    return false;
+  }
 
   const angebotPatch = templatePatchFromForm(nummernFormEl, 'angebot-nummer');
   const rechnungPatch = templatePatchFromForm(nummernFormEl, 'rechnung-nummer');
+  const kundePatch = templatePatchFromForm(nummernFormEl, 'kunde-nummer');
   const current = getPdfTemplate();
   await savePdfTemplate({
     ...current,
     ...angebotPatch,
     ...rechnungPatch,
+    ...kundePatch,
   });
   return true;
 }
@@ -347,7 +361,9 @@ export function initOnboarding({ onComplete } = {}) {
   });
 
   nummernFormEl
-    ?.querySelectorAll('[name="angebot-nummer-schema"], [name="rechnung-nummer-schema"]')
+    ?.querySelectorAll(
+      '[name="angebot-nummer-schema"], [name="rechnung-nummer-schema"], [name="kunde-nummer-schema"]'
+    )
     .forEach((input) => {
       input.addEventListener('input', updateSchemaPreviews);
     });

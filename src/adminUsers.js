@@ -27,3 +27,14 @@ export async function updateAdminTenantPlan(tenantId, plan) {
     body: JSON.stringify({ plan }),
   });
 }
+
+export async function loadAdminSiteSettings() {
+  return apiFetch('/api/admin/site-settings');
+}
+
+export async function updateAdminSiteSettings(patch) {
+  return apiFetch('/api/admin/site-settings', {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+}

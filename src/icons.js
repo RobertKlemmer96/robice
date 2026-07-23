@@ -17,6 +17,10 @@ export function iconAddSvg() {
   return `<svg class="btn-icon__svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>`;
 }
 
+export function iconMoreVerticalSvg() {
+  return `<svg class="btn-icon__svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor"><circle cx="12" cy="5" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="19" r="1.75"/></svg>`;
+}
+
 export function editIconButton(label, attrs = '') {
   const safe = escapeAttr(label);
   return `<button type="button" class="btn btn-icon btn-ghost btn-sm" aria-label="${safe}" title="${safe}" ${attrs}>${iconEditSvg()}</button>`;

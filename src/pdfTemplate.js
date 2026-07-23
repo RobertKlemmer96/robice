@@ -54,6 +54,9 @@ export function getDefaultPdfTemplate() {
       nummerSchema: 'RE-{YYYY}{MM}{DD}-{NR:3}',
       zahlungszielTage: 14,
     },
+    kunde: {
+      nummerSchema: 'K-{NR:5}',
+    },
     texteRechnung: {
       titel: 'RECHNUNG',
       einleitung: 'Wir stellen Ihnen folgende Leistungen in Rechnung:',
@@ -374,6 +377,12 @@ export function templatePatchFromForm(form, section) {
         rechnung: {
           nummerSchema:
             String(fd.get('rechnung-nummer-schema') || '').trim() || 'RE-{YYYY}{MM}{DD}-{NR:3}',
+        },
+      };
+    case 'kunde-nummer':
+      return {
+        kunde: {
+          nummerSchema: String(fd.get('kunde-nummer-schema') || '').trim() || 'K-{NR:5}',
         },
       };
     case 'rechnung-zahlungsziel':

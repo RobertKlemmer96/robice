@@ -256,6 +256,14 @@ body::-webkit-scrollbar-corner,
   background: color-mix(in srgb, var(--surface) 88%, var(--form-frame-bg));
 }
 
+html[data-alpha-banner='hidden'] .landing-alpha-banner {
+  display: none !important;
+}
+
+html[data-alpha-banner='hidden'] #app {
+  --app-alpha-banner-height: 0px;
+}
+
 .hidden {
   display: none !important;
 }
@@ -3096,6 +3104,37 @@ body:has(#app:not(.hidden)) {
   margin-bottom: 18px;
 }
 
+.admin-site-settings {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--input-bg);
+}
+
+.admin-site-settings h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.admin-site-settings__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-site-settings__status {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.admin-site-settings__status.is-visible {
+  color: var(--accent);
+}
+
 .admin-overview__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -4746,38 +4785,61 @@ body:has(#app:not(.hidden)) {
   transition: border-color 0.15s, background 0.15s;
 }
 
-.kunden-item {
-  flex-direction: column;
-}
-
-.kunden-item__header {
+.kunden-actions {
   display: flex;
+  gap: 8px;
+  flex-shrink: 0;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  width: 100%;
 }
 
-.kunden-item__dokumente {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding-top: 10px;
-  margin-top: 10px;
-  border-top: 1px solid var(--border);
+.kunden-actions-menu {
+  position: relative;
 }
 
-.kunden-item__dokumente-count {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-muted);
+.kunden-actions-menu__trigger {
+  min-width: 34px;
 }
 
-.kunden-item__dokumente-panel {
+.kunden-actions-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  min-width: 148px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.kunden-actions-menu__option {
+  display: block;
   width: 100%;
-  margin-top: 10px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kunden-actions-menu__option:hover {
+  background: var(--surface-hover);
+}
+
+.kunden-actions-menu__option--danger {
+  color: var(--danger, #e5484d);
+}
+
+.kunden-actions-menu__option--danger:hover {
+  background: color-mix(in srgb, var(--danger, #e5484d) 12%, transparent);
+}
+
+.kunden-actions-menu.is-open .kunden-actions-menu__trigger {
+  background: var(--surface-hover);
 }
 
 .kunden-dokumente__info {
@@ -4808,12 +4870,43 @@ body:has(#app:not(.hidden)) {
 }
 
 .kunden-dokumente__heading {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+.kunden-dokumente__block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 34px;
+  margin-bottom: 6px;
+}
+
+.kunden-dokumente__block--paged {
+  --kunden-dokumente-row-height: 56px;
+  min-height: calc(34px + 6px + (var(--kunden-dokumente-row-height) * 5) + (6px * 4));
+}
+
+.kunden-dokumente--detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 820px) {
+  .kunden-dokumente--detail {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kunden-dokumente__list--paged {
+  min-height: calc((var(--kunden-dokumente-row-height, 56px) * 5) + (6px * 4));
 }
 
 .kunden-dokumente__list {
@@ -4826,14 +4919,20 @@ body:has(#app:not(.hidden)) {
 }
 
 .kunden-dokumente__row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
-  flex-wrap: wrap;
   padding: 6px 8px;
   border-radius: 8px;
   background: var(--input-bg);
+  min-height: var(--kunden-dokumente-row-height, 56px);
+  box-sizing: border-box;
+}
+
+.kunden-dokumente__row--placeholder {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .kunden-dokumente__nr {
@@ -4848,10 +4947,37 @@ body:has(#app:not(.hidden)) {
   gap: 0.45rem;
 }
 
+.kunden-dokumente__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  align-self: center;
+  min-width: 0;
+}
+
 .kunden-dokumente__actions {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  justify-self: end;
+  align-self: center;
+}
+
+.kunden-dokumente__pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.kunden-dokumente__pager-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  min-width: 4.5rem;
+  text-align: center;
 }
 
 .kunden-picker-item {
@@ -4894,12 +5020,6 @@ body:has(#app:not(.hidden)) {
   margin: 0;
   font-size: 0.82rem;
   color: var(--text-muted);
-}
-
-.kunden-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
 }
 
 .modal {
@@ -5313,7 +5433,7 @@ body:has(#app:not(.hidden)) {
 
 .profil-nummern-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px 14px;
 }
 
@@ -5415,6 +5535,12 @@ body:has(#app:not(.hidden)) {
   color: #b91c1c;
   border-color: color-mix(in srgb, #b91c1c 35%, var(--border));
   background: color-mix(in srgb, #b91c1c 8%, transparent);
+}
+
+@media (max-width: 960px) {
+  .profil-nummern-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
@@ -9384,8 +9510,8 @@ textarea:focus,
 
   .kunden-item,
   .kunden-picker-item {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: flex-start;
     gap: 8px;
     padding: 10px;
     border-radius: 8px;
@@ -9400,16 +9526,7 @@ textarea:focus,
   }
 
   .kunden-actions {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-
-  .kunden-actions .btn {
-    flex: unset;
-    width: 100%;
-    min-height: 38px;
+    flex-shrink: 0;
   }
 
   .kunden-detail__header-actions {

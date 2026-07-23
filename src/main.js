@@ -24,11 +24,18 @@ import {
   startAdminImpersonation,
   stopAdminImpersonation,
   updateAdminTenantPlan,
+  loadAdminSiteSettings,
+  updateAdminSiteSettings,
 } from './adminUsers.js';
+import {
+  applyAlphaBannerVisible,
+  getAlphaBannerVisible,
+  loadPublicSiteSettings,
+} from './siteSettings.js';
 import { initOnboarding, openOnboarding, closeOnboarding } from './onboarding.js';
 import { initKatalogModal } from './katalogModal.js';
 import { initDatePickers, refreshDatePickers } from './datePicker.js';
-import { deleteIconButton, editIconButton, mountIconButton } from './icons.js';
+import { deleteIconButton, editIconButton, iconMoreVerticalSvg, mountIconButton } from './icons.js';
 import { initTheme } from './theme.js';
 import { applyI18n, getBereichMark, initI18n, onLocaleChange, syncBereichMarks, t } from './i18n.js';
 import { initLangSwitcher } from './langSwitcher.js';
@@ -120,7 +127,7 @@ import {
   getZahlungszielTage,
   addDaysIso,
 } from './dokumentnummer.js';
-import { generiereKundennummer } from './kundennummer.js';
+import { generiereKundennummer, previewKundennummer } from './kundennummer.js';
 import {
   normalizeKundeAnrede,
   formatKundeAnredeLabel,
@@ -217,7 +224,8 @@ const state = {
   kundenPickerSuche: '',
   kundenSuche: '',
   kundenPickerFor: 'angebot',
-  expandedKundeDokumenteId: null,
+  kundeDetailDocs: { angebote: [], rechnungen: [] },
+  kundeDetailDocsPage: { angebote: 0, rechnungen: 0 },
   editingKatalogPostenId: null,
   katalogSuche: '',
   angebot: createDocMeta(),
@@ -277,6 +285,9 @@ const els = {
   viewAdmin: document.getElementById('view-admin'),
   adminOverview: document.getElementById('admin-overview'),
   adminUserList: document.getElementById('admin-user-list'),
+  adminAlphaBannerStatus: document.getElementById('admin-alpha-banner-status'),
+  adminAlphaBannerToggle: document.getElementById('admin-alpha-banner-toggle'),
+  adminSiteSettingsStatus: document.getElementById('admin-site-settings-status'),
   adminImpersonationBanner: document.getElementById('admin-impersonation-banner'),
   adminImpersonationLabel: document.getElementById('admin-impersonation-label'),
   adminImpersonationStopBtn: document.getElementById('admin-impersonation-stop-btn'),
@@ -300,6 +311,8 @@ const els = {
   profilRechnungNummerSchema: document.getElementById('profil-rechnung-nummer-schema'),
   profilAngebotSchemaPreview: document.getElementById('profil-angebot-schema-preview'),
   profilRechnungSchemaPreview: document.getElementById('profil-rechnung-schema-preview'),
+  profilKundeNummerSchema: document.getElementById('profil-kunde-nummer-schema'),
+  profilKundeSchemaPreview: document.getElementById('profil-kunde-schema-preview'),
   profilDeleteAccountBtn: document.getElementById('profil-delete-account-btn'),
   profilDeleteModal: document.getElementById('profil-delete-modal'),
   profilDeletePlz: document.getElementById('profil-delete-plz'),
@@ -1087,6 +1100,86 @@ async function resolveKundeIdForSave(name, adresseData, selectedKundeId) {
   };
 }
 
+const KUNDE_DETAIL_DOCS_PAGE_SIZE = 5;
+
+function sortDokumenteNeuesteZuerst(items) {
+  return [...items].sort(
+    (a, b) =>
+      new Date(b.aktualisiertAm || b.erstelltAm) - new Date(a.aktualisiertAm || a.erstelltAm)
+  );
+}
+
+function paginateKundenDokumente(items, page, pageSize = KUNDE_DETAIL_DOCS_PAGE_SIZE) {
+  const total = items.length;
+  if (total === 0) {
+    return { items: [], page: 0, totalPages: 0, total: 0, hasPrev: false, hasNext: false };
+  }
+  const totalPages = Math.ceil(total / pageSize);
+  const safePage = Math.min(Math.max(0, page), totalPages - 1);
+  const start = safePage * pageSize;
+  return {
+    items: items.slice(start, start + pageSize),
+    page: safePage,
+    totalPages,
+    total,
+    hasPrev: safePage > 0,
+    hasNext: safePage < totalPages - 1,
+  };
+}
+
+function renderKundenDokumentePager(kind, pagination) {
+  const ariaKey = kind === 'rechnungen' ? 'kunden.docsPagerAriaRechnungen' : 'kunden.docsPagerAriaAngebote';
+  const totalPages = Math.max(1, pagination.totalPages || 1);
+  const page = pagination.total > 0 ? pagination.page + 1 : 1;
+  const hasPrev = pagination.hasPrev;
+  const hasNext = pagination.hasNext;
+  return `
+    <nav class="kunden-dokumente__pager" aria-label="${escapeHtml(t(ariaKey))}">
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        data-action="kunde-docs-page"
+        data-kind="${kind}"
+        data-dir="prev"
+        ${hasPrev ? '' : 'disabled aria-disabled="true"'}
+      >
+        ${escapeHtml(t('kunden.docsPagerPrev'))}
+      </button>
+      <span class="kunden-dokumente__pager-label">
+        ${escapeHtml(t('kunden.docsPagerPage', { page, total: totalPages }))}
+      </span>
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        data-action="kunde-docs-page"
+        data-kind="${kind}"
+        data-dir="next"
+        ${hasNext ? '' : 'disabled aria-disabled="true"'}
+      >
+        ${escapeHtml(t('kunden.docsPagerNext'))}
+      </button>
+    </nav>`;
+}
+
+function padKundenDokumenteListRows(rowsHtml, itemCount) {
+  const placeholders = Math.max(0, KUNDE_DETAIL_DOCS_PAGE_SIZE - itemCount);
+  const filler = Array.from(
+    { length: placeholders },
+    () => '<li class="kunden-dokumente__row kunden-dokumente__row--placeholder" aria-hidden="true"></li>'
+  ).join('');
+  return rowsHtml + filler;
+}
+
+function renderKundenDokumenteBlock(kind, heading, pagination, rowsHtml) {
+  return `<div class="kunden-dokumente__block kunden-dokumente__block--paged">
+        <div class="kunden-dokumente__block-head">
+          <p class="kunden-dokumente__heading">${escapeHtml(heading)}</p>
+          ${renderKundenDokumentePager(kind, pagination)}
+        </div>
+        <ul class="kunden-dokumente__list kunden-dokumente__list--paged">${padKundenDokumenteListRows(rowsHtml, pagination.items.length)}</ul>
+      </div>`;
+}
+
 function dokumenteFuerKunde(kundeId, kundeName, angebote, rechnungen) {
   const norm = normalizeKundeName(kundeName);
   const matchKunde = (doc) => {
@@ -1102,145 +1195,119 @@ function dokumenteFuerKunde(kundeId, kundeName, angebote, rechnungen) {
   };
 }
 
-function renderKundenAngeboteListHtml(angebote) {
-  if (angebote.length === 0) {
-    return '<p class="empty empty--inline">Keine Angebote für diesen Kunden.</p>';
-  }
+function renderKundenActionsMenuHtml(kundeId) {
+  const label = escapeHtml(t('kunden.actionsMenu'));
+  return `
+    <div class="kunden-actions-menu">
+      <button type="button" class="btn btn-icon btn-ghost btn-sm kunden-actions-menu__trigger" data-action="toggle-kunde-actions-menu" data-id="${kundeId}" aria-haspopup="menu" aria-expanded="false" aria-label="${label}" title="${label}">
+        ${iconMoreVerticalSvg()}
+      </button>
+      <div class="kunden-actions-menu__dropdown hidden" role="menu">
+        <button type="button" class="kunden-actions-menu__option" data-action="show-kunde-detail" data-id="${kundeId}" role="menuitem">${escapeHtml(t('common.open'))}</button>
+        <button type="button" class="kunden-actions-menu__option" data-action="edit-kunde" data-id="${kundeId}" role="menuitem">${escapeHtml(t('common.edit'))}</button>
+        <button type="button" class="kunden-actions-menu__option kunden-actions-menu__option--danger" data-action="delete-kunde" data-id="${kundeId}" role="menuitem">${escapeHtml(t('common.delete'))}</button>
+      </div>
+    </div>`;
+}
 
-  const sorted = [...angebote].sort(
-    (a, b) =>
-      new Date(b.aktualisiertAm || b.erstelltAm) - new Date(a.aktualisiertAm || a.erstelltAm)
-  );
+function closeAllKundenActionsMenus() {
+  els.kundenListe?.querySelectorAll('.kunden-actions-menu.is-open').forEach((menu) => {
+    menu.classList.remove('is-open');
+    menu.querySelector('.kunden-actions-menu__trigger')?.setAttribute('aria-expanded', 'false');
+    menu.querySelector('.kunden-actions-menu__dropdown')?.classList.add('hidden');
+  });
+}
 
-  const rows = sorted
+function toggleKundenActionsMenu(trigger) {
+  const menu = trigger.closest('.kunden-actions-menu');
+  if (!menu) return;
+  const isOpen = menu.classList.contains('is-open');
+  closeAllKundenActionsMenus();
+  if (isOpen) return;
+  menu.classList.add('is-open');
+  trigger.setAttribute('aria-expanded', 'true');
+  menu.querySelector('.kunden-actions-menu__dropdown')?.classList.remove('hidden');
+}
+
+function renderKundenDokumenteHtml(angebote, rechnungen, pages = { angebote: 0, rechnungen: 0 }) {
+  const sortedAngebote = sortDokumenteNeuesteZuerst(angebote);
+  const sortedRechnungen = sortDokumenteNeuesteZuerst(rechnungen);
+  const angebotPage = paginateKundenDokumente(sortedAngebote, pages.angebote ?? 0);
+  const rechnungPage = paginateKundenDokumente(sortedRechnungen, pages.rechnungen ?? 0);
+
+  if (sortedAngebote.length === 0 && sortedRechnungen.length === 0) return '';
+
+  const angRows = angebotPage.items
     .map((a) => {
-      const posten = resolvePostenDetails(a.posten);
-      const { brutto } = berechneSummenAusPosten(posten);
       const datum = formatDatum(new Date(a.aktualisiertAm || a.erstelltAm));
-      const statusBadge = angebotProzessStatusBadgeHtml(
-        a.prozessStatus,
-        escapeHtml(t(angebotProzessStatusLabelKey(a.prozessStatus)))
-      );
       return `
       <li class="kunden-dokumente__row">
         <div class="kunden-dokumente__info">
-          <span class="kunden-dokumente__nr-row">
-            <span class="kunden-dokumente__nr">${escapeHtml(a.angebotNr)}</span>
-            ${statusBadge}
-          </span>
-          <span class="kunden-dokumente__meta">${escapeHtml(datum)} · ${formatEuro(brutto)} · ${posten.length} Posten</span>
+          <span class="kunden-dokumente__nr">${escapeHtml(a.angebotNr)}</span>
+          <span class="kunden-dokumente__meta">${escapeHtml(t('kunden.docModified', { date: datum }))}</span>
         </div>
-        <span class="kunden-dokumente__actions">
-          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-rechnung" data-id="${a.id}">Rechnung erstellen</button>
+        <div class="kunden-dokumente__status">${angebotProzessStatusBadgeHtml(
+          a.prozessStatus,
+          escapeHtml(t(angebotProzessStatusLabelKey(a.prozessStatus)))
+        )}</div>
+        <div class="kunden-dokumente__actions">
           <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-pdf" data-id="${a.id}">PDF</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-edit" data-id="${a.id}">Öffnen</button>
-        </span>
+          <button type="button" class="btn btn-primary btn-sm" data-action="kunde-angebot-edit" data-id="${a.id}">Öffnen</button>
+        </div>
       </li>`;
     })
     .join('');
 
-  return `<ul class="kunden-dokumente__list">${rows}</ul>`;
-}
-
-function formatRechnungenCount(count) {
-  if (count === 0) return 'Keine Rechnungen';
-  if (count === 1) return '1 Rechnung';
-  return `${count} Rechnungen`;
-}
-
-function renderKundenRechnungenListHtml(rechnungen) {
-  if (rechnungen.length === 0) {
-    return '<p class="empty empty--inline">Keine Rechnungen für diesen Kunden.</p>';
-  }
-
-  const sorted = [...rechnungen].sort(
-    (a, b) =>
-      new Date(b.aktualisiertAm || b.erstelltAm) - new Date(a.aktualisiertAm || a.erstelltAm)
-  );
-
-  const rows = sorted
+  const rechnRows = rechnungPage.items
     .map((r) => {
-      const posten = resolvePostenDetails(r.posten);
-      const { brutto } = berechneSummenAusPosten(posten);
       const datum = formatDatum(new Date(r.aktualisiertAm || r.erstelltAm));
-      const angebotHint = r.angebotNr ? ` · Bezug: ${escapeHtml(r.angebotNr)}` : '';
       return `
       <li class="kunden-dokumente__row">
         <div class="kunden-dokumente__info">
           <span class="kunden-dokumente__nr">${escapeHtml(r.rechnungNr)}</span>
-          <span class="kunden-dokumente__meta">${escapeHtml(datum)} · ${formatEuro(brutto)} · ${posten.length} Posten${angebotHint}</span>
+          <span class="kunden-dokumente__meta">${escapeHtml(t('kunden.docModified', { date: datum }))}</span>
         </div>
-        <span class="kunden-dokumente__actions">
+        <div class="kunden-dokumente__status" aria-hidden="true"></div>
+        <div class="kunden-dokumente__actions">
           <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-rechnung-pdf" data-id="${r.id}">PDF</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-rechnung-edit" data-id="${r.id}">Öffnen</button>
-        </span>
+          <button type="button" class="btn btn-primary btn-sm" data-action="kunde-rechnung-edit" data-id="${r.id}">Öffnen</button>
+        </div>
       </li>`;
     })
     .join('');
 
-  return `<ul class="kunden-dokumente__list">${rows}</ul>`;
-}
-
-function formatAngeboteCount(count) {
-  if (count === 0) return 'Keine Angebote';
-  if (count === 1) return '1 Angebot';
-  return `${count} Angebote`;
-}
-
-function renderKundenDokumenteHtml(angebote, rechnungen) {
-  if (angebote.length === 0 && rechnungen.length === 0) return '';
-
-  const angRows = angebote
-    .map(
-      (a) => `
-      <li class="kunden-dokumente__row">
-        <span class="kunden-dokumente__nr-row">
-          <span class="kunden-dokumente__nr">${escapeHtml(a.angebotNr)}</span>
-          ${angebotProzessStatusBadgeHtml(
-            a.prozessStatus,
-            escapeHtml(t(angebotProzessStatusLabelKey(a.prozessStatus)))
-          )}
-        </span>
-        <span class="kunden-dokumente__actions">
-          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-pdf" data-id="${a.id}">PDF</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-angebot-edit" data-id="${a.id}">Öffnen</button>
-        </span>
-      </li>`
-    )
-    .join('');
-
-  const rechnRows = rechnungen
-    .map(
-      (r) => `
-      <li class="kunden-dokumente__row">
-        <span class="kunden-dokumente__nr">${r.rechnungNr}</span>
-        <span class="kunden-dokumente__actions">
-          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-rechnung-pdf" data-id="${r.id}">PDF</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-action="kunde-rechnung-edit" data-id="${r.id}">Öffnen</button>
-        </span>
-      </li>`
-    )
-    .join('');
-
   return `
-    <div class="kunden-dokumente">
+    <div class="kunden-dokumente kunden-dokumente--detail">
       ${
-        angebote.length
-          ? `<div class="kunden-dokumente__block">
-        <p class="kunden-dokumente__heading">Angebote (${angebote.length})</p>
-        <ul class="kunden-dokumente__list">${angRows}</ul>
-      </div>`
+        sortedAngebote.length
+          ? renderKundenDokumenteBlock(
+              'angebote',
+              t('kunden.offersHeading', { count: sortedAngebote.length }),
+              angebotPage,
+              angRows
+            )
           : ''
       }
       ${
-        rechnungen.length
-          ? `<div class="kunden-dokumente__block">
-        <p class="kunden-dokumente__heading">Rechnungen (${rechnungen.length})</p>
-        <ul class="kunden-dokumente__list">${rechnRows}</ul>
-      </div>`
+        sortedRechnungen.length
+          ? renderKundenDokumenteBlock(
+              'rechnungen',
+              t('kunden.invoicesHeading', { count: sortedRechnungen.length }),
+              rechnungPage,
+              rechnRows
+            )
           : ''
       }
     </div>`;
+}
+
+function renderKundenDetailDokumentePanel() {
+  if (!els.kundenDetailDokumente) return;
+  els.kundenDetailDokumente.innerHTML = renderKundenDokumenteHtml(
+    state.kundeDetailDocs.angebote,
+    state.kundeDetailDocs.rechnungen,
+    state.kundeDetailDocsPage
+  );
 }
 
 async function getFormAngebot() {
@@ -2027,12 +2094,16 @@ function setProfilPasswordStatus(message, isError = false) {
 function updateProfilSchemaPreviews(tpl = getPdfTemplate()) {
   const angebotSchema = tpl.angebot?.nummerSchema || '';
   const rechnungSchema = tpl.rechnung?.nummerSchema || '';
+  const kundeSchema = tpl.kunde?.nummerSchema || '';
 
   if (els.profilAngebotNummerSchema) {
     els.profilAngebotNummerSchema.textContent = angebotSchema || '—';
   }
   if (els.profilRechnungNummerSchema) {
     els.profilRechnungNummerSchema.textContent = rechnungSchema || '—';
+  }
+  if (els.profilKundeNummerSchema) {
+    els.profilKundeNummerSchema.textContent = kundeSchema || '—';
   }
 
   const updatePreview = (schema, preview, previewFn) => {
@@ -2050,6 +2121,7 @@ function updateProfilSchemaPreviews(tpl = getPdfTemplate()) {
 
   updatePreview(angebotSchema, els.profilAngebotSchemaPreview, previewAngebotsnummer);
   updatePreview(rechnungSchema, els.profilRechnungSchemaPreview, previewRechnungsnummer);
+  updatePreview(kundeSchema, els.profilKundeSchemaPreview, previewKundennummer);
 }
 
 async function renderProfilView() {
@@ -2239,6 +2311,46 @@ function formatAdminYesNo(value) {
   return value ? 'Ja' : 'Nein';
 }
 
+function setAdminSiteSettingsStatus(message, isError = false) {
+  if (!els.adminSiteSettingsStatus) return;
+  if (!message) {
+    els.adminSiteSettingsStatus.textContent = '';
+    els.adminSiteSettingsStatus.classList.add('hidden');
+    return;
+  }
+  els.adminSiteSettingsStatus.textContent = message;
+  els.adminSiteSettingsStatus.classList.remove('hidden');
+  els.adminSiteSettingsStatus.classList.toggle('settings-status--error', isError);
+}
+
+function renderAdminSiteSettingsControls(visible = getAlphaBannerVisible()) {
+  if (!els.adminAlphaBannerStatus || !els.adminAlphaBannerToggle) return;
+  const isVisible = Boolean(visible);
+  els.adminAlphaBannerStatus.textContent = isVisible
+    ? t('admin.alphaBannerVisible')
+    : t('admin.alphaBannerHidden');
+  els.adminAlphaBannerStatus.classList.toggle('is-visible', isVisible);
+  els.adminAlphaBannerToggle.textContent = isVisible
+    ? t('admin.alphaBannerHide')
+    : t('admin.alphaBannerShow');
+  els.adminAlphaBannerToggle.setAttribute(
+    'aria-pressed',
+    isVisible ? 'true' : 'false'
+  );
+}
+
+async function loadAdminSiteSettingsControls() {
+  if (!isAdmin() || !els.adminAlphaBannerToggle) return;
+  try {
+    const data = await loadAdminSiteSettings();
+    applyAlphaBannerVisible(data?.alphaBannerVisible !== false);
+    renderAdminSiteSettingsControls(data?.alphaBannerVisible !== false);
+  } catch (err) {
+    renderAdminSiteSettingsControls(getAlphaBannerVisible());
+    setAdminSiteSettingsStatus(err.message || t('admin.alphaBannerSaveFailed'), true);
+  }
+}
+
 function renderAdminOverview(overview) {
   if (!els.adminOverview) return;
   if (!overview) {
@@ -2404,6 +2516,8 @@ async function renderAdminView() {
     els.adminUserList.innerHTML = '<p class="empty">Keine Berechtigung.</p>';
     return;
   }
+
+  await loadAdminSiteSettingsControls();
 
   els.adminUserList.innerHTML = '<p class="empty">Lade Nutzer…</p>';
   renderAdminOverview(null);
@@ -2791,7 +2905,6 @@ function setBereich(bereich, viewAfter) {
   closeBereichDropdown();
   state.bereich = bereich;
   saveBereich(bereich);
-  state.expandedKundeDokumenteId = null;
   syncBereichSwitcher();
   syncBereichNav();
 
@@ -3734,12 +3847,15 @@ function closeKundenForm() {
 
 function closeKundenDetail() {
   state.detailKundeId = null;
+  state.kundeDetailDocs = { angebote: [], rechnungen: [] };
+  state.kundeDetailDocsPage = { angebote: 0, rechnungen: 0 };
   els.kundenDetail?.classList.add('hidden');
 }
 
 async function openKundenDetail(kundeId) {
   closeKundenForm();
   state.detailKundeId = kundeId;
+  state.kundeDetailDocsPage = { angebote: 0, rechnungen: 0 };
   els.kundenDetail?.classList.remove('hidden');
   await refreshKundenDetail();
 }
@@ -3783,7 +3899,8 @@ async function refreshKundenDetail() {
       els.kundenDetailNotizWrap.classList.add('hidden');
     }
 
-    els.kundenDetailDokumente.innerHTML = renderKundenDokumenteHtml(kAngebote, kRechnungen);
+    state.kundeDetailDocs = { angebote: kAngebote, rechnungen: kRechnungen };
+    renderKundenDetailDokumentePanel();
   } catch (err) {
     els.kundenDetailDokumente.innerHTML = `<p class="empty">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
   }
@@ -3971,15 +4088,10 @@ async function saveKatalogForm(e) {
 
 async function renderKundenView() {
   const q = state.kundenSuche.trim().toLowerCase();
-  const showRechnungen = state.bereich === 'rechnungen';
   els.kundenListe.innerHTML = `<p class="empty">${t('kunden.loading')}</p>`;
 
   try {
-    const [kunden, angebote, rechnungen] = await Promise.all([
-      getAllKunden(),
-      getAllAngebote(),
-      getAllRechnungen(),
-    ]);
+    const kunden = await getAllKunden();
 
     let filtered = kunden;
 
@@ -3988,59 +4100,28 @@ async function renderKundenView() {
     }
 
     if (filtered.length === 0) {
-      state.expandedKundeDokumenteId = null;
       els.kundenListe.innerHTML = `<p class="empty">${
         q ? t('kunden.notFound') : t('kunden.none')
       }</p>`;
       return;
     }
 
-    if (!filtered.some((k) => k.id === state.expandedKundeDokumenteId)) {
-      state.expandedKundeDokumenteId = null;
-    }
-
     els.kundenListe.innerHTML = filtered
       .map((k) => {
         const kontakt = [k.telefon, k.email].filter((v) => (v || '').trim()).join(' · ');
         const nrPrefix = k.kundenNr ? `<span class="kunden-info__nr">${escapeHtml(k.kundenNr)}</span> · ` : '';
-        const docs = dokumenteFuerKunde(k.id, k.name, angebote, rechnungen);
-        const kundenDokumente = showRechnungen ? docs.rechnungen : docs.angebote;
-        const docCount = kundenDokumente.length;
-        const isExpanded = state.expandedKundeDokumenteId === k.id;
-        const countLabel = showRechnungen
-          ? formatRechnungenCount(docCount)
-          : formatAngeboteCount(docCount);
-        const toggleLabel = showRechnungen ? 'Rechnungen anzeigen' : 'Angebote anzeigen';
-        const listHtml = showRechnungen
-          ? renderKundenRechnungenListHtml(kundenDokumente)
-          : renderKundenAngeboteListHtml(kundenDokumente);
 
         return `
         <article class="kunden-item" data-id="${k.id}">
-          <div class="kunden-item__header">
-            <div class="kunden-info">
-              <h3>${nrPrefix}${escapeHtml(k.name)}</h3>
-              ${formatKundeAnredeLabel(k.anrede) !== '—' ? `<p class="kunden-info__anrede">${escapeHtml(formatKundeAnredeLabel(k.anrede))}</p>` : ''}
-              ${formatAdresseHtml(k) ? `<p>${formatAdresseHtml(k)}</p>` : ''}
-              ${kontakt ? `<p class="kunden-info__kontakt">${escapeHtml(kontakt)}</p>` : ''}
-            </div>
-            <div class="kunden-actions">
-              <button type="button" class="btn btn-primary btn-sm" data-action="show-kunde-detail" data-id="${k.id}">${escapeHtml(t('common.open'))}</button>
-              ${editIconButton(t('common.edit'), `data-action="edit-kunde" data-id="${k.id}"`)}
-              ${deleteIconButton(t('common.delete'), `data-action="delete-kunde" data-id="${k.id}"`)}
-            </div>
+          <div class="kunden-info">
+            <h3>${nrPrefix}${escapeHtml(k.name)}</h3>
+            ${formatKundeAnredeLabel(k.anrede) !== '—' ? `<p class="kunden-info__anrede">${escapeHtml(formatKundeAnredeLabel(k.anrede))}</p>` : ''}
+            ${formatAdresseHtml(k) ? `<p>${formatAdresseHtml(k)}</p>` : ''}
+            ${kontakt ? `<p class="kunden-info__kontakt">${escapeHtml(kontakt)}</p>` : ''}
           </div>
-          <div class="kunden-item__dokumente">
-            <span class="kunden-item__dokumente-count">${countLabel}</span>
-            ${
-              docCount
-                ? `<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-kunde-dokumente" data-id="${k.id}" aria-expanded="${isExpanded}">
-                    ${isExpanded ? 'Ausblenden' : toggleLabel}
-                  </button>`
-                : ''
-            }
+          <div class="kunden-actions">
+            ${renderKundenActionsMenuHtml(k.id)}
           </div>
-          ${isExpanded ? `<div class="kunden-item__dokumente-panel">${listHtml}</div>` : ''}
         </article>
       `;
       })
@@ -4050,7 +4131,7 @@ async function renderKundenView() {
       await refreshKundenDetail();
     }
   } catch (err) {
-    els.kundenListe.innerHTML = `<p class="empty">Fehler beim Laden: ${err.message}</p>`;
+    els.kundenListe.innerHTML = `<p class="empty">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
   }
 }
 
@@ -4125,7 +4206,7 @@ async function saveKundenForm(e) {
   const bestehend = isEdit ? await getKunde(state.editingKundeId) : null;
 
   const formAdresse = readAdresseFieldPair(els.kundenFormStrasse, els.kundenFormPlzOrt);
-  let kundenNr = bestehend?.kundenNr || '';
+  let kundenNr = els.kundenFormKundenNr?.value.trim() || '';
   if (!kundenNr) {
     kundenNr = await generiereKundennummer(getAllKunden);
   }
@@ -4818,6 +4899,22 @@ function bindAppEvents() {
       select.disabled = false;
     }
   });
+  els.adminAlphaBannerToggle?.addEventListener('click', async () => {
+    if (!isAdmin()) return;
+    const nextVisible = !getAlphaBannerVisible();
+    els.adminAlphaBannerToggle.disabled = true;
+    setAdminSiteSettingsStatus('');
+    try {
+      const data = await updateAdminSiteSettings({ alphaBannerVisible: nextVisible });
+      applyAlphaBannerVisible(data?.alphaBannerVisible !== false);
+      renderAdminSiteSettingsControls(data?.alphaBannerVisible !== false);
+      setAdminSiteSettingsStatus(t('admin.alphaBannerSaved'));
+    } catch (err) {
+      setAdminSiteSettingsStatus(err.message || t('admin.alphaBannerSaveFailed'), true);
+    } finally {
+      els.adminAlphaBannerToggle.disabled = false;
+    }
+  });
   els.adminUserList?.addEventListener('click', (e) => {
     const openBtn = e.target.closest('[data-admin-open-tenant]');
     if (openBtn) {
@@ -5119,6 +5216,15 @@ function bindAppEvents() {
   });
 
   els.kundenDetailDokumente?.addEventListener('click', async (e) => {
+    const pageBtn = e.target.closest('[data-action="kunde-docs-page"]');
+    if (pageBtn) {
+      const kind = pageBtn.dataset.kind === 'rechnungen' ? 'rechnungen' : 'angebote';
+      const dir = pageBtn.dataset.dir === 'next' ? 1 : -1;
+      state.kundeDetailDocsPage[kind] = Math.max(0, (state.kundeDetailDocsPage[kind] || 0) + dir);
+      renderKundenDetailDokumentePanel();
+      return;
+    }
+
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const { action, id } = btn.dataset;
@@ -5179,44 +5285,16 @@ function bindAppEvents() {
     const { action, id } = btn.dataset;
 
     try {
+      if (action === 'toggle-kunde-actions-menu') {
+        e.stopPropagation();
+        toggleKundenActionsMenu(btn);
+        return;
+      }
+
+      closeAllKundenActionsMenus();
+
       if (action === 'show-kunde-detail') {
         await openKundenDetail(id);
-        return;
-      }
-
-      if (action === 'toggle-kunde-dokumente') {
-        state.expandedKundeDokumenteId = state.expandedKundeDokumenteId === id ? null : id;
-        await renderKundenView();
-        return;
-      }
-
-      if (action === 'kunde-angebot-rechnung') {
-        const angebot = await getAngebot(id);
-        if (angebot) await loadAngebotAsRechnungEntwurf(angebot);
-        return;
-      }
-
-      if (action === 'kunde-angebot-pdf') {
-        const angebot = await getAngebot(id);
-        if (angebot) openPdfPreview(angebot, resolvePostenDetails(angebot.posten));
-        return;
-      }
-
-      if (action === 'kunde-angebot-edit') {
-        const angebot = await getAngebot(id);
-        if (angebot) await loadAngebotIntoForm(angebot);
-        return;
-      }
-
-      if (action === 'kunde-rechnung-pdf') {
-        const rechnung = await getRechnung(id);
-        if (rechnung) openRechnungPdfPreview(rechnung, resolvePostenDetails(rechnung.posten));
-        return;
-      }
-
-      if (action === 'kunde-rechnung-edit') {
-        const rechnung = await getRechnung(id);
-        if (rechnung) await loadRechnungIntoForm(rechnung);
         return;
       }
 
@@ -5230,7 +5308,6 @@ function bindAppEvents() {
           await deleteKunde(id);
           if (state.editingKundeId === id) closeKundenForm();
           if (state.detailKundeId === id) closeKundenDetail();
-          if (state.expandedKundeDokumenteId === id) state.expandedKundeDokumenteId = null;
           renderKundenView();
         }
       }
@@ -5239,7 +5316,15 @@ function bindAppEvents() {
     }
   });
 
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.kunden-actions-menu')) return;
+    closeAllKundenActionsMenus();
+  });
+
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAllKundenActionsMenus();
+    }
     if (e.key === 'Escape' && els.bereichSwitcherWrap?.classList.contains('is-open')) {
       closeBereichDropdown();
       return;
@@ -5476,12 +5561,14 @@ async function refreshLocaleUi() {
   else if (state.view === 'kunden') await renderKundenView();
   else if (state.view === 'katalog') await renderKatalogView();
   else if (state.view === 'dashboard') await renderDashboardView();
+  else if (state.view === 'admin') renderAdminSiteSettingsControls();
   else if (state.detailKundeId) await refreshKundenDetail();
 }
 
 async function bootstrap() {
   initTheme();
   initI18n();
+  await loadPublicSiteSettings();
   initLangSwitcher();
   mountStaticActionIcons();
   onLocaleChange(() => {

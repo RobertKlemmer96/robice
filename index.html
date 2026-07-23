@@ -1697,7 +1697,7 @@
                 <span class="info-tip info-tip--desktop">
                   <button type="button" class="info-tip__btn" aria-describedby="profil-schema-tip">i</button>
                   <span id="profil-schema-tip" class="info-tip__flyout" role="tooltip" data-i18n="profil.schemaTip">
-                    Die Nummernschemas werden bei der Einrichtung festgelegt und können im Profil nicht geändert werden.
+                    Die Nummernschemas werden bei der Einrichtung festgelegt und können im Profil nicht geändert werden. Einzelne Kundennummern bearbeiten Sie unter Kunden.
                   </span>
                 </span>
               </div>
@@ -1716,6 +1716,14 @@
                   <span class="profil-schema-preview">
                     <span data-i18n="profil.preview">Vorschau</span>:
                     <strong id="profil-rechnung-schema-preview">—</strong>
+                  </span>
+                </div>
+                <div class="profil-field profil-field--static">
+                  <span class="profil-field__label" data-i18n="profil.customerNumber">Kundennummer</span>
+                  <span id="profil-kunde-nummer-schema" class="profil-field__value profil-field__value--mono">—</span>
+                  <span class="profil-schema-preview">
+                    <span data-i18n="profil.preview">Vorschau</span>:
+                    <strong id="profil-kunde-schema-preview">—</strong>
                   </span>
                 </div>
               </div>
@@ -1741,6 +1749,17 @@
           <section class="card">
             <h2>Administration</h2>
             <p class="settings-lead">Übersicht aller Nutzer, Mandanten und Dokumente auf Quotavo.</p>
+            <section id="admin-site-settings" class="admin-site-settings" aria-labelledby="admin-site-settings-title">
+              <h3 id="admin-site-settings-title" data-i18n="admin.siteSettingsTitle">Website</h3>
+              <p class="settings-lead" data-i18n="admin.alphaBannerLead">
+                Alpha-Hinweisleiste oben auf Landingpage und in der App für alle Besucher.
+              </p>
+              <div class="admin-site-settings__actions">
+                <span id="admin-alpha-banner-status" class="admin-site-settings__status" aria-live="polite"></span>
+                <button type="button" id="admin-alpha-banner-toggle" class="btn btn-ghost btn-sm"></button>
+              </div>
+              <p id="admin-site-settings-status" class="settings-status hidden" role="status"></p>
+            </section>
             <div id="admin-overview" class="admin-overview" aria-live="polite"></div>
             <div id="admin-user-list" class="admin-user-list" aria-live="polite"></div>
           </section>
@@ -1869,10 +1888,10 @@
                   <input
                     type="text"
                     id="kunden-form-kunden-nr"
-                    readonly
-                    tabindex="-1"
+                    spellcheck="false"
+                    autocomplete="off"
                     data-i18n-placeholder="form.customerNumberPlaceholder"
-                    placeholder="Wird beim Speichern vergeben"
+                    placeholder="Leer = automatisch nach Schema"
                   />
                 </label>
               </div>
@@ -2127,9 +2146,9 @@
             </section>
 
             <section class="onboarding-step hidden" data-onboarding-step="nummern">
-              <h2>Dokumentnummern</h2>
+              <h2>Nummernschemas</h2>
               <p class="settings-lead">
-                Legen Sie fest, wie Angebots- und Rechnungsnummern automatisch vergeben werden.
+                Legen Sie fest, wie Angebots-, Rechnungs- und Kundennummern automatisch vergeben werden.
               </p>
               <form id="onboarding-nummern-form" class="form-grid">
                 <label class="full">
@@ -2166,6 +2185,24 @@
                 <p class="schema-hint schema-hint--examples">
                   Beispiel: <code>RE-{YYYY}{MM}-{NR:4}</code> ergibt z. B.
                   <code>RE-202607-0001</code>.
+                </p>
+
+                <label class="full">
+                  Kundennummer-Schema
+                  <input
+                    type="text"
+                    name="kunde-nummer-schema"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder="K-{NR:5}"
+                  />
+                </label>
+                <p class="schema-hint">
+                  Vorschau: <strong class="onboarding-kunde-preview">—</strong>
+                </p>
+                <p class="schema-hint schema-hint--examples">
+                  Beispiel: <code>K-{NR:5}</code> ergibt z. B. <code>K-00001</code>. Einzelne Nummern können
+                  später unter Kunden angepasst werden.
                 </p>
               </form>
             </section>
