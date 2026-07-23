@@ -4118,10 +4118,6 @@ body:has(#app:not(.hidden)) {
   color: inherit;
 }
 
-.app-nav__group[data-nav-group='rechnungen'].is-active .app-nav__trigger {
-  color: var(--rechnungen);
-}
-
 .app-nav__chevron {
   width: 13px;
   height: 13px;
@@ -4200,15 +4196,15 @@ body:has(#app:not(.hidden)) {
   color: var(--accent);
 }
 
-.app-nav__group[data-nav-group='rechnungen'] .app-nav__link::before {
+.app-nav__link[data-nav-view='rechnung-archiv']::before {
   background: var(--rechnungen);
 }
 
-.app-nav__group[data-nav-group='rechnungen'] .app-nav__link.is-current {
+.app-nav__link[data-nav-view='rechnung-archiv'].is-current {
   background: color-mix(in srgb, var(--rechnungen) 14%, transparent);
 }
 
-.app-nav__group[data-nav-group='rechnungen'] .app-nav__link.is-current .app-nav__link-title {
+.app-nav__link[data-nav-view='rechnung-archiv'].is-current .app-nav__link-title {
   color: var(--rechnungen);
 }
 

@@ -2783,11 +2783,11 @@ function syncAdminNav() {
 
 const NAV_VIEW_GROUPS = {
   dashboard: 'dashboard',
-  neu: 'angebote',
-  archiv: 'angebote',
+  neu: 'unterlagen',
+  archiv: 'unterlagen',
   prozesse: 'prozesse',
-  'rechnung-neu': 'rechnungen',
-  'rechnung-archiv': 'rechnungen',
+  'rechnung-neu': 'unterlagen',
+  'rechnung-archiv': 'unterlagen',
   kunden: 'stammdaten',
   katalog: 'stammdaten',
   'pdf-vorlage': 'einstellungen',
@@ -5696,9 +5696,13 @@ async function bootstrap() {
   initOnboarding({
     onComplete: async () => {
       await refreshSession();
+      await loadPdfTemplate();
       syncProfileButton();
       await resetForm();
       await resetRechnungForm();
+      if (state.view === 'dashboard') {
+        await renderDashboardView();
+      }
     },
   });
   bindAuthEvents();
