@@ -153,6 +153,13 @@ function runMigrations(database) {
     database.exec(`ALTER TABLE tenants ADD COLUMN notifications_seen_at TEXT`);
   }
 
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id TEXT PRIMARY KEY,
+      applied_at TEXT NOT NULL
+    )
+  `);
+
   const notificationsSeenMigration = database
     .prepare('SELECT 1 FROM schema_migrations WHERE id = ?')
     .get('tenant_notifications_seen_at_v1');
@@ -164,13 +171,6 @@ function runMigrations(database) {
       .prepare('INSERT INTO schema_migrations (id, applied_at) VALUES (?, ?)')
       .run('tenant_notifications_seen_at_v1', new Date().toISOString());
   }
-
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
-      id TEXT PRIMARY KEY,
-      applied_at TEXT NOT NULL
-    )
-  `);
 
   const adminOnboardingMigration = database
     .prepare('SELECT 1 FROM schema_migrations WHERE id = ?')
