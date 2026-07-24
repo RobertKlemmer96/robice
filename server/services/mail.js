@@ -14,6 +14,9 @@ function getTransporter() {
       user: config.smtp.user,
       pass: config.smtp.pass,
     },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
 }
 
@@ -56,7 +59,12 @@ export async function sendDocumentEmail({ to, bcc, subject, text, filename, pdfB
     );
   }
 
-  await transporter.verify();
+  await Promise.race([
+    transporter.verify(),
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('SMTP-Verbindung konnte nicht hergestellt werden (Timeout).')), 12_000);
+    }),
+  ]);
 
   const info = await transporter.sendMail({
     from: config.smtp.from,

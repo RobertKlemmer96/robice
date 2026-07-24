@@ -468,6 +468,7 @@ const els = {
   documentPreviewSendBtn: document.getElementById('document-preview-send-btn'),
   documentPreviewTitle: document.getElementById('document-preview-title'),
   documentPreviewPlanHint: document.getElementById('document-preview-plan-hint'),
+  documentPreviewStatus: document.getElementById('document-preview-status'),
 };
 
 let cachedPlanLimits = null;
@@ -519,21 +520,53 @@ function updateDocumentPreviewModalPlanState() {
   const titleEl = els.documentPreviewTitle;
   const sendBtn = els.documentPreviewSendBtn;
   const hintEl = els.documentPreviewPlanHint;
+  const isSending = sendBtn?.dataset.sending === 'true';
 
   if (titleEl) {
     titleEl.textContent = canSend ? t('pdf.preview') : t('pdf.previewTitleOnly');
   }
   if (sendBtn) {
-    sendBtn.disabled = !canSend;
-    sendBtn.setAttribute('aria-disabled', String(!canSend));
-    sendBtn.classList.toggle('is-disabled', !canSend);
-    sendBtn.textContent = canSend ? t('pdf.send') : t('pdf.sendLocked');
+    sendBtn.disabled = !canSend || isSending;
+    sendBtn.setAttribute('aria-disabled', String(!canSend || isSending));
+    sendBtn.classList.toggle('is-disabled', !canSend || isSending);
+    sendBtn.textContent = isSending
+      ? t('pdf.sending')
+      : canSend
+        ? t('pdf.send')
+        : t('pdf.sendLocked');
     sendBtn.title = canSend ? '' : t('pdf.sendLockedHint');
   }
   if (hintEl) {
     hintEl.textContent = canSend ? '' : t('pdf.sendLockedHint');
     hintEl.classList.toggle('hidden', canSend);
   }
+}
+
+function setDocumentPreviewSending(sending) {
+  const sendBtn = els.documentPreviewSendBtn;
+  const backBtn = els.documentPreviewModal?.querySelector('[data-close-document-preview].btn');
+  if (sendBtn) {
+    sendBtn.dataset.sending = sending ? 'true' : 'false';
+  }
+  if (backBtn) {
+    backBtn.disabled = sending;
+    backBtn.setAttribute('aria-disabled', String(sending));
+    backBtn.classList.toggle('is-disabled', sending);
+  }
+  updateDocumentPreviewModalPlanState();
+}
+
+function setDocumentPreviewStatus(message = '', isError = false) {
+  if (!els.documentPreviewStatus) return;
+  if (!message) {
+    els.documentPreviewStatus.textContent = '';
+    els.documentPreviewStatus.classList.add('hidden');
+    els.documentPreviewStatus.classList.remove('settings-status--error');
+    return;
+  }
+  els.documentPreviewStatus.textContent = message;
+  els.documentPreviewStatus.classList.toggle('settings-status--error', isError);
+  els.documentPreviewStatus.classList.remove('hidden');
 }
 
 const angebotPostenEditor = createPostenEditor(angebotPostenState, {
@@ -4500,6 +4533,8 @@ async function openDocumentPreviewModal(kind) {
 
   documentPreviewKind = previewData.type;
   documentPreviewData = previewData;
+  setDocumentPreviewStatus('');
+  setDocumentPreviewSending(false);
   if (previewData.type === 'angebot' && !state.angebot.editingId && previewData.document?.id) {
     state.angebot.editingId = previewData.document.id;
   }
@@ -4586,25 +4621,48 @@ function closeDocumentPreviewModal() {
   els.documentPreviewModal.setAttribute('aria-hidden', 'true');
   documentPreviewKind = null;
   documentPreviewData = null;
+  setDocumentPreviewSending(false);
+  setDocumentPreviewStatus('');
   if (els.documentPreviewContent) els.documentPreviewContent.innerHTML = '';
 }
 
 async function sendDocumentFromPreviewModal() {
   const kind = documentPreviewKind;
-  if (!kind) return;
-
-  if (!canCurrentTenantSendMail()) {
-    alert(t('planLimits.mailLocked'));
+  if (!kind) {
+    setDocumentPreviewStatus(t('pdf.sendErrorNoDocument'), true);
     return;
   }
 
-  let sent = false;
-  if (kind === 'rechnung') {
-    sent = await speichernUndRechnungPdfAnKundenSenden();
-  } else {
-    sent = await speichernUndPdfAnKundenSenden();
+  if (!canCurrentTenantSendMail()) {
+    setDocumentPreviewStatus(t('planLimits.mailLocked'), true);
+    return;
   }
-  if (sent) closeDocumentPreviewModal();
+
+  setDocumentPreviewSending(true);
+  setDocumentPreviewStatus(t('pdf.sending'));
+
+  try {
+    const result =
+      kind === 'rechnung'
+        ? await speichernUndRechnungPdfAnKundenSenden({ notify: 'none' })
+        : await speichernUndPdfAnKundenSenden({ notify: 'none' });
+
+    if (result.sent) {
+      setDocumentPreviewStatus(result.message);
+      window.setTimeout(() => closeDocumentPreviewModal(), 1800);
+      return;
+    }
+
+    if (result.message) {
+      setDocumentPreviewStatus(result.message, true);
+    }
+  } catch (err) {
+    setDocumentPreviewStatus(err.message || t('pdf.sendFailed'), true);
+  } finally {
+    setDocumentPreviewSending(false);
+    setAngebotFooterBusy(false);
+    setRechnungFooterBusy(false);
+  }
 }
 
 function arrayBufferToBase64(buffer) {
@@ -4759,6 +4817,7 @@ async function speichernAngebot() {
   } catch (err) {
     alert(`Speichern fehlgeschlagen: ${err.message}`);
   } finally {
+    setAngebotFooterBusy(false);
     angebotPostenEditor.render();
   }
 }
@@ -4791,32 +4850,35 @@ async function speichernUndPdf() {
   }
 }
 
-async function speichernUndPdfAnKundenSenden() {
+async function speichernUndPdfAnKundenSenden({ notify = 'alert' } = {}) {
   if (!canCurrentTenantSendMail()) {
-    alert(t('planLimits.mailLocked'));
-    return false;
+    const message = t('planLimits.mailLocked');
+    if (notify === 'alert') alert(message);
+    return { sent: false, message };
   }
   setAngebotFooterBusy(true);
-  let sent = false;
   try {
     await ensureDocumentMailReady(state.angebot.selectedKundeId, els.kundeEmail);
     const result = await persistAngebotFromForm();
     if (!result) {
-      alert(getPersistIncompleteMessage('angebot'));
-      return false;
+      const message = getPersistIncompleteMessage('angebot');
+      if (notify === 'alert') alert(message);
+      return { sent: false, message };
     }
     const { kundeEmail, sendResult } = await sendAngebotPdfByMail(result.angebot, result.posten);
-    alert(formatDocumentSendSuccess('angebot', kundeEmail, sendResult));
+    const message = formatDocumentSendSuccess('angebot', kundeEmail, sendResult);
+    if (notify === 'alert') alert(message);
     const saved = await getAngebot(result.angebot.id);
     if (saved) await loadAngebotIntoForm(saved);
-    sent = true;
+    return { sent: true, message };
   } catch (err) {
-    alert(`Versand fehlgeschlagen: ${err.message}`);
+    const message = `Versand fehlgeschlagen: ${err.message}`;
+    if (notify === 'alert') alert(message);
+    return { sent: false, message };
   } finally {
     setAngebotFooterBusy(false);
     angebotPostenEditor.render();
   }
-  return sent;
 }
 
 async function speichernRechnung() {
@@ -4857,32 +4919,35 @@ async function speichernUndRechnungPdf() {
   }
 }
 
-async function speichernUndRechnungPdfAnKundenSenden() {
+async function speichernUndRechnungPdfAnKundenSenden({ notify = 'alert' } = {}) {
   if (!canCurrentTenantSendMail()) {
-    alert(t('planLimits.mailLocked'));
-    return false;
+    const message = t('planLimits.mailLocked');
+    if (notify === 'alert') alert(message);
+    return { sent: false, message };
   }
   setRechnungFooterBusy(true);
-  let sent = false;
   try {
     await ensureDocumentMailReady(state.rechnung.selectedKundeId, els.rechnungKundeEmail);
     const result = await persistRechnungFromForm();
     if (!result) {
-      alert(getPersistIncompleteMessage('rechnung'));
-      return false;
+      const message = getPersistIncompleteMessage('rechnung');
+      if (notify === 'alert') alert(message);
+      return { sent: false, message };
     }
     const { kundeEmail, sendResult } = await sendRechnungPdfByMail(result.rechnung, result.posten);
-    alert(formatDocumentSendSuccess('rechnung', kundeEmail, sendResult));
+    const message = formatDocumentSendSuccess('rechnung', kundeEmail, sendResult);
+    if (notify === 'alert') alert(message);
     const saved = await getRechnung(result.rechnung.id);
     if (saved) await loadRechnungIntoForm(saved);
-    sent = true;
+    return { sent: true, message };
   } catch (err) {
-    alert(`Versand fehlgeschlagen: ${err.message}`);
+    const message = `Versand fehlgeschlagen: ${err.message}`;
+    if (notify === 'alert') alert(message);
+    return { sent: false, message };
   } finally {
     setRechnungFooterBusy(false);
     rechnungPostenEditor.render();
   }
-  return sent;
 }
 
 let appFlowGeneration = 0;
@@ -5291,7 +5356,9 @@ function bindAppEvents() {
   els.documentPreviewModal?.querySelectorAll('[data-close-document-preview]').forEach((el) => {
     el.addEventListener('click', () => closeDocumentPreviewModal());
   });
-  els.documentPreviewSendBtn?.addEventListener('click', () => sendDocumentFromPreviewModal());
+  els.documentPreviewSendBtn?.addEventListener('click', () => {
+    void sendDocumentFromPreviewModal();
+  });
   els.documentPreviewViewport?.addEventListener('dblclick', () => {
     void openDocumentPreviewPdfTab();
   });
