@@ -36,9 +36,9 @@ export const SEO_PAGES = {
   },
   faq: {
     path: '/faq',
-    title: 'FAQ – Quotavo als Tool-Time-Alternative',
+    title: 'FAQ – Quotavo als sevDesk-Alternative',
     description:
-      'Häufige Fragen zu Quotavo: Kosten, Tool-Time-Wechsel, CSV-Import, Handwerk, PDF-Vorlagen, E-Mail-Versand und Katalog.',
+      'Häufige Fragen zu Quotavo: Kosten, sevDesk-Wechsel, Handwerk, PDF-Vorlagen, E-Mail-Versand, DATEV-Export und Katalog.',
     ogTitle: 'Quotavo FAQ',
     keywords: 'FAQ, Hilfe, Quotavo, Angebote, Rechnungen',
     schema: 'faq',
@@ -54,7 +54,7 @@ export const SEO_PAGES = {
     path: '/angebot-erstellen',
     title: 'Angebot erstellen als PDF – schnell & günstig | Quotavo',
     description:
-      'Professionelles Angebot online erstellen — schlanke Tool-Time-Alternative: Katalog, MwSt., PDF-Export und E-Mail-Versand für Handwerker und Kleinbetriebe.',
+      'Professionelles Angebot online erstellen — schlanke sevDesk-Alternative: Katalog, MwSt., PDF-Export und E-Mail-Versand für Handwerker und Kleinbetriebe.',
     ogTitle: 'Angebot erstellen als PDF – Quotavo',
     keywords:
       'Angebot erstellen, Angebot PDF, Angebot Vorlage, Angebot online, Angebotssoftware, Dienstleister',
@@ -72,23 +72,23 @@ export const SEO_PAGES = {
   },
   'angebot-handwerker': {
     path: '/angebot-handwerker',
-    title: 'Angebot für Handwerker – günstige Tool-Time-Alternative | Quotavo',
+    title: 'Angebot für Handwerker – günstige sevDesk-Alternative | Quotavo',
     description:
-      'Angebote für Elektriker, SHK, Maler und Kleinbetriebe: Leistungskatalog, mobile Nutzung, schnelle PDFs und Online-Bestätigung — schlanker als Tool Time.',
+      'Angebote für Elektriker, SHK, Maler und Kleinbetriebe: Leistungskatalog, mobile Nutzung, schnelle PDFs und Online-Bestätigung — schlanker als sevDesk.',
     ogTitle: 'Angebot für Handwerker – Quotavo',
     keywords:
-      'Angebot Handwerker, Tool Time Alternative Handwerk, SHK Software, Elektriker Angebot, Maler Angebot, Kleinbetrieb Software',
+      'Angebot Handwerker, sevDesk Alternative Handwerk, SHK Software, Elektriker Angebot, Maler Angebot, Kleinbetrieb Software',
     schema: 'guide-handwerker',
   },
-  'tooltime-alternative': {
-    path: '/tooltime-alternative',
-    title: 'Tool Time Alternative – schlank & günstig | Quotavo',
+  'sevdesk-alternative': {
+    path: '/sevdesk-alternative',
+    title: 'sevDesk Alternative – schlank & günstig | Quotavo',
     description:
-      'Quotavo ist die schlanke, günstige Alternative zu Tool Time für Angebote und Rechnungen: KI-Import, CSV-Migration, mobile Nutzung — für Handwerker, Freelancer und Kleinbetriebe.',
-    ogTitle: 'Tool Time Alternative – Quotavo',
+      'Quotavo ist die schlanke, günstige Alternative zu sevDesk für Angebote und Rechnungen: KI-Import, mobile Nutzung, DATEV-Export — für Handwerker, Freelancer und Kleinbetriebe.',
+    ogTitle: 'sevDesk Alternative – Quotavo',
     keywords:
-      'Tool Time Alternative, ToolTime Alternative, günstige Handwerkersoftware, Angebotssoftware Handwerk, Kleinbetrieb Software, Freelancer Rechnung',
-    schema: 'guide-tooltime',
+      'sevDesk Alternative, sevdesk Alternative, günstige Rechnungssoftware, Angebotssoftware Handwerk, Kleinbetrieb Software, Freelancer Rechnung',
+    schema: 'guide-sevdesk',
   },
   'angebot-online-bestaetigen': {
     path: '/angebot-online-bestaetigen',

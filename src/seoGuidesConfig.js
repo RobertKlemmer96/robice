@@ -2,13 +2,13 @@
 export const SEO_GUIDES = {
   'angebot-erstellen': {
     title: 'Angebot erstellen – so geht\'s mit Quotavo',
-    lead: 'Ein professionelles Angebot muss nicht in Word, Excel oder einem teuren Voll-Paket wie Tool Time entstehen. Mit Quotavo erstellen Sie Angebote direkt im Browser — schnell, günstig, inklusive Katalog, MwSt. und PDF-Export.',
+    lead: 'Ein professionelles Angebot muss nicht in Word, Excel oder einer teuren Buchhaltungssoftware wie sevDesk entstehen. Mit Quotavo erstellen Sie Angebote direkt im Browser — schnell, günstig, inklusive Katalog, MwSt. und PDF-Export.',
     sections: [
       {
         heading: 'Warum Angebote digital erstellen?',
         paragraphs: [
           'Papier oder lose Dateien führen zu Medienbrüchen: Kundendaten tippen Sie mehrfach ab, Summen rechnen sich nicht automatisch nach und das Layout wirkt oft uneinheitlich.',
-          'Quotavo bündelt Kundenstamm, Leistungskatalog und PDF-Vorlage in einer Oberfläche — die schlanke Alternative zu Tool Time für Handwerker, Freelancer und Kleinbetriebe.',
+          'Quotavo bündelt Kundenstamm, Leistungskatalog und PDF-Vorlage in einer Oberfläche — die schlanke Alternative zu sevDesk für Handwerker, Freelancer und Kleinbetriebe.',
         ],
       },
       {
@@ -72,7 +72,7 @@ export const SEO_GUIDES = {
   },
   'angebot-handwerker': {
     title: 'Angebot für Handwerker und Kleinbetriebe',
-    lead: 'Als Elektriker, SHK-Betrieb, Maler oder Freelancer brauchen Sie schnelle, saubere Angebote — oft vor Ort oder zwischen zwei Einsätzen. Quotavo ist die schlanke Alternative zu Tool Time: Browser auf PC, Tablet und Smartphone, ohne Disposition und Lager-Overkill.',
+    lead: 'Als Elektriker, SHK-Betrieb, Maler oder Freelancer brauchen Sie schnelle, saubere Angebote — oft vor Ort oder zwischen zwei Einsätzen. Quotavo ist die schlanke Alternative zu sevDesk: Browser auf PC, Tablet und Smartphone, ohne Buchhaltungs-Overkill.',
     sections: [
       {
         heading: 'Typische Anforderungen im Handwerk',
@@ -92,15 +92,15 @@ export const SEO_GUIDES = {
         ],
       },
       {
-        heading: 'Kein Overkill — bewusst schlanker als Tool Time',
+        heading: 'Kein Overkill — bewusst schlanker als sevDesk',
         paragraphs: [
-          'Quotavo ist bewusst schlank: keine Disposition, kein Lager, keine Zeiterfassung. Fokus auf Angebot, Rechnung, Kunde und PDF — genau das, was viele Betriebe statt Excel, Word oder einem teuren Voll-Paket brauchen.',
-          'Wer von Tool Time wechselt, kann Kunden, Angebote, Rechnungen und Katalog-Posten per CSV importieren — ohne jedes Modul nachbauen zu wollen.',
+          'Quotavo ist bewusst schlank: kein vollständiges Buchhaltungsmodul, keine Bankanbindung, kein Beleg-Scanning. Fokus auf Angebot, Rechnung, Kunde und PDF — genau das, was viele Betriebe statt Excel, Word oder einem teuren Voll-Paket brauchen.',
+          'Wer von sevDesk wechselt, muss nicht die komplette Buchhaltung mitnehmen — nur den Teil, der Umsatz bringt: schnelle Angebote, saubere Rechnungen und DATEV-Export für den Steuerberater.',
         ],
       },
     ],
     related: [
-      { href: '/tooltime-alternative', label: 'Tool-Time-Alternative' },
+      { href: '/sevdesk-alternative', label: 'sevDesk-Alternative' },
       { href: '/angebot-erstellen', label: 'Angebot erstellen' },
       { href: '/rechnung-schreiben', label: 'Rechnung schreiben' },
       { href: '/angebot-online-bestaetigen', label: 'Online-Bestätigung' },
@@ -133,14 +133,14 @@ export const SEO_GUIDES = {
       { href: '/handbuch', label: 'Handbuch' },
     ],
   },
-  'tooltime-alternative': {
-    title: 'Tool Time Alternative — schlank, günstig, fokussiert',
-    lead: 'Quotavo ist keine Kopie von Tool Time. Es ist die schlanke, deutlich günstigere Alternative für alle, die vor allem schnell Angebote und Rechnungen erstellen wollen — Handwerker, Freelancer und Kleinbetriebe inklusive.',
+  'sevdesk-alternative': {
+    title: 'sevDesk Alternative — schlank, günstig, fokussiert',
+    lead: 'Quotavo ist keine Kopie von sevDesk. Es ist die schlanke, deutlich günstigere Alternative für alle, die vor allem schnell Angebote und Rechnungen erstellen wollen — Handwerker, Freelancer und Kleinbetriebe inklusive.',
     sections: [
       {
-        heading: 'Warum nicht einfach Tool Time kopieren?',
+        heading: 'Warum nicht einfach sevDesk mitnehmen?',
         paragraphs: [
-          'Tool Time deckt Disposition, Zeiterfassung, Lager, CRM und vieles mehr ab. Das ist stark — kostet aber Zeit, Geld und Schulungsaufwand, wenn Sie eigentlich nur professionelle Angebote und Rechnungen brauchen.',
+          'sevDesk deckt Buchhaltung, Bankanbindung, Belege, Umsatzsteuer-Voranmeldung und vieles mehr ab. Das ist stark — kostet aber Zeit, Geld und Schulungsaufwand, wenn Sie eigentlich nur professionelle Angebote und Rechnungen schnell erledigen wollen.',
           'Erfolgreicher ist oft eine klare Positionierung statt „alles kann alles“. Quotavo konzentriert sich auf den Umsatz-Pfad: Kunde → Angebot → Bestätigung → Rechnung → PDF/E-Mail/DATEV.',
         ],
       },
@@ -148,7 +148,7 @@ export const SEO_GUIDES = {
         heading: 'Wo Quotavo bewusst anders ist',
         steps: [
           'KI-first: KI-Import aus PDFs und automatisierter Datenimport reduzieren Tipparbeit.',
-          'Deutlich günstiger: kostenloser Einstieg, Plus ab 3,99 € — ohne Voll-Paket-Preis.',
+          'Deutlich günstiger: kostenloser Einstieg, Plus ab 3,99 € — ohne Buchhaltungs-Vollpaket.',
           'Spezialisiert auf Angebote & Rechnungen: Elektriker, SHK, Maler und vergleichbare Gewerke.',
           'Bessere mobile Erfahrung: responsive Oberfläche für Büro, Baustelle und unterwegs.',
           'Schnellere Angebotserstellung: Katalog, Kundenstamm, Vorlagen — Angebot in Minuten.',
@@ -156,18 +156,18 @@ export const SEO_GUIDES = {
         ],
       },
       {
-        heading: 'Wechsel von Tool Time — was geht heute?',
+        heading: 'Wechsel von sevDesk — was Sie mitnehmen sollten',
         paragraphs: [
-          'Unter Daten-Import können Sie CSV-Exporte aus Tool Time für Kunden, Angebote, Rechnungen und Katalog-Posten einspielen. Beim erneuten Import werden Katalog-Duplikate aktualisiert statt doppelt angelegt.',
-          'Sie müssen nicht jedes Tool-Time-Modul ersetzen — nur den Teil, der Ihnen Umsatz bringt: saubere Angebote, nachvollziehbare Bestätigungen und rechtskonforme Rechnungen mit ZUGFeRD.',
+          'Kunden und Leistungen legen Sie einmal in Quotavo an — oder nutzen den KI-Import aus bestehenden PDFs. Eine vollständige Buchhaltungs-Migration ist nicht nötig.',
+          'Sie müssen sevDesk nicht komplett ersetzen — nur den Teil, der Ihnen Umsatz bringt: saubere Angebote, nachvollziehbare Bestätigungen und rechtskonforme Rechnungen mit ZUGFeRD und DATEV-Export.',
         ],
       },
       {
         heading: 'Für wen Quotavo die bessere Wahl ist',
         paragraphs: [
-          'Einzelunternehmer und Kleinbetriebe, die Tool Time zu groß oder zu teuer finden.',
+          'Einzelunternehmer und Kleinbetriebe, die sevDesk zu umfangreich oder zu teuer finden.',
           'Handwerksbetriebe, die mobil Angebote schreiben und dem Kunden ein professionelles PDF schicken wollen.',
-          'Freelancer und Dienstleister, die Excel/Word hinter sich lassen, aber kein Voll-ERP brauchen.',
+          'Freelancer und Dienstleister, die Excel/Word hinter sich lassen, aber keine komplette Buchhaltungssoftware brauchen.',
           'Teams, die KI-Unterstützung und schnelle Workflows schätzen — ohne monatelange Einführung.',
         ],
       },
@@ -183,15 +183,15 @@ export const SEO_GUIDES = {
 
 export const SEO_HUB = {
   title: 'Ressourcen & Ratgeber',
-  lead: 'Hilfeseiten, Ratgeber und Dokumentation zu Quotavo — inklusive Tool-Time-Alternative für Handwerk und Kleinbetrieb.',
+  lead: 'Hilfeseiten, Ratgeber und Dokumentation zu Quotavo — inklusive sevDesk-Alternative für Handwerk und Kleinbetrieb.',
   groups: [
     {
       title: 'Ratgeber',
       links: [
         {
-          href: '/tooltime-alternative',
-          label: 'Tool Time Alternative',
-          desc: 'Schlanke, günstige Alternative — KI, Mobil, CSV-Import.',
+          href: '/sevdesk-alternative',
+          label: 'sevDesk Alternative',
+          desc: 'Schlanke, günstige Alternative — KI, Mobil, DATEV-Export.',
         },
         {
           href: '/angebot-erstellen',
@@ -218,15 +218,12 @@ export const SEO_HUB = {
     {
       title: 'Hilfe & Rechtliches',
       links: [
-        { href: '/handbuch', label: 'Handbuch', desc: 'Alle Funktionen im Überblick.' },
-        { href: '/faq', label: 'FAQ', desc: 'Häufige Fragen und Antworten.' },
-        { href: '/roadmap', label: 'Roadmap', desc: 'Geplante Features.' },
+        { href: '/faq', label: 'FAQ', desc: 'Häufige Fragen zu Quotavo.' },
+        { href: '/handbuch', label: 'Handbuch', desc: 'Vollständige Bedienungsanleitung.' },
+        { href: '/roadmap', label: 'Roadmap', desc: 'Geplante Funktionen.' },
         { href: '/impressum', label: 'Impressum', desc: 'Anbieterkennzeichnung.' },
-        { href: '/datenschutz', label: 'Datenschutz', desc: 'Datenschutzerklärung (DSGVO).' },
-        { href: '/agb', label: 'AGB', desc: 'Nutzungsbedingungen.' },
+        { href: '/datenschutz', label: 'Datenschutz', desc: 'Datenschutzerklärung.' },
       ],
     },
   ],
-  shareText:
-    'Quotavo — Angebote und Rechnungen online erstellen, PDF exportieren, Kunden verwalten. Kostenlos starten:',
 };

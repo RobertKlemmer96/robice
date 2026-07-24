@@ -3,15 +3,15 @@
  */
 export const FAQ = {
   lastUpdated: '2026-07-24',
-  intro: 'Antworten auf die häufigsten Fragen zu Quotavo — der schlanken Alternative zu Tool Time für Angebote und Rechnungen.',
+  intro: 'Antworten auf die häufigsten Fragen zu Quotavo — der schlanken Alternative zu sevDesk für Angebote und Rechnungen.',
   items: [
     {
-      q: 'Ist Quotavo eine Alternative zu Tool Time?',
-      a: 'Ja. Quotavo ist bewusst schlanker und günstiger: Fokus auf Angebote, Rechnungen, Kunden und PDF — ohne Disposition, Lager und Zeiterfassung. CSV-Import aus Tool Time für Kunden, Angebote, Rechnungen und Katalog ist möglich.',
+      q: 'Ist Quotavo eine Alternative zu sevDesk?',
+      a: 'Ja. Quotavo ist bewusst schlanker und günstiger: Fokus auf Angebote, Rechnungen, Kunden und PDF — ohne vollständige Buchhaltung, Bankanbindung und Beleg-Scanning. Ideal, wenn sevDesk Ihnen zu umfangreich oder zu teuer ist.',
     },
     {
       q: 'Für wen ist Quotavo gedacht?',
-      a: 'Für Handwerker (z. B. Elektriker, SHK, Maler), Freelancer und Kleinbetriebe, die schnell professionelle Angebote und Rechnungen erstellen wollen — mobil, günstig und ohne Tool-Time-Overkill.',
+      a: 'Für Handwerker (z. B. Elektriker, SHK, Maler), Freelancer und Kleinbetriebe, die schnell professionelle Angebote und Rechnungen erstellen wollen — mobil, günstig und ohne Buchhaltungs-Overkill.',
     },
     {
       q: 'Ist Quotavo kostenlos?',

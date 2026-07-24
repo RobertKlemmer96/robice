@@ -1783,6 +1783,91 @@ body:has(#app:not(.hidden)) {
   padding-top: 4px;
 }
 
+.landing-ai-banner {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 12%, var(--surface)) 0%,
+    color-mix(in srgb, var(--accent) 4%, var(--surface)) 100%
+  );
+}
+
+.landing-ai-banner__icon {
+  flex-shrink: 0;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.landing-ai-banner__title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.landing-ai-banner__text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.landing-feature--highlight {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface) 95%);
+}
+
+.landing-section--compare {
+  padding-top: 8px;
+}
+
+.landing-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.landing-compare-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 18px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.landing-compare-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+.landing-compare-card p {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.landing-compare-card__link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.landing-compare-card__link:hover {
+  text-decoration: underline;
+}
+
+.landing-compare-card__hint {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .landing-positioning {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1831,6 +1916,15 @@ body:has(#app:not(.hidden)) {
 @media (max-width: 768px) {
   .landing-positioning {
     grid-template-columns: 1fr;
+  }
+
+  .landing-compare {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-ai-banner {
+    flex-direction: column;
+    gap: 10px;
   }
 }
 

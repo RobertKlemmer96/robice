@@ -11,12 +11,12 @@ export const LOCALES = {
 
 const MESSAGES = {
   de: {
-    'meta.title': 'Quotavo – Schlanke Tool-Time-Alternative für Handwerker',
+    'meta.title': 'Quotavo – Angebote & Rechnungen leicht und schnell',
     'meta.description':
-      'Quotavo ist die günstige, schlanke Alternative zu Tool Time: Angebote und Rechnungen in Minuten, KI-Import, mobile Nutzung und CSV-Migration — für Handwerker, Freelancer und Kleinbetriebe.',
-    'meta.ogTitle': 'Quotavo – Günstige Alternative zu Tool Time',
+      'Quotavo: leicht, einfach, KI im Hintergrund. Angebote und Rechnungen in Minuten — schlanke Alternative zu sevDesk und Tool Time für Handwerker und Kleinbetriebe.',
+    'meta.ogTitle': 'Quotavo – Leicht. Einfach. Mit KI.',
     'meta.keywords':
-      'Tool Time Alternative, Handwerker Software, Angebot erstellen, Rechnung schreiben, SHK Software, Elektriker Angebot, Maler Angebot, Kleinbetrieb, Freelancer, günstige Handwerkersoftware, Angebotssoftware',
+      'sevDesk Alternative, Handwerker Software, Angebot erstellen, Rechnung schreiben, SHK Software, Elektriker Angebot, Maler Angebot, Kleinbetrieb, Freelancer, günstige Rechnungssoftware, Angebotssoftware',
     'meta.author': 'Robert Klemmer',
     'lang.choose': 'Sprache wählen',
     'lang.menu': 'Sprache',
@@ -67,7 +67,7 @@ const MESSAGES = {
     'landing.alpha': 'Alpha-Vorschau',
     'landing.alphaText':
       'Quotavo befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können sich noch ändern.',
-    'landing.tagline': 'Tool-Time-Alternative',
+    'landing.tagline': 'sevDesk-Alternative',
     'landing.login': 'Anmelden',
     'landing.startFree': 'Kostenlos starten',
     'landing.navAria': 'Seitenbereiche',
@@ -76,7 +76,7 @@ const MESSAGES = {
     'landing.navFaq': 'FAQ',
     'landing.pricingCompareTitle': 'Die 3 Pakete im Vergleich',
     'landing.pricingCompareLead':
-      'Deutlich günstiger als Tool Time — von kostenlos testen bis unbegrenzt nutzen.',
+      'Deutlich günstiger als sevDesk — von kostenlos testen bis unbegrenzt nutzen.',
     'landing.pricingCompareCaption': 'Vergleich der Tarife Free, Plus und Pro',
     'landing.pricingPopular': 'Beliebt',
     'landing.pricingSoon': 'Demnächst',
@@ -100,35 +100,52 @@ const MESSAGES = {
     'landing.pricingCsvYear': 'Jahr',
     'landing.pricingRowAi': 'KI-Import aus PDFs',
     'landing.pricingRowOpenItems': 'Offene Posten',
-    'landing.heroEyebrow': 'Günstiger · KI-first · Handwerk & Kleinbetrieb',
+    'landing.heroEyebrow': 'Leicht · Einfach · KI im Hintergrund',
     'landing.heroTitle': 'Angebote & Rechnungen —',
-    'landing.heroAccent': 'ohne Tool-Time-Overkill',
+    'landing.heroAccent': 'leicht und schnell',
     'landing.heroLead':
-      'Quotavo ist die schlanke, günstige Alternative zu Tool Time: schnelle Angebotserstellung, mobile Nutzung, KI-Import und CSV-Migration — für Elektriker, SHK, Maler, Freelancer und Kleinbetriebe.',
+      'Quotavo ist bewusst einfach gehalten: klare Oberfläche, wenige Klicks bis zum PDF. KI unterstützt Sie im Hintergrund — beim Import, Ausfüllen und Wiederholen — ohne komplizierte Menüs.',
     'landing.registerFree': 'Jetzt kostenlos starten',
     'landing.hasAccount': 'Bereits Konto? Anmelden',
-    'landing.badgeFree': 'Kostenlos starten — deutlich günstiger',
-    'landing.badgeTenant': 'Fokus: Angebote & Rechnungen',
-    'landing.badgeNoInstall': 'Mobil im Browser — kein CRM-Overkill',
-    'landing.positioningTitle': 'Warum Quotavo statt Tool Time?',
-    'landing.positioningLead':
-      'Tool Time ist stark — aber oft zu groß und zu teuer, wenn Sie vor allem schnell Angebote und Rechnungen erstellen wollen. Quotavo setzt genau dort an: schlank, günstig, ohne jedes Modul nachzubauen.',
-    'landing.positionTitle1': 'KI-first & schneller',
-    'landing.positionText1':
-      'KI-Import aus PDFs, Leistungskatalog und CSV-Import aus Tool Time — weniger Tipparbeit, Angebote in Minuten statt Stunden.',
-    'landing.positionTitle2': 'Deutlich günstiger',
-    'landing.positionText2':
-      'Kostenloser Einstieg, transparente Preise ab 3,99 € — ohne Voll-Paket für Disposition, Zeiterfassung und Lagerhaltung.',
-    'landing.positionTitle3': 'Handwerk & Kleinbetrieb',
-    'landing.positionText3':
-      'Elektriker, SHK, Maler, Freelancer und Kleinbetriebe: mobile Oberfläche, Einsatzorte, Stundensätze und Material im Katalog.',
-    'landing.positionTitle4': 'Schlank statt alles kopieren',
-    'landing.positionText4':
-      'Kein Versuch, Tool Time eins zu eins zu ersetzen — Fokus auf Umsatz: Angebot, Online-Bestätigung, Rechnung, PDF und DATEV-Export.',
-    'landing.positionLink': 'Mehr zur Tool-Time-Alternative →',
-    'landing.featuresTitle': 'Was Quotavo kann — ohne Ballast',
+    'landing.badgeFree': 'In Minuten startklar',
+    'landing.badgeTenant': 'KI hilft im Hintergrund',
+    'landing.badgeNoInstall': 'Leicht & mobil im Browser',
+    'landing.aiBannerTitle': 'KI arbeitet mit — Sie bleiben im Flow',
+    'landing.aiBannerText':
+      'KI hilft im Hintergrund bei allem: PDFs auslesen, Posten vorschlagen, Kunden übernehmen, Nummern und Summen prüfen. Sie klicken weiter — ohne Tabellen-Chaos und ohne Schulung.',
+    'landing.featuresTitle': 'Alles Wichtige — ohne Ballast',
     'landing.featuresLead':
-      'Alles für den Angebots- und Rechnungsalltag. Keine Disposition, kein Lager, keine Zeiterfassung — dafür schneller am Ziel.',
+      'Nur die Funktionen, die Sie wirklich brauchen: schnell, übersichtlich und ohne Buchhaltungs-Overkill. Für Handwerk, Freelancer und Kleinbetriebe.',
+    'landing.featureQuotes': 'Angebote & Rechnungen',
+    'landing.featureQuotesDesc':
+      'Posten aus Katalog oder manuell — MwSt. und Summen automatisch. Eigene Nummernkreise, in wenigen Klicks zum PDF.',
+    'landing.featurePdf': 'PDF-Vorlagen & Briefkopf',
+    'landing.featurePdfDesc':
+      'Logo, Farben und Layout einmal einrichten — danach wirkt jedes Dokument professionell, ohne Word oder Excel.',
+    'landing.featureCustomers': 'Kunden & Einsatzorte',
+    'landing.featureCustomersDesc':
+      'Stammdaten zentral pflegen, per Autocomplete übernehmen. KI kann Daten aus PDFs vorbefüllen.',
+    'landing.featureCatalog': 'Leistungskatalog',
+    'landing.featureCatalogDesc':
+      'Lohn- und Materialposten einmal anlegen — in jedem Angebot wieder nutzen. CSV-Import inklusive.',
+    'landing.featureConfirm': 'Online-Angebotsbestätigung',
+    'landing.featureConfirmDesc':
+      'Kunde bestätigt per Link mit PLZ-Check — Sie sehen den Status sofort, ohne Telefon-Hin-und-Her.',
+    'landing.featureProcesses': 'Prozesse & Status',
+    'landing.featureProcessesDesc':
+      'Gespeichert, Versendet, Bestätigt, Abgelehnt — alles auf einen Blick, filterbar und übersichtlich.',
+    'landing.featureZugferd': 'ZUGFeRD E-Rechnung',
+    'landing.featureZugferdDesc':
+      'Rechnungs-PDF mit eingebetteter XML — bereit für digitale Weiterverarbeitung und Ihren Steuerberater.',
+    'landing.featureMail': 'E-Mail-Versand & Archiv',
+    'landing.featureMailDesc':
+      'PDF direkt an Kunden senden, Dokumente durchsuchbar archivieren und jederzeit weiterbearbeiten.',
+    'landing.featureDatev': 'DATEV-Export',
+    'landing.featureDatevDesc':
+      'Rechnungen als Buchungsstapel (EXTF) exportieren — SKR03/SKR04 aus dem Profil.',
+    'landing.featureAi': 'KI-Import aus PDFs',
+    'landing.featureAiDesc':
+      'Bestehende Angebote oder Rechnungen hochladen — KI liest Posten und Kundendaten aus und spart Tipparbeit.',
     'landing.stepsTitle': 'In drei Schritten loslegen',
     'landing.step1Title': 'Kostenlos registrieren',
     'landing.step1Text':
@@ -140,18 +157,29 @@ const MESSAGES = {
       'Posten wählen, PDF erzeugen, optional per E-Mail versenden — mit Bestätigungslink für den Kunden.',
     'landing.ctaTitle': 'Bereit für das erste Angebot?',
     'landing.ctaLead':
-      'Wechseln Sie von Tool Time, Excel oder Word — Registrierung dauert unter einer Minute, der Einstieg ist kostenlos.',
+      'Einfach registrieren, Assistent durchklicken, loslegen — der Einstieg ist kostenlos und dauert unter einer Minute.',
+    'landing.compareTitle': 'Schlanker als sevDesk & Tool Time',
+    'landing.compareLead':
+      'Viele kennen sevDesk oder Tool Time — Quotavo ist bewusst leichter. Kein Versuch, alles zu kopieren. Nur das, was Angebote und Rechnungen schnell macht.',
+    'landing.compareSevdeskTitle': 'Alternative zu sevDesk',
+    'landing.compareSevdeskText':
+      'sevDesk ist stark für Buchhaltung, Bank und Belege — aber oft zu umfangreich, wenn Sie vor allem schnell Angebote schreiben und PDFs versenden wollen. Quotavo: leichter Einstieg, günstiger, Fokus auf Dokumente statt Voll-Buchhaltung.',
+    'landing.compareSevdeskLink': 'Mehr zur sevDesk-Alternative →',
+    'landing.compareTooltimeTitle': 'Alternative zu Tool Time',
+    'landing.compareTooltimeText':
+      'Tool Time deckt Disposition, Zeiterfassung und Lager ab — Quotavo nicht. Dafür Angebote und Rechnungen in Minuten, ohne Schulung. CSV-Import aus Tool Time für Kunden, Angebote, Rechnungen und Katalog möglich.',
+    'landing.compareTooltimeLink': 'Daten-Import aus Tool Time',
     'landing.guidesTitle': 'Ratgeber & Hilfe',
     'landing.guidesLead':
-      'Praxisnahe Anleitungen für Angebote, Rechnungen und Handwerk — inklusive Tool-Time-Wechsel.',
+      'Praxisnahe Anleitungen für Angebote, Rechnungen und Handwerk — inklusive Wechsel von klassischer Buchhaltungssoftware.',
     'landing.guideOffer': 'Angebot erstellen als PDF',
     'landing.guideOfferDesc': 'Kunde, Katalog, MwSt. und PDF-Versand — Schritt für Schritt.',
     'landing.guideInvoice': 'Rechnung schreiben online',
     'landing.guideInvoiceDesc': 'Pflichtangaben, ZUGFeRD-E-Rechnung und Übergang vom Angebot.',
     'landing.guideTrades': 'Angebot für Handwerker',
     'landing.guideTradesDesc': 'Katalog, Einsatzorte und mobile Nutzung im Alltag.',
-    'landing.guideToolTime': 'Tool-Time-Alternative',
-    'landing.guideToolTimeDesc': 'Warum Quotavo schlanker und günstiger ist — und was Sie migrieren können.',
+    'landing.guideSevdesk': 'sevDesk-Alternative',
+    'landing.guideSevdeskDesc': 'Warum Quotavo schlanker und günstiger ist — und für wen der Wechsel lohnt.',
     'landing.guideHub': 'Alle Ressourcen',
     'landing.guideHubDesc': 'FAQ, Handbuch, Roadmap und Link-Übersicht zum Teilen.',
     'auth.backHome': '← Zur Startseite',
@@ -586,12 +614,12 @@ const MESSAGES = {
     'pdfTpl.colText': 'Text Spalte {n}',
   },
   en: {
-    'meta.title': 'Quotavo – Lean Tool Time alternative for trades',
+    'meta.title': 'Quotavo – Quotes & invoices made easy',
     'meta.description':
-      'Quotavo is the affordable, lean alternative to Tool Time: quotes and invoices in minutes, AI import, mobile use and CSV migration — for trades, freelancers and small businesses.',
-    'meta.ogTitle': 'Quotavo – Affordable Tool Time alternative',
+      'Quotavo: light, simple, AI in the background. Quotes and invoices in minutes — a lean alternative to sevDesk and Tool Time.',
+    'meta.ogTitle': 'Quotavo – Easy. Simple. AI-powered.',
     'meta.keywords':
-      'Tool Time alternative, trades software, quote software, invoicing, HVAC, electrician quote, painter quote, small business, freelancer, affordable field service software',
+      'sevDesk alternative, trades software, quote software, invoicing, HVAC, electrician quote, painter quote, small business, freelancer, affordable invoicing software',
     'meta.author': 'Robert Klemmer',
     'lang.choose': 'Choose language',
     'lang.menu': 'Language',
@@ -642,7 +670,7 @@ const MESSAGES = {
     'landing.alpha': 'Alpha preview',
     'landing.alphaText':
       'Quotavo is under active development — features, content, and pricing may still change.',
-    'landing.tagline': 'Tool Time alternative',
+    'landing.tagline': 'sevDesk alternative',
     'landing.login': 'Log in',
     'landing.startFree': 'Start for free',
     'landing.navAria': 'Page sections',
@@ -651,7 +679,7 @@ const MESSAGES = {
     'landing.navFaq': 'FAQ',
     'landing.pricingCompareTitle': 'Compare the 3 plans',
     'landing.pricingCompareLead':
-      'Much cheaper than Tool Time — from free trial to unlimited use.',
+      'Much cheaper than sevDesk — from free trial to unlimited use.',
     'landing.pricingCompareCaption': 'Comparison of Free, Plus and Pro plans',
     'landing.pricingPopular': 'Popular',
     'landing.pricingSoon': 'Coming soon',
@@ -675,35 +703,52 @@ const MESSAGES = {
     'landing.pricingCsvYear': 'Yearly',
     'landing.pricingRowAi': 'AI import from PDFs',
     'landing.pricingRowOpenItems': 'Open items',
-    'landing.heroEyebrow': 'Cheaper · AI-first · Trades & small business',
+    'landing.heroEyebrow': 'Light · Simple · AI in the background',
     'landing.heroTitle': 'Quotes & invoices —',
-    'landing.heroAccent': 'without Tool Time bloat',
+    'landing.heroAccent': 'easy and fast',
     'landing.heroLead':
-      'Quotavo is the lean, affordable alternative to Tool Time: fast quoting, mobile use, AI import and CSV migration — for electricians, HVAC, painters, freelancers and small businesses.',
+      'Quotavo is deliberately simple: a clear interface, a few clicks to PDF. AI supports you in the background — import, fill-in, repeat — without complicated menus.',
     'landing.registerFree': 'Start for free now',
     'landing.hasAccount': 'Already have an account? Log in',
-    'landing.badgeFree': 'Free to start — much cheaper',
-    'landing.badgeTenant': 'Focus: quotes & invoices',
-    'landing.badgeNoInstall': 'Mobile in browser — no CRM bloat',
-    'landing.positioningTitle': 'Why Quotavo instead of Tool Time?',
-    'landing.positioningLead':
-      'Tool Time is powerful — but often too big and too expensive when you mainly need fast quotes and invoices. Quotavo focuses on exactly that: lean, affordable, without copying every module.',
-    'landing.positionTitle1': 'AI-first & faster',
-    'landing.positionText1':
-      'AI import from PDFs, service catalog and CSV import from Tool Time — less typing, quotes in minutes.',
-    'landing.positionTitle2': 'Much cheaper',
-    'landing.positionText2':
-      'Free tier, transparent pricing from €3.99 — no full package for dispatch, time tracking and inventory.',
-    'landing.positionTitle3': 'Trades & small business',
-    'landing.positionText3':
-      'Electricians, HVAC, painters, freelancers and small teams: mobile UI, job sites, hourly rates and materials in the catalog.',
-    'landing.positionTitle4': 'Lean, not a clone',
-    'landing.positionText4':
-      'No attempt to replace Tool Time one-to-one — focus on revenue: quote, online confirmation, invoice, PDF and DATEV export.',
-    'landing.positionLink': 'More about the Tool Time alternative →',
-    'landing.featuresTitle': 'What Quotavo does — without bloat',
+    'landing.badgeFree': 'Ready in minutes',
+    'landing.badgeTenant': 'AI helps in the background',
+    'landing.badgeNoInstall': 'Light & mobile in browser',
+    'landing.aiBannerTitle': 'AI works with you — you stay in flow',
+    'landing.aiBannerText':
+      'AI helps in the background with everything: read PDFs, suggest line items, prefill customers, check numbers and totals. You keep clicking — no spreadsheet chaos, no training.',
+    'landing.featuresTitle': 'Everything that matters — without bloat',
     'landing.featuresLead':
-      'Everything for quotes and invoices. No dispatch, no warehouse, no time tracking — faster where it matters.',
+      'Only the features you actually need: fast, clear and without accounting overhead. For trades, freelancers and small businesses.',
+    'landing.featureQuotes': 'Quotes & invoices',
+    'landing.featureQuotesDesc':
+      'Line items from catalog or manual — VAT and totals automatic. Own number ranges, PDF in a few clicks.',
+    'landing.featurePdf': 'PDF templates & letterhead',
+    'landing.featurePdfDesc':
+      'Set up logo, colors and layout once — every document looks professional, without Word or Excel.',
+    'landing.featureCustomers': 'Customers & job sites',
+    'landing.featureCustomersDesc':
+      'Maintain master data centrally, autocomplete on new docs. AI can prefill data from PDFs.',
+    'landing.featureCatalog': 'Service catalog',
+    'landing.featureCatalogDesc':
+      'Create labor and material items once — reuse in every quote. CSV import included.',
+    'landing.featureConfirm': 'Online quote confirmation',
+    'landing.featureConfirmDesc':
+      'Customer confirms via link with ZIP check — you see status instantly, no phone ping-pong.',
+    'landing.featureProcesses': 'Processes & status',
+    'landing.featureProcessesDesc':
+      'Saved, sent, confirmed, declined — all at a glance, filterable and clear.',
+    'landing.featureZugferd': 'ZUGFeRD e-invoice',
+    'landing.featureZugferdDesc':
+      'Invoice PDF with embedded XML — ready for digital processing and your accountant.',
+    'landing.featureMail': 'Email delivery & archive',
+    'landing.featureMailDesc':
+      'Send PDFs to customers, searchable archive, edit anytime.',
+    'landing.featureDatev': 'DATEV export',
+    'landing.featureDatevDesc':
+      'Export invoices as booking batch (EXTF) — SKR03/SKR04 from profile.',
+    'landing.featureAi': 'AI import from PDFs',
+    'landing.featureAiDesc':
+      'Upload existing quotes or invoices — AI reads line items and customer data and saves typing.',
     'landing.stepsTitle': 'Get started in three steps',
     'landing.step1Title': 'Register for free',
     'landing.step1Text':
@@ -715,18 +760,29 @@ const MESSAGES = {
       'Pick line items, generate PDF, optionally send by email — with confirmation link for customers.',
     'landing.ctaTitle': 'Ready for your first quote?',
     'landing.ctaLead':
-      'Switch from Tool Time, Excel or Word — registration takes under a minute and the free tier gets you started.',
+      'Register, follow the wizard, get started — the free tier takes under a minute.',
+    'landing.compareTitle': 'Leaner than sevDesk & Tool Time',
+    'landing.compareLead':
+      'Many know sevDesk or Tool Time — Quotavo is deliberately lighter. No attempt to copy everything. Only what makes quotes and invoices fast.',
+    'landing.compareSevdeskTitle': 'Alternative to sevDesk',
+    'landing.compareSevdeskText':
+      'sevDesk is strong for accounting, banking and receipts — but often too much when you mainly need fast quotes and PDF delivery. Quotavo: easier start, cheaper, document focus instead of full bookkeeping.',
+    'landing.compareSevdeskLink': 'More about the sevDesk alternative →',
+    'landing.compareTooltimeTitle': 'Alternative to Tool Time',
+    'landing.compareTooltimeText':
+      'Tool Time covers dispatch, time tracking and inventory — Quotavo does not. Instead: quotes and invoices in minutes, no training. CSV import from Tool Time for customers, quotes, invoices and catalog.',
+    'landing.compareTooltimeLink': 'Import data from Tool Time',
     'landing.guidesTitle': 'Guides & help',
     'landing.guidesLead':
-      'Practical guides for quotes, invoices and trades — including switching from Tool Time.',
+      'Practical guides for quotes, invoices and trades — including switching from classic accounting software.',
     'landing.guideOffer': 'Create a quote as PDF',
     'landing.guideOfferDesc': 'Customer, catalog, VAT and PDF delivery — step by step.',
     'landing.guideInvoice': 'Write invoices online',
     'landing.guideInvoiceDesc': 'Required fields, ZUGFeRD e-invoice and quote-to-invoice flow.',
     'landing.guideTrades': 'Quotes for trades',
     'landing.guideTradesDesc': 'Catalog, job sites and mobile use in the field.',
-    'landing.guideToolTime': 'Tool Time alternative',
-    'landing.guideToolTimeDesc': 'Why Quotavo is leaner and cheaper — and what you can migrate.',
+    'landing.guideSevdesk': 'sevDesk alternative',
+    'landing.guideSevdeskDesc': 'Why Quotavo is leaner and cheaper — and who benefits from switching.',
     'landing.guideHub': 'All resources',
     'landing.guideHubDesc': 'FAQ, handbook, roadmap and link hub to share.',
     'auth.backHome': '← Back to home',
