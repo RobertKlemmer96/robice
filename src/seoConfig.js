@@ -1,4 +1,4 @@
-/** Öffentliche Site-URL — bei Domain-Umzug hier und in public/sitemap.xml anpassen. */
+/** Öffentliche Site-URL — bei Domain-Umzug hier anpassen; Sitemap wird via npm run sitemap:generate erzeugt. */
 export const SEO_CONFIG = {
   siteUrl: 'https://robice.onrender.com',
   siteName: 'Quotavo',

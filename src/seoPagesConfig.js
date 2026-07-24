@@ -123,17 +123,57 @@ export function getAllSitemapEntries() {
     { loc: getAbsoluteUrl('/'), changefreq: 'weekly', priority: '1.0', lastmod: today },
   ];
 
-  for (const slug of PUBLIC_PATHS) {
-    const path = `/${slug}`;
-    const guidePriority =
-      slug.startsWith('angebot') || slug === 'rechnung-schreiben' ? '0.9' : '0.7';
+  const slugOrder = [
+    'sevdesk-alternative',
+    'angebot-erstellen',
+    'rechnung-schreiben',
+    'angebot-handwerker',
+    'angebot-online-bestaetigen',
+    'ressourcen',
+    'handbuch',
+    'faq',
+    'roadmap',
+    'impressum',
+    'datenschutz',
+    'agb',
+  ];
+
+  const slugs = [
+    ...slugOrder.filter((slug) => PUBLIC_PATHS.includes(slug)),
+    ...PUBLIC_PATHS.filter((slug) => !slugOrder.includes(slug)),
+  ];
+
+  for (const slug of slugs) {
+    const { priority, changefreq } = getSitemapMeta(slug);
     entries.push({
-      loc: getAbsoluteUrl(path),
-      changefreq: slug === 'roadmap' ? 'monthly' : 'weekly',
-      priority: slug === 'ressourcen' ? '0.8' : guidePriority,
+      loc: getAbsoluteUrl(`/${slug}`),
+      changefreq,
+      priority,
       lastmod: today,
     });
   }
 
   return entries;
+}
+
+function getSitemapMeta(slug) {
+  if (slug === 'sevdesk-alternative') {
+    return { priority: '0.95', changefreq: 'weekly' };
+  }
+  if (slug === 'ressourcen') {
+    return { priority: '0.8', changefreq: 'weekly' };
+  }
+  if (slug.startsWith('angebot') || slug === 'rechnung-schreiben') {
+    return { priority: '0.9', changefreq: 'weekly' };
+  }
+  if (slug === 'handbuch' || slug === 'faq') {
+    return { priority: '0.7', changefreq: 'weekly' };
+  }
+  if (slug === 'roadmap') {
+    return { priority: '0.6', changefreq: 'monthly' };
+  }
+  if (slug === 'impressum' || slug === 'datenschutz' || slug === 'agb') {
+    return { priority: '0.5', changefreq: 'monthly' };
+  }
+  return { priority: '0.7', changefreq: 'weekly' };
 }
