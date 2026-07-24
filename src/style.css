@@ -1779,6 +1779,61 @@ body:has(#app:not(.hidden)) {
   color: var(--text-muted);
 }
 
+.landing-section--positioning {
+  padding-top: 4px;
+}
+
+.landing-positioning {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.landing-position {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 16px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.landing-position h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.landing-position p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.landing-positioning__link-wrap {
+  margin: 16px 0 0;
+  text-align: center;
+}
+
+.landing-positioning__link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.landing-positioning__link:hover {
+  text-decoration: underline;
+}
+
+.landing-guide--featured {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+@media (max-width: 768px) {
+  .landing-positioning {
+    grid-template-columns: 1fr;
+  }
+}
+
 .landing-section--features {
   padding-top: 8px;
 }

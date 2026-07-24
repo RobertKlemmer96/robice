@@ -11,12 +11,12 @@ export const LOCALES = {
 
 const MESSAGES = {
   de: {
-    'meta.title': 'Quotavo',
+    'meta.title': 'Quotavo – Schlanke Tool-Time-Alternative für Handwerker',
     'meta.description':
-      'Quotavo: Angebote und Rechnungen online erstellen, Kunden und Katalog verwalten, professionelle PDFs exportieren — kostenlos für Dienstleister.',
-    'meta.ogTitle': 'Quotavo – Angebote & Rechnungen als PDF',
+      'Quotavo ist die günstige, schlanke Alternative zu Tool Time: Angebote und Rechnungen in Minuten, KI-Import, mobile Nutzung und CSV-Migration — für Handwerker, Freelancer und Kleinbetriebe.',
+    'meta.ogTitle': 'Quotavo – Günstige Alternative zu Tool Time',
     'meta.keywords':
-      'Angebote, Rechnungen, PDF, Angebot erstellen, Rechnung schreiben, Kundenverwaltung, Dienstleister, Kleinunternehmen',
+      'Tool Time Alternative, Handwerker Software, Angebot erstellen, Rechnung schreiben, SHK Software, Elektriker Angebot, Maler Angebot, Kleinbetrieb, Freelancer, günstige Handwerkersoftware, Angebotssoftware',
     'meta.author': 'Robert Klemmer',
     'lang.choose': 'Sprache wählen',
     'lang.menu': 'Sprache',
@@ -67,7 +67,7 @@ const MESSAGES = {
     'landing.alpha': 'Alpha-Vorschau',
     'landing.alphaText':
       'Quotavo befindet sich in aktiver Entwicklung — Funktionen, Inhalte und Preise können sich noch ändern.',
-    'landing.tagline': 'Angebote & Rechnungen',
+    'landing.tagline': 'Tool-Time-Alternative',
     'landing.login': 'Anmelden',
     'landing.startFree': 'Kostenlos starten',
     'landing.navAria': 'Seitenbereiche',
@@ -76,7 +76,7 @@ const MESSAGES = {
     'landing.navFaq': 'FAQ',
     'landing.pricingCompareTitle': 'Die 3 Pakete im Vergleich',
     'landing.pricingCompareLead':
-      'Finden Sie die passende Stufe für Ihr Büro — von kostenlos testen bis unbegrenzt nutzen.',
+      'Deutlich günstiger als Tool Time — von kostenlos testen bis unbegrenzt nutzen.',
     'landing.pricingCompareCaption': 'Vergleich der Tarife Free, Plus und Pro',
     'landing.pricingPopular': 'Beliebt',
     'landing.pricingSoon': 'Demnächst',
@@ -100,19 +100,35 @@ const MESSAGES = {
     'landing.pricingCsvYear': 'Jahr',
     'landing.pricingRowAi': 'KI-Import aus PDFs',
     'landing.pricingRowOpenItems': 'Offene Posten',
-    'landing.heroEyebrow': 'Kostenlos · Sofort startklar · Für Dienstleistung',
-    'landing.heroTitle': 'Angebote und Rechnungen erstellen —',
-    'landing.heroAccent': 'professionell als PDF',
+    'landing.heroEyebrow': 'Günstiger · KI-first · Handwerk & Kleinbetrieb',
+    'landing.heroTitle': 'Angebote & Rechnungen —',
+    'landing.heroAccent': 'ohne Tool-Time-Overkill',
     'landing.heroLead':
-      'Kunden, Katalog, Angebotsbestätigung per Link, ZUGFeRD-Rechnungen und Prozess-Übersicht — alles in einer Oberfläche. In Minuten startklar, ohne Installation.',
-    'landing.registerFree': 'Jetzt kostenlos registrieren',
+      'Quotavo ist die schlanke, günstige Alternative zu Tool Time: schnelle Angebotserstellung, mobile Nutzung, KI-Import und CSV-Migration — für Elektriker, SHK, Maler, Freelancer und Kleinbetriebe.',
+    'landing.registerFree': 'Jetzt kostenlos starten',
     'landing.hasAccount': 'Bereits Konto? Anmelden',
-    'landing.badgeFree': '100 % kostenlos nutzbar',
-    'landing.badgeTenant': 'Eigener Mandant & getrennte Daten',
-    'landing.badgeNoInstall': 'Keine Installation nötig',
-    'landing.featuresTitle': 'Was Quotavo kann',
+    'landing.badgeFree': 'Kostenlos starten — deutlich günstiger',
+    'landing.badgeTenant': 'Fokus: Angebote & Rechnungen',
+    'landing.badgeNoInstall': 'Mobil im Browser — kein CRM-Overkill',
+    'landing.positioningTitle': 'Warum Quotavo statt Tool Time?',
+    'landing.positioningLead':
+      'Tool Time ist stark — aber oft zu groß und zu teuer, wenn Sie vor allem schnell Angebote und Rechnungen erstellen wollen. Quotavo setzt genau dort an: schlank, günstig, ohne jedes Modul nachzubauen.',
+    'landing.positionTitle1': 'KI-first & schneller',
+    'landing.positionText1':
+      'KI-Import aus PDFs, Leistungskatalog und CSV-Import aus Tool Time — weniger Tipparbeit, Angebote in Minuten statt Stunden.',
+    'landing.positionTitle2': 'Deutlich günstiger',
+    'landing.positionText2':
+      'Kostenloser Einstieg, transparente Preise ab 3,99 € — ohne Voll-Paket für Disposition, Zeiterfassung und Lagerhaltung.',
+    'landing.positionTitle3': 'Handwerk & Kleinbetrieb',
+    'landing.positionText3':
+      'Elektriker, SHK, Maler, Freelancer und Kleinbetriebe: mobile Oberfläche, Einsatzorte, Stundensätze und Material im Katalog.',
+    'landing.positionTitle4': 'Schlank statt alles kopieren',
+    'landing.positionText4':
+      'Kein Versuch, Tool Time eins zu eins zu ersetzen — Fokus auf Umsatz: Angebot, Online-Bestätigung, Rechnung, PDF und DATEV-Export.',
+    'landing.positionLink': 'Mehr zur Tool-Time-Alternative →',
+    'landing.featuresTitle': 'Was Quotavo kann — ohne Ballast',
     'landing.featuresLead':
-      'Von der ersten Kundenanfrage bis zur E-Rechnung — konkrete Funktionen für Ihren Büroalltag.',
+      'Alles für den Angebots- und Rechnungsalltag. Keine Disposition, kein Lager, keine Zeiterfassung — dafür schneller am Ziel.',
     'landing.stepsTitle': 'In drei Schritten loslegen',
     'landing.step1Title': 'Kostenlos registrieren',
     'landing.step1Text':
@@ -123,7 +139,21 @@ const MESSAGES = {
     'landing.step3Text':
       'Posten wählen, PDF erzeugen, optional per E-Mail versenden — mit Bestätigungslink für den Kunden.',
     'landing.ctaTitle': 'Bereit für das erste Angebot?',
-    'landing.ctaLead': 'Registrierung dauert unter einer Minute. Quotavo ist aktuell kostenlos nutzbar.',
+    'landing.ctaLead':
+      'Wechseln Sie von Tool Time, Excel oder Word — Registrierung dauert unter einer Minute, der Einstieg ist kostenlos.',
+    'landing.guidesTitle': 'Ratgeber & Hilfe',
+    'landing.guidesLead':
+      'Praxisnahe Anleitungen für Angebote, Rechnungen und Handwerk — inklusive Tool-Time-Wechsel.',
+    'landing.guideOffer': 'Angebot erstellen als PDF',
+    'landing.guideOfferDesc': 'Kunde, Katalog, MwSt. und PDF-Versand — Schritt für Schritt.',
+    'landing.guideInvoice': 'Rechnung schreiben online',
+    'landing.guideInvoiceDesc': 'Pflichtangaben, ZUGFeRD-E-Rechnung und Übergang vom Angebot.',
+    'landing.guideTrades': 'Angebot für Handwerker',
+    'landing.guideTradesDesc': 'Katalog, Einsatzorte und mobile Nutzung im Alltag.',
+    'landing.guideToolTime': 'Tool-Time-Alternative',
+    'landing.guideToolTimeDesc': 'Warum Quotavo schlanker und günstiger ist — und was Sie migrieren können.',
+    'landing.guideHub': 'Alle Ressourcen',
+    'landing.guideHubDesc': 'FAQ, Handbuch, Roadmap und Link-Übersicht zum Teilen.',
     'auth.backHome': '← Zur Startseite',
     'auth.login': 'Anmelden',
     'auth.register': 'Registrieren',
@@ -556,12 +586,12 @@ const MESSAGES = {
     'pdfTpl.colText': 'Text Spalte {n}',
   },
   en: {
-    'meta.title': 'Quotavo',
+    'meta.title': 'Quotavo – Lean Tool Time alternative for trades',
     'meta.description':
-      'Quotavo: Create quotes and invoices online, manage customers and your service catalog, and export professional PDFs — free for service businesses.',
-    'meta.ogTitle': 'Quotavo – Quotes & Invoices as PDF',
+      'Quotavo is the affordable, lean alternative to Tool Time: quotes and invoices in minutes, AI import, mobile use and CSV migration — for trades, freelancers and small businesses.',
+    'meta.ogTitle': 'Quotavo – Affordable Tool Time alternative',
     'meta.keywords':
-      'quotes, invoices, PDF, quote software, invoicing, customer management, service business, freelancers',
+      'Tool Time alternative, trades software, quote software, invoicing, HVAC, electrician quote, painter quote, small business, freelancer, affordable field service software',
     'meta.author': 'Robert Klemmer',
     'lang.choose': 'Choose language',
     'lang.menu': 'Language',
@@ -612,7 +642,7 @@ const MESSAGES = {
     'landing.alpha': 'Alpha preview',
     'landing.alphaText':
       'Quotavo is under active development — features, content, and pricing may still change.',
-    'landing.tagline': 'Quotes & invoices',
+    'landing.tagline': 'Tool Time alternative',
     'landing.login': 'Log in',
     'landing.startFree': 'Start for free',
     'landing.navAria': 'Page sections',
@@ -621,7 +651,7 @@ const MESSAGES = {
     'landing.navFaq': 'FAQ',
     'landing.pricingCompareTitle': 'Compare the 3 plans',
     'landing.pricingCompareLead':
-      'Find the right tier for your office — from free trial to unlimited use.',
+      'Much cheaper than Tool Time — from free trial to unlimited use.',
     'landing.pricingCompareCaption': 'Comparison of Free, Plus and Pro plans',
     'landing.pricingPopular': 'Popular',
     'landing.pricingSoon': 'Coming soon',
@@ -645,19 +675,35 @@ const MESSAGES = {
     'landing.pricingCsvYear': 'Yearly',
     'landing.pricingRowAi': 'AI import from PDFs',
     'landing.pricingRowOpenItems': 'Open items',
-    'landing.heroEyebrow': 'Free · Ready instantly · For services',
-    'landing.heroTitle': 'Create quotes and invoices —',
-    'landing.heroAccent': 'professional PDFs',
+    'landing.heroEyebrow': 'Cheaper · AI-first · Trades & small business',
+    'landing.heroTitle': 'Quotes & invoices —',
+    'landing.heroAccent': 'without Tool Time bloat',
     'landing.heroLead':
-      'Customers, catalog, quote confirmation via link, ZUGFeRD invoices and process overview — all in one interface. Ready in minutes, no installation.',
-    'landing.registerFree': 'Register for free now',
+      'Quotavo is the lean, affordable alternative to Tool Time: fast quoting, mobile use, AI import and CSV migration — for electricians, HVAC, painters, freelancers and small businesses.',
+    'landing.registerFree': 'Start for free now',
     'landing.hasAccount': 'Already have an account? Log in',
-    'landing.badgeFree': '100% free to use',
-    'landing.badgeTenant': 'Own tenant & separate data',
-    'landing.badgeNoInstall': 'No installation required',
-    'landing.featuresTitle': 'What Quotavo can do',
+    'landing.badgeFree': 'Free to start — much cheaper',
+    'landing.badgeTenant': 'Focus: quotes & invoices',
+    'landing.badgeNoInstall': 'Mobile in browser — no CRM bloat',
+    'landing.positioningTitle': 'Why Quotavo instead of Tool Time?',
+    'landing.positioningLead':
+      'Tool Time is powerful — but often too big and too expensive when you mainly need fast quotes and invoices. Quotavo focuses on exactly that: lean, affordable, without copying every module.',
+    'landing.positionTitle1': 'AI-first & faster',
+    'landing.positionText1':
+      'AI import from PDFs, service catalog and CSV import from Tool Time — less typing, quotes in minutes.',
+    'landing.positionTitle2': 'Much cheaper',
+    'landing.positionText2':
+      'Free tier, transparent pricing from €3.99 — no full package for dispatch, time tracking and inventory.',
+    'landing.positionTitle3': 'Trades & small business',
+    'landing.positionText3':
+      'Electricians, HVAC, painters, freelancers and small teams: mobile UI, job sites, hourly rates and materials in the catalog.',
+    'landing.positionTitle4': 'Lean, not a clone',
+    'landing.positionText4':
+      'No attempt to replace Tool Time one-to-one — focus on revenue: quote, online confirmation, invoice, PDF and DATEV export.',
+    'landing.positionLink': 'More about the Tool Time alternative →',
+    'landing.featuresTitle': 'What Quotavo does — without bloat',
     'landing.featuresLead':
-      'From first customer inquiry to e-invoice — concrete features for your daily office work.',
+      'Everything for quotes and invoices. No dispatch, no warehouse, no time tracking — faster where it matters.',
     'landing.stepsTitle': 'Get started in three steps',
     'landing.step1Title': 'Register for free',
     'landing.step1Text':
@@ -668,7 +714,21 @@ const MESSAGES = {
     'landing.step3Text':
       'Pick line items, generate PDF, optionally send by email — with confirmation link for customers.',
     'landing.ctaTitle': 'Ready for your first quote?',
-    'landing.ctaLead': 'Registration takes under a minute. Quotavo is currently free to use.',
+    'landing.ctaLead':
+      'Switch from Tool Time, Excel or Word — registration takes under a minute and the free tier gets you started.',
+    'landing.guidesTitle': 'Guides & help',
+    'landing.guidesLead':
+      'Practical guides for quotes, invoices and trades — including switching from Tool Time.',
+    'landing.guideOffer': 'Create a quote as PDF',
+    'landing.guideOfferDesc': 'Customer, catalog, VAT and PDF delivery — step by step.',
+    'landing.guideInvoice': 'Write invoices online',
+    'landing.guideInvoiceDesc': 'Required fields, ZUGFeRD e-invoice and quote-to-invoice flow.',
+    'landing.guideTrades': 'Quotes for trades',
+    'landing.guideTradesDesc': 'Catalog, job sites and mobile use in the field.',
+    'landing.guideToolTime': 'Tool Time alternative',
+    'landing.guideToolTimeDesc': 'Why Quotavo is leaner and cheaper — and what you can migrate.',
+    'landing.guideHub': 'All resources',
+    'landing.guideHubDesc': 'FAQ, handbook, roadmap and link hub to share.',
     'auth.backHome': '← Back to home',
     'auth.login': 'Log in',
     'auth.register': 'Register',

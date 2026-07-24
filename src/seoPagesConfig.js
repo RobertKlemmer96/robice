@@ -36,9 +36,9 @@ export const SEO_PAGES = {
   },
   faq: {
     path: '/faq',
-    title: 'FAQ – Häufige Fragen zu Quotavo',
+    title: 'FAQ – Quotavo als Tool-Time-Alternative',
     description:
-      'Antworten zu Kosten, Datenschutz, PDF-Vorlagen, E-Mail-Versand, Katalog und Kundenverwaltung in Quotavo.',
+      'Häufige Fragen zu Quotavo: Kosten, Tool-Time-Wechsel, CSV-Import, Handwerk, PDF-Vorlagen, E-Mail-Versand und Katalog.',
     ogTitle: 'Quotavo FAQ',
     keywords: 'FAQ, Hilfe, Quotavo, Angebote, Rechnungen',
     schema: 'faq',
@@ -52,9 +52,9 @@ export const SEO_PAGES = {
   },
   'angebot-erstellen': {
     path: '/angebot-erstellen',
-    title: 'Angebot erstellen als PDF – kostenlos online | Quotavo',
+    title: 'Angebot erstellen als PDF – schnell & günstig | Quotavo',
     description:
-      'Professionelles Angebot online erstellen: Kunden wählen, Posten aus Katalog, MwSt. berechnen, PDF mit Logo exportieren oder per E-Mail senden.',
+      'Professionelles Angebot online erstellen — schlanke Tool-Time-Alternative: Katalog, MwSt., PDF-Export und E-Mail-Versand für Handwerker und Kleinbetriebe.',
     ogTitle: 'Angebot erstellen als PDF – Quotavo',
     keywords:
       'Angebot erstellen, Angebot PDF, Angebot Vorlage, Angebot online, Angebotssoftware, Dienstleister',
@@ -72,13 +72,23 @@ export const SEO_PAGES = {
   },
   'angebot-handwerker': {
     path: '/angebot-handwerker',
-    title: 'Angebot für Handwerker – PDF & Kundenbestätigung | Quotavo',
+    title: 'Angebot für Handwerker – günstige Tool-Time-Alternative | Quotavo',
     description:
-      'Angebote für Handwerk und Dienstleistung: Leistungskatalog, Einsatzorte, professionelle PDFs und Online-Bestätigung durch den Kunden.',
+      'Angebote für Elektriker, SHK, Maler und Kleinbetriebe: Leistungskatalog, mobile Nutzung, schnelle PDFs und Online-Bestätigung — schlanker als Tool Time.',
     ogTitle: 'Angebot für Handwerker – Quotavo',
     keywords:
-      'Angebot Handwerker, Handwerker Software, Angebot Vorlage Handwerk, Dienstleister, PDF Angebot',
+      'Angebot Handwerker, Tool Time Alternative Handwerk, SHK Software, Elektriker Angebot, Maler Angebot, Kleinbetrieb Software',
     schema: 'guide-handwerker',
+  },
+  'tooltime-alternative': {
+    path: '/tooltime-alternative',
+    title: 'Tool Time Alternative – schlank & günstig | Quotavo',
+    description:
+      'Quotavo ist die schlanke, günstige Alternative zu Tool Time für Angebote und Rechnungen: KI-Import, CSV-Migration, mobile Nutzung — für Handwerker, Freelancer und Kleinbetriebe.',
+    ogTitle: 'Tool Time Alternative – Quotavo',
+    keywords:
+      'Tool Time Alternative, ToolTime Alternative, günstige Handwerkersoftware, Angebotssoftware Handwerk, Kleinbetrieb Software, Freelancer Rechnung',
+    schema: 'guide-tooltime',
   },
   'angebot-online-bestaetigen': {
     path: '/angebot-online-bestaetigen',

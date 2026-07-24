@@ -2,13 +2,13 @@
 export const SEO_GUIDES = {
   'angebot-erstellen': {
     title: 'Angebot erstellen – so geht\'s mit Quotavo',
-    lead: 'Ein professionelles Angebot muss nicht in Word oder Excel entstehen. Mit Quotavo erstellen Sie Angebote direkt im Browser — inklusive Katalog, MwSt. und PDF-Export.',
+    lead: 'Ein professionelles Angebot muss nicht in Word, Excel oder einem teuren Voll-Paket wie Tool Time entstehen. Mit Quotavo erstellen Sie Angebote direkt im Browser — schnell, günstig, inklusive Katalog, MwSt. und PDF-Export.',
     sections: [
       {
         heading: 'Warum Angebote digital erstellen?',
         paragraphs: [
           'Papier oder lose Dateien führen zu Medienbrüchen: Kundendaten tippen Sie mehrfach ab, Summen rechnen sich nicht automatisch nach und das Layout wirkt oft uneinheitlich.',
-          'Quotavo bündelt Kundenstamm, Leistungskatalog und PDF-Vorlage in einer Oberfläche — speziell für Dienstleister, Handwerk und Freelancer ohne Voll-CRM.',
+          'Quotavo bündelt Kundenstamm, Leistungskatalog und PDF-Vorlage in einer Oberfläche — die schlanke Alternative zu Tool Time für Handwerker, Freelancer und Kleinbetriebe.',
         ],
       },
       {
@@ -71,8 +71,8 @@ export const SEO_GUIDES = {
     ],
   },
   'angebot-handwerker': {
-    title: 'Angebot für Handwerker und Dienstleister',
-    lead: 'Als Handwerker oder Dienstleister brauchen Sie schnelle, saubere Angebote — oft vor Ort oder zwischen zwei Einsätzen. Quotavo funktioniert im Browser auf PC, Tablet und Smartphone.',
+    title: 'Angebot für Handwerker und Kleinbetriebe',
+    lead: 'Als Elektriker, SHK-Betrieb, Maler oder Freelancer brauchen Sie schnelle, saubere Angebote — oft vor Ort oder zwischen zwei Einsätzen. Quotavo ist die schlanke Alternative zu Tool Time: Browser auf PC, Tablet und Smartphone, ohne Disposition und Lager-Overkill.',
     sections: [
       {
         heading: 'Typische Anforderungen im Handwerk',
@@ -92,13 +92,15 @@ export const SEO_GUIDES = {
         ],
       },
       {
-        heading: 'Kein Overkill',
+        heading: 'Kein Overkill — bewusst schlanker als Tool Time',
         paragraphs: [
-          'Quotavo ist bewusst schlank: keine Disposition, kein Lager, keine Zeiterfassung. Fokus auf Angebot, Rechnung, Kunde und PDF — genau das, was viele Betriebe statt Excel und Word brauchen.',
+          'Quotavo ist bewusst schlank: keine Disposition, kein Lager, keine Zeiterfassung. Fokus auf Angebot, Rechnung, Kunde und PDF — genau das, was viele Betriebe statt Excel, Word oder einem teuren Voll-Paket brauchen.',
+          'Wer von Tool Time wechselt, kann Kunden, Angebote, Rechnungen und Katalog-Posten per CSV importieren — ohne jedes Modul nachbauen zu wollen.',
         ],
       },
     ],
     related: [
+      { href: '/tooltime-alternative', label: 'Tool-Time-Alternative' },
       { href: '/angebot-erstellen', label: 'Angebot erstellen' },
       { href: '/rechnung-schreiben', label: 'Rechnung schreiben' },
       { href: '/angebot-online-bestaetigen', label: 'Online-Bestätigung' },
@@ -131,15 +133,66 @@ export const SEO_GUIDES = {
       { href: '/handbuch', label: 'Handbuch' },
     ],
   },
+  'tooltime-alternative': {
+    title: 'Tool Time Alternative — schlank, günstig, fokussiert',
+    lead: 'Quotavo ist keine Kopie von Tool Time. Es ist die schlanke, deutlich günstigere Alternative für alle, die vor allem schnell Angebote und Rechnungen erstellen wollen — Handwerker, Freelancer und Kleinbetriebe inklusive.',
+    sections: [
+      {
+        heading: 'Warum nicht einfach Tool Time kopieren?',
+        paragraphs: [
+          'Tool Time deckt Disposition, Zeiterfassung, Lager, CRM und vieles mehr ab. Das ist stark — kostet aber Zeit, Geld und Schulungsaufwand, wenn Sie eigentlich nur professionelle Angebote und Rechnungen brauchen.',
+          'Erfolgreicher ist oft eine klare Positionierung statt „alles kann alles“. Quotavo konzentriert sich auf den Umsatz-Pfad: Kunde → Angebot → Bestätigung → Rechnung → PDF/E-Mail/DATEV.',
+        ],
+      },
+      {
+        heading: 'Wo Quotavo bewusst anders ist',
+        steps: [
+          'KI-first: KI-Import aus PDFs und automatisierter Datenimport reduzieren Tipparbeit.',
+          'Deutlich günstiger: kostenloser Einstieg, Plus ab 3,99 € — ohne Voll-Paket-Preis.',
+          'Spezialisiert auf Angebote & Rechnungen: Elektriker, SHK, Maler und vergleichbare Gewerke.',
+          'Bessere mobile Erfahrung: responsive Oberfläche für Büro, Baustelle und unterwegs.',
+          'Schnellere Angebotserstellung: Katalog, Kundenstamm, Vorlagen — Angebot in Minuten.',
+          'Auch für Freelancer und Kleinbetriebe: kein Team-Minimum, kein Enterprise-Overhead.',
+        ],
+      },
+      {
+        heading: 'Wechsel von Tool Time — was geht heute?',
+        paragraphs: [
+          'Unter Daten-Import können Sie CSV-Exporte aus Tool Time für Kunden, Angebote, Rechnungen und Katalog-Posten einspielen. Beim erneuten Import werden Katalog-Duplikate aktualisiert statt doppelt angelegt.',
+          'Sie müssen nicht jedes Tool-Time-Modul ersetzen — nur den Teil, der Ihnen Umsatz bringt: saubere Angebote, nachvollziehbare Bestätigungen und rechtskonforme Rechnungen mit ZUGFeRD.',
+        ],
+      },
+      {
+        heading: 'Für wen Quotavo die bessere Wahl ist',
+        paragraphs: [
+          'Einzelunternehmer und Kleinbetriebe, die Tool Time zu groß oder zu teuer finden.',
+          'Handwerksbetriebe, die mobil Angebote schreiben und dem Kunden ein professionelles PDF schicken wollen.',
+          'Freelancer und Dienstleister, die Excel/Word hinter sich lassen, aber kein Voll-ERP brauchen.',
+          'Teams, die KI-Unterstützung und schnelle Workflows schätzen — ohne monatelange Einführung.',
+        ],
+      },
+    ],
+    related: [
+      { href: '/angebot-handwerker', label: 'Angebot für Handwerker' },
+      { href: '/angebot-erstellen', label: 'Angebot erstellen' },
+      { href: '/faq', label: 'FAQ' },
+      { href: '/ressourcen', label: 'Alle Ressourcen' },
+    ],
+  },
 };
 
 export const SEO_HUB = {
   title: 'Ressourcen & Ratgeber',
-  lead: 'Hilfeseiten, Ratgeber und Dokumentation zu Quotavo — ideal zum Teilen und Verlinken.',
+  lead: 'Hilfeseiten, Ratgeber und Dokumentation zu Quotavo — inklusive Tool-Time-Alternative für Handwerk und Kleinbetrieb.',
   groups: [
     {
       title: 'Ratgeber',
       links: [
+        {
+          href: '/tooltime-alternative',
+          label: 'Tool Time Alternative',
+          desc: 'Schlanke, günstige Alternative — KI, Mobil, CSV-Import.',
+        },
         {
           href: '/angebot-erstellen',
           label: 'Angebot erstellen als PDF',

@@ -13,6 +13,7 @@ export const GUIDE_PATHS = new Set([
   'rechnung-schreiben',
   'angebot-handwerker',
   'angebot-online-bestaetigen',
+  'tooltime-alternative',
 ]);
 
 export const HUB_PATH = 'ressourcen';
