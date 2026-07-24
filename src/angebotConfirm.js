@@ -18,6 +18,19 @@ async function fetchPublicAngebot(token) {
   return data;
 }
 
+async function verifyAngebotPlz(token, plz) {
+  const res = await fetch(`/api/public/angebote/${encodeURIComponent(token)}/verify-plz`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ plz }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || 'Postleitzahl konnte nicht geprüft werden.');
+  }
+  return data;
+}
+
 async function respondToAngebot(token, plz, decision) {
   const res = await fetch(`/api/public/angebote/${encodeURIComponent(token)}/respond`, {
     method: 'POST',
@@ -146,16 +159,32 @@ export async function initAngebotConfirm(token, { showLanding }) {
 
   let verifiedPlz = '';
 
-  plzForm?.addEventListener('submit', (event) => {
+  plzForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const plz = plzInput?.value.trim() || '';
-    if (!/^\d{5}$/.test(plz.replace(/\D/g, ''))) {
+    const normalizedPlz = plz.replace(/\D/g, '');
+    if (!/^\d{5}$/.test(normalizedPlz)) {
       setStatus('Bitte geben Sie eine gültige fünfstellige Postleitzahl ein.', true);
       return;
     }
-    verifiedPlz = plz.replace(/\D/g, '');
-    setStatus('');
-    setStep('action');
+
+    setStatus('Postleitzahl wird geprüft…');
+    if (plzSubmit) plzSubmit.disabled = true;
+    if (plzInput) plzInput.disabled = true;
+
+    try {
+      await verifyAngebotPlz(token, normalizedPlz);
+      verifiedPlz = normalizedPlz;
+      setStatus('');
+      setStep('action');
+    } catch (err) {
+      verifiedPlz = '';
+      setStatus(err.message || 'Postleitzahl konnte nicht geprüft werden.', true);
+      plzInput?.focus();
+    } finally {
+      if (plzSubmit) plzSubmit.disabled = false;
+      if (plzInput) plzInput.disabled = false;
+    }
   });
 
   async function submitDecision(decision) {

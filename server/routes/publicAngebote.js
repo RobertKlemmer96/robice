@@ -36,6 +36,34 @@ export function createPublicAngeboteRouter() {
     }
   });
 
+  router.post('/:token/verify-plz', (req, res) => {
+    try {
+      const { plz } = req.body || {};
+      const result = angeboteRepo.verifyAngebotConfirmationPlz(req.params.token, plz);
+
+      if (result.error === 'NOT_FOUND') {
+        res.status(404).json({ error: 'Angebot nicht gefunden oder Link ungültig.' });
+        return;
+      }
+      if (result.error === 'INVALID_PLZ') {
+        res.status(403).json({ error: 'Postleitzahl stimmt nicht mit dem Angebot überein.' });
+        return;
+      }
+      if (result.error === 'ALREADY_RESPONDED') {
+        res.status(409).json({
+          error: 'Zu diesem Angebot wurde bereits geantwortet.',
+          decision: result.angebot?.prozessStatus,
+        });
+        return;
+      }
+
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('public angebot verify-plz:', err);
+      res.status(500).json({ error: 'Postleitzahl konnte nicht geprüft werden.' });
+    }
+  });
+
   router.post('/:token/respond', (req, res) => {
     try {
       const { plz, decision } = req.body || {};

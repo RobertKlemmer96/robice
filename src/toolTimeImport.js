@@ -1,6 +1,7 @@
 import { normalizeAdresse } from './adresse.js';
 import { normalizeKundeAnrede } from './kundeStammdaten.js';
 import { normalizeAngebotProzessStatus } from './angebotProzessStatus.js';
+import { normalizePostenArt } from './data.js';
 import { addDaysIso, getZahlungszielTage } from './dokumentnummer.js';
 
 const COMPARE_FIELDS = ['name', 'anrede', 'strasse', 'plzOrt', 'telefon', 'email'];
@@ -209,6 +210,9 @@ export function detectToolTimeCsvType(csvText) {
   const normalized = String(csvText || '').replace(/^\uFEFF/, '');
   const firstLine = normalized.split(/\r?\n/).find((line) => line.trim()) || '';
   const headers = firstLine.split(';').map((header) => header.trim().toLowerCase());
+  if (headers.includes('leistungsart') && headers.includes('einzelpreis') && headers.includes('position')) {
+    return 'katalog';
+  }
   if (
     headers.includes('angebot_nummer') ||
     headers.includes('leistungszeitraum_von') ||
@@ -666,6 +670,164 @@ export async function importToolTimeCustomers(csvText, {
     } catch (err) {
       result.errors.push({
         name: customer.name,
+        message: err.message || String(err),
+      });
+    }
+  }
+
+  return result;
+}
+
+const TOOL_TIME_CATALOG_HEADERS = {
+  leistungsart: 'leistungsart',
+  beschreibung: 'beschreibung',
+  einheit: 'einheit',
+  einzelpreis: 'einzelpreis',
+  artikelnummer: 'grosshandel_artikelnummer',
+};
+
+export const TOOL_TIME_CATALOG_MARKER_PREFIX = 'Tool Time Katalog: ';
+
+function mapToolTimeLeistungsart(value) {
+  const key = cleanCell(value).toLowerCase();
+  if (key === 'material') return 'material';
+  return 'lohn';
+}
+
+function mapToolTimeCatalogPrices(einheit, einzelpreis) {
+  const price = parseGermanDecimal(einzelpreis);
+  const unit = cleanCell(einheit).toLowerCase();
+  if (unit.includes('stunde') || unit === 'std' || unit === 'std.') {
+    return { preisStk: 0, preisStd: price };
+  }
+  return { preisStk: price, preisStd: price };
+}
+
+function buildToolTimeCatalogKey(candidate) {
+  if (candidate.artikelnummer) {
+    return `art:${candidate.artikelnummer}`;
+  }
+  return `name:${candidate.leistungsart}|${normalizeCompare(candidate.bezeichnung)}`;
+}
+
+function buildCatalogMarker(toolTimeKey) {
+  return `${TOOL_TIME_CATALOG_MARKER_PREFIX}${toolTimeKey}`;
+}
+
+function buildCatalogBeschreibung(item) {
+  const parts = [
+    buildCatalogMarker(item.toolTimeKey),
+    item.leistungsart ? `Leistungsart: ${item.leistungsart}` : '',
+    item.artikelnummer ? `Artikelnr.: ${item.artikelnummer}` : '',
+  ].filter(Boolean);
+  return parts.join(' · ');
+}
+
+export function mapToolTimeCatalogRow(row) {
+  const bezeichnung = cleanCell(row[TOOL_TIME_CATALOG_HEADERS.beschreibung]);
+  if (!bezeichnung) return null;
+
+  const leistungsart = cleanCell(row[TOOL_TIME_CATALOG_HEADERS.leistungsart]);
+  const artikelnummer = cleanCell(row[TOOL_TIME_CATALOG_HEADERS.artikelnummer]);
+  const art = mapToolTimeLeistungsart(leistungsart);
+  const prices = mapToolTimeCatalogPrices(
+    row[TOOL_TIME_CATALOG_HEADERS.einheit],
+    row[TOOL_TIME_CATALOG_HEADERS.einzelpreis]
+  );
+
+  const candidate = {
+    bezeichnung,
+    art,
+    artikelnummer,
+    leistungsart,
+    preisStk: prices.preisStk,
+    preisStd: prices.preisStd,
+  };
+  candidate.toolTimeKey = buildToolTimeCatalogKey(candidate);
+  return candidate;
+}
+
+export function parseToolTimeCatalog(csvText) {
+  const unique = new Map();
+  for (const row of parseSemicolonCsv(csvText)) {
+    const item = mapToolTimeCatalogRow(row);
+    if (item) unique.set(item.toolTimeKey, item);
+  }
+  return Array.from(unique.values());
+}
+
+function findExistingKatalogPosten(candidate, existingPosten) {
+  const marker = buildCatalogMarker(candidate.toolTimeKey);
+  const byMarker =
+    existingPosten.find((posten) => String(posten.beschreibung || '').includes(marker)) ?? null;
+  if (byMarker) return byMarker;
+
+  const normName = normalizeCompare(candidate.bezeichnung);
+  const art = normalizePostenArt(candidate.art);
+  return (
+    existingPosten.find(
+      (posten) =>
+        normalizeCompare(posten.bezeichnung) === normName &&
+        normalizePostenArt(posten.art) === art
+    ) ?? null
+  );
+}
+
+export async function importToolTimeCatalog(csvText, {
+  saveKatalogPosten,
+  getAllKatalogPosten,
+  createKatalogPostenId,
+}) {
+  const rows = parseSemicolonCsv(csvText);
+  const items = parseToolTimeCatalog(csvText);
+  const existingPosten = await getAllKatalogPosten();
+
+  const result = {
+    total: items.length,
+    imported: 0,
+    updated: 0,
+    skipped: rows.length - rows.filter((row) => mapToolTimeCatalogRow(row)).length,
+    errors: [],
+  };
+
+  for (const item of items) {
+    try {
+      const existing = findExistingKatalogPosten(item, existingPosten);
+      const jetzt = new Date().toISOString();
+      const beschreibung = buildCatalogBeschreibung(item);
+
+      if (existing) {
+        const saved = await saveKatalogPosten({
+          ...existing,
+          bezeichnung: item.bezeichnung,
+          beschreibung,
+          art: item.art,
+          preisStk: item.preisStk,
+          preisStd: item.preisStd,
+          aktualisiertAm: jetzt,
+        });
+        const idx = existingPosten.findIndex((posten) => posten.id === saved.id);
+        if (idx >= 0) existingPosten[idx] = saved;
+        else existingPosten.push(saved);
+        result.updated += 1;
+        continue;
+      }
+
+      const saved = await saveKatalogPosten({
+        id: createKatalogPostenId(),
+        bezeichnung: item.bezeichnung,
+        beschreibung,
+        art: item.art,
+        preisStk: item.preisStk,
+        preisStd: item.preisStd,
+        erstelltAm: jetzt,
+        aktualisiertAm: jetzt,
+      });
+      existingPosten.push(saved);
+      result.imported += 1;
+    } catch (err) {
+      result.errors.push({
+        name: item.bezeichnung,
         message: err.message || String(err),
       });
     }

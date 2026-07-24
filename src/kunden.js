@@ -10,7 +10,7 @@ export async function getKunde(id) {
   try {
     return await apiFetch(`${API_BASE}/${id}`);
   } catch (err) {
-    if (err.message === 'Kunde nicht gefunden.') return null;
+    if (err.status === 404) return null;
     throw err;
   }
 }

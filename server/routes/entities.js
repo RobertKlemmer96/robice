@@ -1,9 +1,20 @@
 import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
 
+const SINGULAR_LABELS = {
+  Kunden: 'Kunde',
+  Angebote: 'Angebot',
+  Rechnungen: 'Rechnung',
+  'Katalog-Posten': 'Katalog-Posten',
+};
+
+function getSingularLabel(label) {
+  return SINGULAR_LABELS[label] || label;
+}
+
 export function createEntityRouter({ label, list, get, save, remove, idField = 'id' }) {
   const router = express.Router();
-  const singular = label.endsWith('e') ? label.slice(0, -1) : label;
+  const singular = getSingularLabel(label);
 
   router.get('/', requireAuth, (req, res) => {
     try {

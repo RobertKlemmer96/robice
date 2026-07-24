@@ -10,7 +10,7 @@ export async function getRechnung(id) {
   try {
     return await apiFetch(`${API_BASE}/${id}`);
   } catch (err) {
-    if (err.message === 'Rechnung nicht gefunden.') return null;
+    if (err.status === 404) return null;
     throw err;
   }
 }

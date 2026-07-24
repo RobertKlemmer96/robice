@@ -58,6 +58,7 @@ import {
 import {
   loadKatalogPosten,
   getKatalogPostenById,
+  getAllKatalogPosten,
   saveKatalogPosten,
   deleteKatalogPosten,
   createKatalogPostenId,
@@ -130,9 +131,11 @@ import {
 import { generiereKundennummer, previewKundennummer } from './kundennummer.js';
 import {
   detectToolTimeCsvType,
+  importToolTimeCatalog,
   importToolTimeCustomers,
   importToolTimeOffers,
   importToolTimeRechnungen,
+  parseToolTimeCatalog,
   parseToolTimeCustomers,
   parseToolTimeOffers,
   parseToolTimeRechnungen,
@@ -389,6 +392,7 @@ const els = {
   katalogFormPreisStk: document.getElementById('katalog-form-preis-stk'),
   katalogFormPreisStd: document.getElementById('katalog-form-preis-std'),
   katalogNeuBtn: document.getElementById('katalog-neu-btn'),
+  katalogImportBtn: document.getElementById('katalog-import-btn'),
   katalogListe: document.getElementById('katalog-liste'),
   katalogSuche: document.getElementById('katalog-suche'),
   angebotNr: document.getElementById('angebot-nr'),
@@ -2248,6 +2252,7 @@ function getImportDataType() {
   const value = els.importDataType?.value;
   if (value === 'angebote') return 'angebote';
   if (value === 'rechnungen') return 'rechnungen';
+  if (value === 'katalog') return 'katalog';
   return 'customers';
 }
 
@@ -2271,6 +2276,15 @@ function getImportMessageKeys(dataType) {
         successWithCustomers: 'import.successRechnungenWithCustomers',
         previewCount: 'import.previewCountRechnungen',
       };
+    case 'katalog':
+      return {
+        noRows: 'import.noRowsKatalog',
+        allDuplicates: null,
+        success: 'import.successKatalog',
+        successWithDuplicates: 'import.successKatalogUpdated',
+        successWithCustomers: null,
+        previewCount: 'import.previewCountKatalog',
+      };
     default:
       return {
         noRows: 'import.noRows',
@@ -2289,6 +2303,8 @@ function countImportPreviewRows(csvText, dataType) {
       return parseToolTimeOffers(csvText).length;
     case 'rechnungen':
       return parseToolTimeRechnungen(csvText).length;
+    case 'katalog':
+      return parseToolTimeCatalog(csvText).length;
     default:
       return parseToolTimeCustomers(csvText).length;
   }
@@ -2342,9 +2358,23 @@ function syncImportFileUi(file = null) {
 function formatImportResultStatus(result, dataType) {
   const messages = getImportMessageKeys(dataType);
   const hasCustomerCreates = dataType === 'angebote' || dataType === 'rechnungen';
+  const processedCount = (result.imported || 0) + (result.updated || 0);
 
-  if (result.imported === 0 && result.total === 0) {
+  if (processedCount === 0 && result.total === 0) {
     return { message: t(messages.noRows), isError: true };
+  }
+
+  if (dataType === 'katalog' && result.errors.length > 0) {
+    const firstError = result.errors[0];
+    return {
+      message: t('import.partialFailedKatalog', {
+        imported: result.imported,
+        updated: result.updated,
+        failed: result.errors.length,
+        message: firstError.message,
+      }),
+      isError: true,
+    };
   }
 
   if (result.imported === 0 && result.duplicates > 0 && result.errors.length === 0) {
@@ -2358,7 +2388,7 @@ function formatImportResultStatus(result, dataType) {
     const firstError = result.errors[0];
     return {
       message: t('import.partialFailed', {
-        imported: result.imported,
+        imported: dataType === 'katalog' ? processedCount : result.imported,
         failed: result.errors.length,
         message: firstError.message,
       }),
@@ -2372,6 +2402,28 @@ function formatImportResultStatus(result, dataType) {
         imported: result.imported,
         customers: result.customersCreated,
       }),
+      isError: false,
+    };
+  }
+
+  if (dataType === 'katalog') {
+    if (result.imported > 0 && result.updated > 0) {
+      return {
+        message: t('import.successKatalogMixed', {
+          imported: result.imported,
+          updated: result.updated,
+        }),
+        isError: false,
+      };
+    }
+    if (result.updated > 0) {
+      return {
+        message: t('import.successKatalogUpdated', { count: result.updated }),
+        isError: false,
+      };
+    }
+    return {
+      message: t('import.successKatalog', { count: result.imported }),
       isError: false,
     };
   }
@@ -2447,7 +2499,13 @@ async function runImportSubmit() {
               createRechnungId,
               createKundeId,
             })
-          : await importToolTimeCustomers(csvText, {
+          : dataType === 'katalog'
+            ? await importToolTimeCatalog(csvText, {
+                saveKatalogPosten,
+                getAllKatalogPosten,
+                createKatalogPostenId,
+              })
+            : await importToolTimeCustomers(csvText, {
               saveKunde,
               getAllKunden,
               generiereKundennummer,
@@ -2456,11 +2514,12 @@ async function runImportSubmit() {
 
     const { message, isError } = formatImportResultStatus(result, dataType);
     setImportStatus(message, isError);
-    if (isError && result.imported === 0) {
+    const processedCount = (result.imported || 0) + (result.updated || 0);
+    if (isError && processedCount === 0) {
       return;
     }
 
-    if (result.imported > 0) {
+    if (processedCount > 0) {
       els.importCsvFile.value = '';
       syncImportFileUi();
       if (dataType === 'customers' && state.view === 'kunden') {
@@ -2471,6 +2530,9 @@ async function runImportSubmit() {
       }
       if (dataType === 'rechnungen' && state.view === 'rechnung-archiv') {
         await renderRechnungArchiv();
+      }
+      if (dataType === 'katalog' && state.view === 'katalog') {
+        await renderKatalogView();
       }
     }
   } catch (err) {
@@ -4868,8 +4930,12 @@ async function speichernUndPdfAnKundenSenden({ notify = 'alert' } = {}) {
     const { kundeEmail, sendResult } = await sendAngebotPdfByMail(result.angebot, result.posten);
     const message = formatDocumentSendSuccess('angebot', kundeEmail, sendResult);
     if (notify === 'alert') alert(message);
-    const saved = await getAngebot(result.angebot.id);
-    if (saved) await loadAngebotIntoForm(saved);
+    try {
+      const saved = await getAngebot(result.angebot.id);
+      if (saved) await loadAngebotIntoForm(saved);
+    } catch {
+      /* Formular-Neuladen nach Versand ist optional */
+    }
     return { sent: true, message };
   } catch (err) {
     const message = `Versand fehlgeschlagen: ${err.message}`;
@@ -4937,8 +5003,12 @@ async function speichernUndRechnungPdfAnKundenSenden({ notify = 'alert' } = {}) 
     const { kundeEmail, sendResult } = await sendRechnungPdfByMail(result.rechnung, result.posten);
     const message = formatDocumentSendSuccess('rechnung', kundeEmail, sendResult);
     if (notify === 'alert') alert(message);
-    const saved = await getRechnung(result.rechnung.id);
-    if (saved) await loadRechnungIntoForm(saved);
+    try {
+      const saved = await getRechnung(result.rechnung.id);
+      if (saved) await loadRechnungIntoForm(saved);
+    } catch {
+      /* Formular-Neuladen nach Versand ist optional */
+    }
     return { sent: true, message };
   } catch (err) {
     const message = `Versand fehlgeschlagen: ${err.message}`;
@@ -5412,6 +5482,10 @@ function bindAppEvents() {
     resetKatalogForm();
     openKatalogForm();
     els.katalogFormBezeichnung?.focus();
+  });
+  els.katalogImportBtn?.addEventListener('click', () => {
+    if (els.importDataType) els.importDataType.value = 'katalog';
+    showView('import');
   });
   els.katalogSuche?.addEventListener('input', (e) => {
     state.katalogSuche = e.target.value;

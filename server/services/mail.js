@@ -62,7 +62,7 @@ export function getMailStatus() {
     return {
       configured: true,
       devMode: false,
-      hint: 'Versand über Brevo API (HTTPS). PDF wird per E-Mail an den Kunden gesendet.',
+      hint: '',
     };
   }
 
@@ -77,7 +77,7 @@ export function getMailStatus() {
   return {
     configured: true,
     devMode: false,
-    hint: 'PDF wird per E-Mail an den Kunden gesendet. Eine Kopie geht an Ihre Profil-E-Mail.',
+    hint: '',
   };
 }
 

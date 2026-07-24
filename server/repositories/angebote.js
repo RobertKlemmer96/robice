@@ -76,6 +76,22 @@ export function verifyAngebotKundePlz(kunde, plzInput) {
   return expected.length > 0 && expected === given;
 }
 
+export function verifyAngebotConfirmationPlz(token, plzInput) {
+  const angebot = getAngebotByConfirmationToken(token);
+  if (!angebot) return { error: 'NOT_FOUND' };
+
+  const status = normalizeProzessStatus(angebot.prozessStatus);
+  if (status === 'bestaetigt' || status === 'abgelehnt') {
+    return { error: 'ALREADY_RESPONDED', angebot };
+  }
+
+  if (!verifyAngebotKundePlz(angebot.kunde, plzInput)) {
+    return { error: 'INVALID_PLZ' };
+  }
+
+  return { ok: true };
+}
+
 export function respondToAngebotConfirmation(token, plzInput, decision) {
   const angebot = getAngebotByConfirmationToken(token);
   if (!angebot) return { error: 'NOT_FOUND' };
