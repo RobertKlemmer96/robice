@@ -54,6 +54,19 @@ envVars:
 
 Alternative für später: auf PostgreSQL umstellen (siehe `docs/OPS.md`).
 
+## E-Mail-Versand (Brevo auf Render)
+
+Render blockiert ausgehendes **SMTP** (Port 587/465). Deshalb auf Render **`BREVO_API_KEY`** setzen statt SMTP:
+
+1. [Brevo](https://app.brevo.com) → **SMTP & API** → **API Keys** → neuen **v3-Key** erstellen (`xkeysib-…`)
+2. Absender-Adresse in Brevo unter **Senders** verifizieren (gleiche E-Mail wie `SMTP_FROM`)
+3. Render → **Environment**:
+   - `BREVO_API_KEY` = der v3-Key
+   - `SMTP_FROM` = `"Quotavo" <ihre@verifizierte-email.de>`
+4. Service neu starten
+
+Lokal kann weiterhin SMTP (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`) genutzt werden — `BREVO_API_KEY` hat Vorrang, wenn gesetzt.
+
 ## Blueprint
 
 Im Repo liegt `render.yaml`. Bei Neuanlage über Blueprint wird `SESSION_SECRET` automatisch generiert.

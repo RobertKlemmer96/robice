@@ -34,6 +34,7 @@ export const config = {
     pass: process.env.SMTP_PASS || '',
     from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@quotavo.com',
   },
+  brevoApiKey: process.env.BREVO_API_KEY || '',
 };
 
 if (config.isProd && !process.env.SESSION_SECRET) {
